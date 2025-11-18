@@ -29,14 +29,17 @@ import java.util.List;
 import javax.websocket.Session;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -204,7 +207,7 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testHandleReportMsg_UeSerialNoNull_SkipsUpsert() {
         // Given
-        Session session = Mockito.mock(Session.class);
+        Session session = mock(Session.class);
         when(session.getId()).thenReturn("session-null-serial");
         when(registry.getExecutorName("session-null-serial")).thenReturn("Executor-NullSerial");
 
@@ -234,7 +237,7 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testHandleReportMsg_UeSerialNoEmpty_SkipsUpsert() {
         // Given
-        Session session = Mockito.mock(Session.class);
+        Session session = mock(Session.class);
         when(session.getId()).thenReturn("session-empty-serial");
         when(registry.getExecutorName("session-empty-serial")).thenReturn("Executor-EmptySerial");
 
@@ -261,7 +264,7 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testHandleReportMsg_UeSerialNoNullString_SkipsUpsert() {
         // Given
-        Session session = Mockito.mock(Session.class);
+        Session session = mock(Session.class);
         when(session.getId()).thenReturn("session-null-string");
         when(registry.getExecutorName("session-null-string")).thenReturn("Executor-NullString");
 
@@ -288,7 +291,7 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testHandleDeRegisterRequest_Success() {
         // Given
-        Session session = Mockito.mock(Session.class);
+        Session session = mock(Session.class);
         when(session.getId()).thenReturn("session-dereg-001");
         when(registry.getExecutorName("session-dereg-001")).thenReturn("Executor-Dereg");
 
@@ -311,7 +314,7 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testHandleDeRegisterRequest_NoBinding_SendsError() {
         // Given
-        Session session = Mockito.mock(Session.class);
+        Session session = mock(Session.class);
         when(session.getId()).thenReturn("session-dereg-002");
         when(registry.getExecutorName("session-dereg-002")).thenReturn(null);
 
@@ -334,7 +337,7 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testHandleDeRegisterRequest_DatabaseError_SendsError() {
         // Given
-        Session session = Mockito.mock(Session.class);
+        Session session = mock(Session.class);
         when(session.getId()).thenReturn("session-dereg-003");
         when(registry.getExecutorName("session-dereg-003")).thenReturn("Executor-DbError");
 
