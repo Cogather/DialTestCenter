@@ -99,13 +99,24 @@ public interface OperationLogDao {
     /**
      * 根据ID查询操作记录
      */
-    @Select("SELECT ol.id, ol.username, ol.operation_type as operationType, ol.operation_target as operationTarget, ol.operation_description_zh as operationDescriptionZh, ol.operation_description_en as operationDescriptionEn, ol.operation_data as operationData, TO_CHAR(ol.operation_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as operationTime FROM operation_logs ol WHERE ol.id = #{id}")
+    @Select("SELECT ol.id, ol.username, " +
+            "ol.operation_type as operationType, " +
+            "ol.operation_target as operationTarget, " +
+            "ol.operation_description_zh as operationDescriptionZh, " +
+            "ol.operation_description_en as operationDescriptionEn, " +
+            "ol.operation_data as operationData, " +
+            "TO_CHAR(ol.operation_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS') as operationTime " +
+            "FROM operation_logs ol WHERE ol.id = #{id}")
     OperationLog findById(@Param("id") Integer id);
     
     /**
      * 保存操作记录
      */
-    @Insert("INSERT INTO operation_logs (username, operation_type, operation_target, operation_description_zh, operation_description_en, operation_data) VALUES (#{username}, #{operationType}, #{operationTarget}, #{operationDescriptionZh}, #{operationDescriptionEn}, #{operationData}::jsonb)")
+    @Insert("INSERT INTO operation_logs " +
+            "(username, operation_type, operation_target, operation_description_zh, " +
+            "operation_description_en, operation_data) " +
+            "VALUES (#{username}, #{operationType}, #{operationTarget}, " +
+            "#{operationDescriptionZh}, #{operationDescriptionEn}, #{operationData}::jsonb)")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int save(OperationLog operationLog);
     

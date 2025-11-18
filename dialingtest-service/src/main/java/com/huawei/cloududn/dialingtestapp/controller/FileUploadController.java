@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.List;
 
 /**
@@ -203,7 +204,8 @@ public class FileUploadController {
      * @param trimValues 是否去除首尾空格（未使用，保留接口一致性）
      * @return 验证错误响应，如果验证通过则返回null
      */
-    private ResponseEntity<TestCaseSetUploadResponse> validateBusinessTypes(String businessZh, String businessEn, boolean trimValues) {
+    private ResponseEntity<TestCaseSetUploadResponse> validateBusinessTypes(
+            String businessZh, String businessEn, boolean trimValues) {
         if (businessZh == null || businessZh.trim().isEmpty()) {
             return createTestCaseSetErrorResponse("Business type (Chinese) is required", HttpStatus.BAD_REQUEST);
         }
@@ -403,10 +405,12 @@ public class FileUploadController {
      * @return JSON响应字符串
      */
     private String buildSinglePackageResponse(SoftwarePackage softwarePackage) {
-        return String.format("{\"success\":true,\"message\":\"上传软件包成功\",\"data\":{\"id\":%d,\"softwareName\":\"%s\",\"fileSize\":%d}}",
-            softwarePackage.getId(),
-            softwarePackage.getSoftwareName(),
-            softwarePackage.getFileSize());
+        return String.format(Locale.ROOT,
+                "{\"success\":true,\"message\":\"上传软件包成功\"," +
+                "\"data\":{\"id\":%d,\"softwareName\":\"%s\",\"fileSize\":%d}}",
+                softwarePackage.getId(),
+                softwarePackage.getSoftwareName(),
+                softwarePackage.getFileSize());
     }
     
     /**

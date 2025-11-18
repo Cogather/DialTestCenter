@@ -13,6 +13,8 @@ import org.springframework.context.ApplicationEvent;
  * @since 2025-11-09
  */
 public class TaskDispatchEvent extends ApplicationEvent {
+    private static final long serialVersionUID = 1L;
+
     private final String sessionId;
     private final Object taskPayload;
     private final String taskId;

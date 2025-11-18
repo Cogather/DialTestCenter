@@ -4,7 +4,9 @@
 
 package com.huawei.cloududn.dialingtestapp.service.executormanagement;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterAckDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.ReportAckDto;
@@ -27,6 +29,7 @@ import java.time.Instant;
 import javax.websocket.Session;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -199,7 +202,7 @@ public class ExecutorMgmtService {
     private String buildUeInfoJson(UeItemDto ueItem) {
         // Simple JSON construction (should use ObjectMapper in production)
         // Handle null values properly
-        return String.format(
+        return String.format(Locale.ROOT,
             "{\"serial\":\"%s\",\"brand\":\"%s\",\"model\":\"%s\",\"os\":\"%s\"," +
             "\"version\":\"%s\",\"resolution\":\"%s\",\"ipv4\":\"%s\",\"ipv6\":\"%s\"," +
             "\"battery\":%d}",
@@ -400,7 +403,8 @@ public class ExecutorMgmtService {
                         logger.debug("Skipping UE with empty msisdn");
                     }
                 }
-                logger.info("Executor info response processed successfully for {}, {} UE records updated", executorName, processedCount);
+                logger.info("Executor info response processed successfully for {}, {} UE records updated", 
+                        executorName, processedCount);
             } else {
                 logger.debug("No UE details in executor info response");
             }
@@ -438,7 +442,7 @@ public class ExecutorMgmtService {
 
         } catch (Exception e) {
             logger.error("Failed to get executor details", e);
-            throw new RuntimeException("Failed to get executor details", e);
+            throw new IllegalStateException("Failed to get executor details", e);
         }
     }
 
@@ -464,20 +468,80 @@ public class ExecutorMgmtService {
      * @return UeItemDto
      */
     private UeItemDto convertUeToUeItemDto(Ue ue) {
-        // 解析UE信息JSON (简化实现)
         UeItemDto dto = new UeItemDto();
-        dto.setSerialNo(ue.getMsisdn()); // 使用msisdn作为serialNo
-        dto.setBrand("Unknown"); // 从info字段解析
+        dto.setSerialNo(ue.getMsisdn());
+        String infoJson = ue.getInfo();
+        if (infoJson == null || infoJson.trim().isEmpty()) {
+            logger.debug("UE info is empty for msisdn={}, using entity fields with defaults", ue.getMsisdn());
+            // 优先使用 Ue 实体字段，如果为空则使用默认值
+            dto.setBrand("Unknown");
+            dto.setModel("Unknown");
+            dto.setOs(ue.getOs() != null && !ue.getOs().trim().isEmpty() ? ue.getOs() : "Unknown");
+            dto.setVersion("Unknown");
+            dto.setWmsize("Unknown");
+            dto.setIpv4("Unknown");
+            dto.setIpv6("Unknown");
+            dto.setBattery(0);
+            return dto;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(infoJson);
+            dto.setBrand(getTextOrDefault(node, "brand", "Unknown"));
+            dto.setModel(getTextOrDefault(node, "model", "Unknown"));
+            dto.setOs(getTextOrDefault(node, "os", "Unknown"));
+            dto.setVersion(getTextOrDefault(node, "version", "Unknown"));
+            dto.setWmsize(getTextOrDefault(node, "resolution", "Unknown"));
+            dto.setIpv4(getTextOrDefault(node, "ipv4", "Unknown"));
+            dto.setIpv6(getTextOrDefault(node, "ipv6", "Unknown"));
+            dto.setBattery(node.has("battery") ? node.get("battery").asInt(0) : 0);
+            logger.debug("Successfully parsed UE info for msisdn={}", ue.getMsisdn());
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to parse UE info JSON for msisdn={}, using default values",
+                ue.getMsisdn(), e);
+            setDefaultUeValues(dto);
+        } catch (Exception e) {
+            logger.error("Unexpected error parsing UE info for msisdn={}", ue.getMsisdn(), e);
+            setDefaultUeValues(dto);
+        }
+        return dto;
+    }
+    
+    /**
+     * Get text value from JSON node with default fallback.
+     *
+     * @param node         JSON node
+     * @param fieldName    field name
+     * @param defaultValue default value if field missing or null
+     * @return field value or default
+     */
+    private String getTextOrDefault(JsonNode node, String fieldName, String defaultValue) {
+        if (node == null || !node.has(fieldName)) {
+            return defaultValue;
+        } else {
+            String value = node.get(fieldName).asText("");
+            if (value == null || value.trim().isEmpty() || "null".equalsIgnoreCase(value)) {
+                return defaultValue;
+            } else {
+                return value;
+            }
+        }
+    }
+    
+    /**
+     * Set default values for UeItemDto.
+     *
+     * @param dto UeItemDto to set defaults
+     */
+    private void setDefaultUeValues(UeItemDto dto) {
+        dto.setBrand("Unknown");
         dto.setModel("Unknown");
-        dto.setOs(ue.getOs() != null ? ue.getOs() : "Unknown");
+        dto.setOs("Unknown");
         dto.setVersion("Unknown");
         dto.setWmsize("Unknown");
         dto.setIpv4("Unknown");
         dto.setIpv6("Unknown");
         dto.setBattery(0);
-
-        // TODO: 从ue.getInfo() JSON字段解析详细信息
-        return dto;
     }
 
     private static String text(JsonNode node, String field) {

@@ -87,7 +87,8 @@ public interface SoftwarePackageDao {
     /**
      * 根据软件名称获取软件包详细信息
      */
-    @Select("SELECT id, software_name, description, file_size, file_sha256 FROM software_package WHERE software_name = #{softwareName}")
+    @Select("SELECT id, software_name, description, file_size, file_sha256 " +
+            "FROM software_package WHERE software_name = #{softwareName}")
     @Results({
             @Result(property = "id", column = "id"),
             @Result(property = "softwareName", column = "software_name"),
@@ -109,7 +110,8 @@ public interface SoftwarePackageDao {
             @Result(property = "id", column = "id"),
             @Result(property = "softwareName", column = "software_name"),
             @Result(property = "description", column = "description"),
-            @Result(property = "fileContent", column = "file_content", javaType = byte[].class, jdbcType = org.apache.ibatis.type.JdbcType.BINARY),
+            @Result(property = "fileContent", column = "file_content", 
+                    javaType = byte[].class, jdbcType = org.apache.ibatis.type.JdbcType.BINARY),
             @Result(property = "fileSha256", column = "file_sha256"),
             @Result(property = "fileSize", column = "file_size")
     })
@@ -120,7 +122,8 @@ public interface SoftwarePackageDao {
      */
     @Select("SELECT file_content FROM software_package WHERE id = #{id}")
     @Results({
-            @Result(property = "fileContent", column = "file_content", javaType = byte[].class, jdbcType = org.apache.ibatis.type.JdbcType.BINARY)
+            @Result(property = "fileContent", column = "file_content", 
+                    javaType = byte[].class, jdbcType = org.apache.ibatis.type.JdbcType.BINARY)
     })
     SoftwarePackageFileContent selectSoftwarePackageFileContent(Long id);
 

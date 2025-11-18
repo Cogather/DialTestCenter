@@ -13,6 +13,7 @@ import com.huawei.cloududn.dialingtest.model.ExecutorCountResponse;
 import com.huawei.cloududn.dialingtest.model.UserRolePageResponseData;
 import com.huawei.cloududn.dialingtestapp.util.OperationLogUtil;
 import com.huawei.cloududn.dialingtestapp.util.PermissionValidator;
+import com.huawei.cloududn.dialingtestapp.util.PermissionValidator.PermissionValidationResult;
 import com.huawei.cloududn.dialingtestapp.service.UserRoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -63,10 +64,14 @@ public class UserRoleController implements UserRolesApi {
     }
     
     @Override
-    public ResponseEntity<UserRoleResponse> createUserRole(@RequestHeader("X-Csrf-Token") String xCsrfToken, @RequestHeader("X-Username") String xUsername, CreateUserRoleRequest body) {
+    public ResponseEntity<UserRoleResponse> createUserRole(
+            @RequestHeader("X-Csrf-Token") String xCsrfToken,
+            @RequestHeader("X-Username") String xUsername,
+            CreateUserRoleRequest body) {
         try {
             // 检查权限（需要ADMIN权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdmin(xUsername, "创建用户角色");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdmin(xUsername, "创建用户角色");
             if (!permissionResult.isValid()) {
                 UserRoleResponse response = new UserRoleResponse();
                 response.setSuccess(false);
@@ -102,10 +107,12 @@ public class UserRoleController implements UserRolesApi {
     }
     
     @Override
-    public ResponseEntity<UserRoleResponse> updateUserRole(String xUsername, Integer id, UpdateUserRoleRequest body) {
+    public ResponseEntity<UserRoleResponse> updateUserRole(
+            String xUsername, Integer id, UpdateUserRoleRequest body) {
         try {
             // 检查权限（需要ADMIN权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdmin(xUsername, "update user role");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdmin(xUsername, "update user role");
             if (!permissionResult.isValid()) {
                 UserRoleResponse response = new UserRoleResponse();
                 response.setSuccess(false);
@@ -161,7 +168,8 @@ public class UserRoleController implements UserRolesApi {
     public ResponseEntity<Void> deleteUserRole(Integer id, String xUsername) {
         try {
             // 检查权限（需要ADMIN权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdmin(xUsername, "删除用户角色");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdmin(xUsername, "删除用户角色");
             if (!permissionResult.isValid()) {
                 HttpStatus status = permissionResult.getErrorMessage().contains("未提供用户名") 
                     ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN;

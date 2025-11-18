@@ -15,6 +15,8 @@ import org.springframework.context.ApplicationEvent;
  * @since 2025-11-16
  */
 public class InboundFileCompleteEvent extends ApplicationEvent {
+    private static final long serialVersionUID = 1L;
+
     private final InboundFileState state;
 
     /**

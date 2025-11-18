@@ -17,8 +17,10 @@ public interface PreprocessRuleDao {
     /**
      * 插入预处理规则
      */
-    @Insert("INSERT INTO preprocess_rules (rule_name, business_zh, business_en, category, app_name, content, is_custom, package_id) " +
-            "VALUES (#{ruleName}, #{businessZh}, #{businessEn}, #{category}, #{appName}, #{content}, #{isCustom}, #{packageId})")
+    @Insert("INSERT INTO preprocess_rules " +
+            "(rule_name, business_zh, business_en, category, app_name, content, is_custom, package_id) " +
+            "VALUES (#{ruleName}, #{businessZh}, #{businessEn}, #{category}, " +
+            "#{appName}, #{content}, #{isCustom}, #{packageId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(PreprocessRule preprocessRule);
     
@@ -26,9 +28,12 @@ public interface PreprocessRuleDao {
      * 批量插入预处理规则
      */
     @Insert("<script>" +
-            "INSERT INTO preprocess_rules (rule_name, business_zh, business_en, category, app_name, content, is_custom, package_id) VALUES " +
+            "INSERT INTO preprocess_rules " +
+            "(rule_name, business_zh, business_en, category, app_name, content, is_custom, package_id) " +
+            "VALUES " +
             "<foreach collection='list' item='item' separator=','>" +
-            "(#{item.ruleName}, #{item.businessZh}, #{item.businessEn}, #{item.category}, #{item.appName}, #{item.content}, #{item.isCustom}, #{item.packageId})" +
+            "(#{item.ruleName}, #{item.businessZh}, #{item.businessEn}, #{item.category}, " +
+            "#{item.appName}, #{item.content}, #{item.isCustom}, #{item.packageId})" +
             "</foreach>" +
             "</script>")
     int batchInsert(@Param("list") List<PreprocessRule> preprocessRules);
@@ -69,7 +74,9 @@ public interface PreprocessRuleDao {
             "AND rule_name = #{ruleName} " +
             "</if>" +
             "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (rule_name LIKE CONCAT('%', #{keyword}, '%') OR category LIKE CONCAT('%', #{keyword}, '%') OR app_name LIKE CONCAT('%', #{keyword}, '%')) " +
+            "AND (rule_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR category LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR app_name LIKE CONCAT('%', #{keyword}, '%')) " +
             "</if>" +
             "</where>" +
             "ORDER BY id DESC " +
@@ -113,7 +120,9 @@ public interface PreprocessRuleDao {
             "AND rule_name = #{ruleName} " +
             "</if>" +
             "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (rule_name LIKE CONCAT('%', #{keyword}, '%') OR category LIKE CONCAT('%', #{keyword}, '%') OR app_name LIKE CONCAT('%', #{keyword}, '%')) " +
+            "AND (rule_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR category LIKE CONCAT('%', #{keyword}, '%') " +
+            "OR app_name LIKE CONCAT('%', #{keyword}, '%')) " +
             "</if>" +
             "</where>" +
             "</script>")
@@ -180,8 +189,10 @@ public interface PreprocessRuleDao {
     /**
      * 根据业务类型和分类获取不重复的应用名称
      */
-    @Select("SELECT DISTINCT app_name FROM preprocess_rules WHERE business_zh = #{businessZh} AND category = #{category} ORDER BY app_name")
-    List<String> findDistinctAppNamesByBusinessAndCategory(@Param("businessZh") String businessZh, @Param("category") String category);
+    @Select("SELECT DISTINCT app_name FROM preprocess_rules " +
+            "WHERE business_zh = #{businessZh} AND category = #{category} ORDER BY app_name")
+    List<String> findDistinctAppNamesByBusinessAndCategory(
+            @Param("businessZh") String businessZh, @Param("category") String category);
     
     /**
      * 获取所有不重复的规则名称
@@ -210,8 +221,10 @@ public interface PreprocessRuleDao {
     /**
      * 根据业务类型和分类获取不重复的规则名称
      */
-    @Select("SELECT DISTINCT rule_name FROM preprocess_rules WHERE business_zh = #{businessZh} AND category = #{category} ORDER BY rule_name")
-    List<String> findDistinctRuleNamesByBusinessAndCategory(@Param("businessZh") String businessZh, @Param("category") String category);
+    @Select("SELECT DISTINCT rule_name FROM preprocess_rules " +
+            "WHERE business_zh = #{businessZh} AND category = #{category} ORDER BY rule_name")
+    List<String> findDistinctRuleNamesByBusinessAndCategory(
+            @Param("businessZh") String businessZh, @Param("category") String category);
     /**
      * 根据规则名称与中文业务类型查询
      */
@@ -244,24 +257,34 @@ public interface PreprocessRuleDao {
         @Result(property = "isCustom", column = "is_custom"),
         @Result(property = "packageId", column = "package_id")
     })
-    PreprocessRule findByRuleNameAndBusinessEn(@Param("ruleName") String ruleName, @Param("businessEn") String businessEn);
+    PreprocessRule findByRuleNameAndBusinessEn(
+            @Param("ruleName") String ruleName, @Param("businessEn") String businessEn);
     
     /**
      * 根据业务类型和应用名称获取不重复的规则名称
      */
-    @Select("SELECT DISTINCT rule_name FROM preprocess_rules WHERE business_zh = #{businessZh} AND app_name = #{appName} ORDER BY rule_name")
-    List<String> findDistinctRuleNamesByBusinessAndApp(@Param("businessZh") String businessZh, @Param("appName") String appName);
+    @Select("SELECT DISTINCT rule_name FROM preprocess_rules " +
+            "WHERE business_zh = #{businessZh} AND app_name = #{appName} ORDER BY rule_name")
+    List<String> findDistinctRuleNamesByBusinessAndApp(
+            @Param("businessZh") String businessZh, @Param("appName") String appName);
     
     /**
      * 根据分类和应用名称获取不重复的规则名称
      */
-    @Select("SELECT DISTINCT rule_name FROM preprocess_rules WHERE category = #{category} AND app_name = #{appName} ORDER BY rule_name")
-    List<String> findDistinctRuleNamesByCategoryAndApp(@Param("category") String category, @Param("appName") String appName);
+    @Select("SELECT DISTINCT rule_name FROM preprocess_rules " +
+            "WHERE category = #{category} AND app_name = #{appName} ORDER BY rule_name")
+    List<String> findDistinctRuleNamesByCategoryAndApp(
+            @Param("category") String category, @Param("appName") String appName);
     
     /**
      * 根据业务类型、分类和应用名称获取不重复的规则名称
      */
-    @Select("SELECT DISTINCT rule_name FROM preprocess_rules WHERE business_zh = #{businessZh} AND category = #{category} AND app_name = #{appName} ORDER BY rule_name")
-    List<String> findDistinctRuleNamesByBusinessAndCategoryAndApp(@Param("businessZh") String businessZh, @Param("category") String category, @Param("appName") String appName);
+    @Select("SELECT DISTINCT rule_name FROM preprocess_rules " +
+            "WHERE business_zh = #{businessZh} AND category = #{category} AND app_name = #{appName} " +
+            "ORDER BY rule_name")
+    List<String> findDistinctRuleNamesByBusinessAndCategoryAndApp(
+            @Param("businessZh") String businessZh, 
+            @Param("category") String category, 
+            @Param("appName") String appName);
 }
 

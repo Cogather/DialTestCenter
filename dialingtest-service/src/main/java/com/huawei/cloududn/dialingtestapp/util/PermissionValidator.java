@@ -108,7 +108,8 @@ public class PermissionValidator {
      * @param operationDescription 操作描述（用于错误消息）
      * @return 验证结果
      */
-    public PermissionValidationResult checkAnyRole(String username, List<String> requiredRoles, String operationDescription) {
+    public PermissionValidationResult checkAnyRole(
+            String username, List<String> requiredRoles, String operationDescription) {
         PermissionValidationResult usernameCheck = validateUsername(username);
         if (!usernameCheck.isValid()) {
             return usernameCheck;

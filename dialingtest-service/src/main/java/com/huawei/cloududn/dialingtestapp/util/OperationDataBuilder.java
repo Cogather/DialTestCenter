@@ -99,7 +99,8 @@ public class OperationDataBuilder {
     }
 
     // 通用更新操作构建方法 - 支持更新操作
-    public OperationDataBuilder buildUpdateOperation(Object oldValues, Object newValues, String operationType, String operationTarget) {
+    public OperationDataBuilder buildUpdateOperation(
+            Object oldValues, Object newValues, String operationType, String operationTarget) {
         Map<String, Object> oldData = maskSensitiveFields(oldValues);
         Map<String, Object> newData = maskSensitiveFields(newValues);
         
@@ -155,7 +156,9 @@ public class OperationDataBuilder {
     }
 
     // 通用操作构建方法 - 支持自定义操作
-    public OperationDataBuilder buildCustomOperation(Object entity, String operationType, String operationTarget, Map<String, Object> additionalData) {
+    public OperationDataBuilder buildCustomOperation(
+            Object entity, String operationType, String operationTarget, 
+            Map<String, Object> additionalData) {
         OperationDataBuilder builder = fromEntity(entity)
                .add("operationType", operationType)
                .add("operationTarget", operationTarget);
@@ -277,7 +280,8 @@ public class OperationDataBuilder {
      * @param operationTarget 操作目标
      * @return OperationDataBuilder
      */
-    public OperationDataBuilder businessUpdateOperation(Object oldValues, Object newValues, String operationType, String operationTarget) {
+    public OperationDataBuilder businessUpdateOperation(
+            Object oldValues, Object newValues, String operationType, String operationTarget) {
         return buildUpdateOperation(oldValues, newValues, operationType, operationTarget);
     }
 

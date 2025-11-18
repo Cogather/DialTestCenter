@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -77,7 +78,7 @@ public class TaskMgmtServiceTest {
 
     @Test
     public void testFindMethods_AndCountMainTasks() {
-        List<TaskEntity> mockTasks = Arrays.asList(mockTask);
+        List<TaskEntity> mockTasks = Collections.singletonList(mockTask);
         Mockito.when(taskDao.findMainTasks(Mockito.anyInt(), Mockito.anyInt())).thenReturn(mockTasks);
         Mockito.when(taskDao.countMainTasks()).thenReturn(5L);
         Mockito.when(taskDao.findSubTasksByMainTaskId(Mockito.anyLong())).thenReturn(mockTasks);

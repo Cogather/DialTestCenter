@@ -43,7 +43,8 @@ public class CallbackController {
                 idObj = body.get("main_task_id");
             }
             if (idObj == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error("VALIDATION_ERROR", "参数验证失败: mainTaskId 不能为null; ", 400));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(error("VALIDATION_ERROR", "参数验证失败: mainTaskId 不能为null; ", 400));
             } else {
                 Long mainTaskId;
                 try {
@@ -60,7 +61,8 @@ public class CallbackController {
                 String status = statusObj == null ? null : String.valueOf(statusObj);
                 boolean success = "SUCCESS".equalsIgnoreCase(status);
                 if (!success && (status == null || !"FAILED".equalsIgnoreCase(status))) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error("VALIDATION_ERROR", "参数验证失败: status 必须为 SUCCESS 或 FAILED; ", 400));
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(error("VALIDATION_ERROR", "参数验证失败: status 必须为 SUCCESS 或 FAILED; ", 400));
                 } else {
                     logger.info("Received task callback: mainTaskId={}, status={}", mainTaskId, status);
                     Object rd = body.get("result_data");

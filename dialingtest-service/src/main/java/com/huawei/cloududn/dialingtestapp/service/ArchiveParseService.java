@@ -40,7 +40,7 @@ public class ArchiveParseService {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("解析压缩包失败", e);
+            throw new IllegalStateException("解析压缩包失败", e);
         }
         
         return result;

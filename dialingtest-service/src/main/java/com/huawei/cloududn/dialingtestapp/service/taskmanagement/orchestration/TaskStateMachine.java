@@ -40,7 +40,8 @@ public class TaskStateMachine {
         initTransitionTable();
         initActionTable();
         initListeners();
-        logger.info("TaskStateMachine initialized with {} transitions and {} state actions", transitionTable.size(), stateActions.size());
+        logger.info("TaskStateMachine initialized with {} transitions and {} state actions", 
+                transitionTable.size(), stateActions.size());
     }
 
     /**

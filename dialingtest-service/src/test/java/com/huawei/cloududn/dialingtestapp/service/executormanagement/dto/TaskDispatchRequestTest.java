@@ -22,8 +22,29 @@ import static org.junit.Assert.assertTrue;
  * @since 2025-11-18
  */
 public class TaskDispatchRequestTest {
+    /**
+     * 测试默认构造器
+     * 验证默认构造器创建的对象所有字段均为null
+     */
     @Test
-    public void testTaskDispatchRequest_AllFunctionality_ShouldWorkCorrectly() {
+    public void testDefaultConstructor_AllFieldsNull_ShouldBeNull() {
+        TaskDispatchRequest defaultRequest = new TaskDispatchRequest();
+        assertNotNull(defaultRequest);
+        assertNull(defaultRequest.getExecutorName());
+        assertNull(defaultRequest.getTaskId());
+        assertNull(defaultRequest.getScriptName());
+        assertNull(defaultRequest.getVersion());
+        assertNull(defaultRequest.getSerialNoList());
+        assertNull(defaultRequest.getProctype());
+        assertNull(defaultRequest.getParameters());
+    }
+
+    /**
+     * 测试参数化构造器
+     * 验证参数化构造器正确设置所有字段
+     */
+    @Test
+    public void testParameterizedConstructor_AllFields_ShouldBeSet() {
         String testExecutorName = "Executor-001";
         Integer testTaskId = 200;
         String testScriptName = "dialtest_script";
@@ -35,16 +56,6 @@ public class TaskDispatchRequestTest {
         String testProctype = "TYPE_A";
         String testParameters = "{\"key\":\"value\"}";
 
-        TaskDispatchRequest defaultRequest = new TaskDispatchRequest();
-        assertNotNull(defaultRequest);
-        assertNull(defaultRequest.getExecutorName());
-        assertNull(defaultRequest.getTaskId());
-        assertNull(defaultRequest.getScriptName());
-        assertNull(defaultRequest.getVersion());
-        assertNull(defaultRequest.getSerialNoList());
-        assertNull(defaultRequest.getProctype());
-        assertNull(defaultRequest.getParameters());
-
         TaskDispatchRequest request = new TaskDispatchRequest(testExecutorName, testTaskId,
                 testScriptName, testVersion, testSerialNoList, testProctype, testParameters);
         assertEquals(testExecutorName, request.getExecutorName());
@@ -54,6 +65,24 @@ public class TaskDispatchRequestTest {
         assertEquals(testSerialNoList, request.getSerialNoList());
         assertEquals(testProctype, request.getProctype());
         assertEquals(testParameters, request.getParameters());
+    }
+
+    /**
+     * 测试Setter和Getter方法
+     * 验证所有setter方法正确设置字段值
+     */
+    @Test
+    public void testSettersAndGetters_AllFields_ShouldBeSet() {
+        String testExecutorName = "Executor-001";
+        Integer testTaskId = 200;
+        String testScriptName = "dialtest_script";
+        String testVersion = "v1.0.0";
+        List<String> testSerialNoList = new ArrayList<>();
+        testSerialNoList.add("SN001");
+        testSerialNoList.add("SN002");
+        testSerialNoList.add("SN003");
+        String testProctype = "TYPE_A";
+        String testParameters = "{\"key\":\"value\"}";
 
         TaskDispatchRequest setterRequest = new TaskDispatchRequest();
         setterRequest.setExecutorName(testExecutorName);
@@ -70,7 +99,27 @@ public class TaskDispatchRequestTest {
         assertEquals(testSerialNoList, setterRequest.getSerialNoList());
         assertEquals(testProctype, setterRequest.getProctype());
         assertEquals(testParameters, setterRequest.getParameters());
+    }
 
+    /**
+     * 测试toString方法
+     * 验证toString正确格式化所有字段
+     */
+    @Test
+    public void testToString_AllFields_ShouldFormatCorrectly() {
+        String testExecutorName = "Executor-001";
+        Integer testTaskId = 200;
+        String testScriptName = "dialtest_script";
+        String testVersion = "v1.0.0";
+        List<String> testSerialNoList = new ArrayList<>();
+        testSerialNoList.add("SN001");
+        testSerialNoList.add("SN002");
+        testSerialNoList.add("SN003");
+        String testProctype = "TYPE_A";
+        String testParameters = "{\"key\":\"value\"}";
+
+        TaskDispatchRequest request = new TaskDispatchRequest(testExecutorName, testTaskId,
+                testScriptName, testVersion, testSerialNoList, testProctype, testParameters);
         String result = request.toString();
         assertTrue(result.contains("executorName='" + testExecutorName + "'"));
         assertTrue(result.contains("taskId=" + testTaskId));

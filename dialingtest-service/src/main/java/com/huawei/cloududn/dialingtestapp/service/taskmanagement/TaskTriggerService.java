@@ -6,9 +6,9 @@ package com.huawei.cloududn.dialingtestapp.service.taskmanagement;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.huawei.cloududn.dialingtest.model.StartTaskRequest;
 import com.huawei.cloududn.dialingtest.model.TaskEntity;
 import com.huawei.cloududn.dialingtest.model.TemplateEntity;
-import com.huawei.cloududn.dialingtestapp.service.taskmanagement.dto.StartTaskRequest;
 import com.huawei.cloududn.dialingtestapp.service.taskmanagement.dto.TaskContext;
 import com.huawei.cloududn.dialingtestapp.service.taskmanagement.orchestration.state.TaskState;
 
@@ -37,15 +37,15 @@ public class TaskTriggerService {
 
     public TaskEntity createTaskFromRequest(StartTaskRequest request) {
         TaskContext ctx = new TaskContext();
-        if (request != null && "TRAINING".equalsIgnoreCase(request.getScenario())) {
+        if (request != null && request.getScenario() != null 
+                && "TRAINING".equalsIgnoreCase(request.getScenario().toString())) {
             ctx.setStep(TaskState.START_TRAINING_DIALING);
         } else {
             ctx.setStep(TaskState.START_VALIDATION);
         }
         TaskEntity entity = buildMainTask("MANUAL", ctx, request == null ? null : toJson(request));
-        TaskEntity saved = taskMgmtService.create(entity);
         // 初始化步骤进入后由状态机自动触发相应 Action（当回调/事件到达时）
-        return saved;
+        return taskMgmtService.create(entity);
     }
 
     public TaskEntity createTaskFromTemplate(TemplateEntity template) {
@@ -53,8 +53,7 @@ public class TaskTriggerService {
         ctx.setStep(TaskState.START_VALIDATION);
         TaskEntity entity = buildMainTask("CRON", ctx, template == null ? null : template.getInput());
         entity.setTemplateTaskId(template == null ? null : template.getId());
-        TaskEntity saved = taskMgmtService.create(entity);
-        return saved;
+        return taskMgmtService.create(entity);
     }
 
     private TaskEntity buildMainTask(String creator, TaskContext ctx, String inputJson) {

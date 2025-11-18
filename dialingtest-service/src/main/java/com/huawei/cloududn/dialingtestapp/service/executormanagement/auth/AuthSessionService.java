@@ -250,7 +250,8 @@ public class AuthSessionService {
             byte[] ntlmBytes = hexStringToBytes(ntlmHash);
             byte[] challengeBytes = Base64.getDecoder().decode(challengeBase64);
 
-            logger.debug("CHAP calculation: ntlmBytes.length={}, challengeBytes.length={}", ntlmBytes.length, challengeBytes.length);
+            logger.debug("CHAP calculation: ntlmBytes.length={}, challengeBytes.length={}", 
+                    ntlmBytes.length, challengeBytes.length);
             logger.debug("NTLM bytes (hex): {}", bytesToHexString(ntlmBytes));
             logger.debug("Challenge bytes (hex): {}", bytesToHexString(challengeBytes));
 
@@ -275,7 +276,7 @@ public class AuthSessionService {
     private long generateTokenV3() {
         byte[] bytes = new byte[8];
         new SecureRandom().nextBytes(bytes);
-        long token = 0;
+        long token = 0L;
         for (int i = 0; i < 8; i++) {
             token = (token << 8) | (bytes[i] & 0xFF);
         }

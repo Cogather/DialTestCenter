@@ -10,6 +10,7 @@ import com.huawei.cloududn.dialingtestapp.service.SoftwarePackagesService;
 import com.huawei.cloududn.dialingtestapp.service.UserRoleService;
 import com.huawei.cloududn.dialingtestapp.util.OperationLogUtil;
 import com.huawei.cloududn.dialingtestapp.util.PermissionValidator;
+import com.huawei.cloududn.dialingtestapp.util.PermissionValidator.PermissionValidationResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,10 +97,12 @@ public class SoftwarePackageController implements SoftwarePackagesApi {
     }
     
     @Override
-    public ResponseEntity<SoftwarePackagePayload> updateSoftwarePackage(String xUsername, Long id, UpdateSoftwarePackageBody body) {
+    public ResponseEntity<SoftwarePackagePayload> updateSoftwarePackage(
+            String xUsername, Long id, UpdateSoftwarePackageBody body) {
         try {
             // 检查权限（需要ADMIN或OPERATOR权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "更新软件包信息");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "更新软件包信息");
             if (!permissionResult.isValid()) {
                 SoftwarePackagePayload response = new SoftwarePackagePayload();
                 response.setSuccess(false);
@@ -139,7 +142,8 @@ public class SoftwarePackageController implements SoftwarePackagesApi {
     public ResponseEntity<SuccessResponse> deleteSoftwarePackage(Long id, String xUsername) {
         try {
             // 检查权限（需要ADMIN或OPERATOR权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "删除软件包");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "删除软件包");
             if (!permissionResult.isValid()) {
                 SuccessResponse response = new SuccessResponse();
                 response.setSuccess(false);
@@ -180,10 +184,14 @@ public class SoftwarePackageController implements SoftwarePackagesApi {
     }
     
     @Override
-    public ResponseEntity<Resource> downloadSoftwarePackages(@RequestHeader("X-Csrf-Token") String xCsrfToken, @RequestHeader("X-Username") String xUsername, BatchDownloadRequest body) {
+    public ResponseEntity<Resource> downloadSoftwarePackages(
+            @RequestHeader("X-Csrf-Token") String xCsrfToken,
+            @RequestHeader("X-Username") String xUsername,
+            BatchDownloadRequest body) {
         try {
             // 检查权限（需要ADMIN或OPERATOR权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "下载软件包");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "下载软件包");
             if (!permissionResult.isValid()) {
                 HttpStatus status = permissionResult.getErrorMessage().contains("未提供用户名") 
                     ? HttpStatus.BAD_REQUEST : HttpStatus.FORBIDDEN;

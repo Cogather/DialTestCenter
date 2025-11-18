@@ -18,8 +18,10 @@ public interface ValidationTaskDao {
      * 插入校验任务
      */
     @Insert("INSERT INTO test_case_set_validation_task " +
-            "(test_case_set_id, task_id, status, progress, started_time, completed_time, error_message, created_time) " +
-            "VALUES (#{testCaseSetId}, #{taskId}, #{status}, #{progress}, #{startedTime}, #{completedTime}, #{errorMessage}, #{createdTime})")
+            "(test_case_set_id, task_id, status, progress, " +
+            "started_time, completed_time, error_message, created_time) " +
+            "VALUES (#{testCaseSetId}, #{taskId}, #{status}, #{progress}, " +
+            "#{startedTime}, #{completedTime}, #{errorMessage}, #{createdTime})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(ValidationTask task);
     

@@ -17,8 +17,10 @@ public interface PreprocessRulePackageDao {
     /**
      * 插入ZIP包
      */
-    @Insert("INSERT INTO preprocess_rule_packages (package_name, business_zh, business_en, file_content, file_size, description) " +
-            "VALUES (#{packageName}, #{businessZh}, #{businessEn}, #{fileContent}, #{fileSize}, #{description})")
+    @Insert("INSERT INTO preprocess_rule_packages " +
+            "(package_name, business_zh, business_en, file_content, file_size, description) " +
+            "VALUES (#{packageName}, #{businessZh}, #{businessEn}, " +
+            "#{fileContent}, #{fileSize}, #{description})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(PreprocessRulePackageEntity preprocessRulePackage);
     
@@ -92,8 +94,10 @@ public interface PreprocessRulePackageDao {
     /**
      * 检查包名和业务类型是否已存在
      */
-    @Select("SELECT COUNT(*) FROM preprocess_rule_packages WHERE package_name = #{packageName} AND business_zh = #{businessZh}")
-    int countByPackageNameAndBusiness(@Param("packageName") String packageName, @Param("businessZh") String businessZh);
+    @Select("SELECT COUNT(*) FROM preprocess_rule_packages " +
+            "WHERE package_name = #{packageName} AND business_zh = #{businessZh}")
+    int countByPackageNameAndBusiness(
+            @Param("packageName") String packageName, @Param("businessZh") String businessZh);
     
     /**
      * 根据包名和业务类型查询ZIP包
@@ -108,7 +112,8 @@ public interface PreprocessRulePackageDao {
         @Result(property = "fileSize", column = "file_size"),
         @Result(property = "description", column = "description")
     })
-    PreprocessRulePackageEntity findByPackageNameAndBusiness(@Param("packageName") String packageName, @Param("businessZh") String businessZh);
+    PreprocessRulePackageEntity findByPackageNameAndBusiness(
+            @Param("packageName") String packageName, @Param("businessZh") String businessZh);
     
     /**
      * 更新ZIP包

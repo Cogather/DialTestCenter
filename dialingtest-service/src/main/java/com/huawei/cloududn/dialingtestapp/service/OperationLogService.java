@@ -110,7 +110,8 @@ public class OperationLogService {
         operationLog.setOperationDescriptionEn(request.getOperationDescriptionEn());
         operationLog.setOperationData(request.getOperationData());
         // 使用数据库默认时间戳，避免精度问题
-        // operationLog.setOperationTime(ZonedDateTime.now(ZoneId.of("GMT+8")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")));
+        // operationLog.setOperationTime(ZonedDateTime.now(ZoneId.of("GMT+8"))
+        //         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")));
         
         // 保存到数据库
         int result = operationLogDao.save(operationLog);

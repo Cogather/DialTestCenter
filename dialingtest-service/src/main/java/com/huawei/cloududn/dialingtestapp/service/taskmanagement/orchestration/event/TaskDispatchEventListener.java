@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +81,7 @@ public class TaskDispatchEventListener {
                 @SuppressWarnings("unchecked")
                 List<String> serialNoList = (List<String>) payload.get("serial_no_list");
                 if (serialNoList == null || serialNoList.isEmpty()) {
-                    serialNoList = Arrays.asList("default_ue"); // 默认UE
+                    serialNoList = Collections.singletonList("default_ue"); // 默认UE
                 }
                 request.setSerialNoList(serialNoList);
 

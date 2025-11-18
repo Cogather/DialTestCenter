@@ -23,7 +23,6 @@ import com.huawei.cloududn.dialingtestapp.service.taskmanagement.orchestration.T
 import com.huawei.cloududn.dialingtestapp.dao.executormanagement.ExecutorDao;
 import com.huawei.cloududn.dialingtest.model.Executor;
 import com.huawei.cloududn.dialingtest.model.Ue;
-import com.huawei.cloududn.dialingtest.model.TaskEntity;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,8 +33,8 @@ import org.mockito.MockitoAnnotations;
 
 import javax.websocket.Session;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
@@ -104,6 +103,7 @@ public class TaskInterfaceServiceTest {
             taskInterfaceService.dispatchTask(nullRequest);
             fail("Should throw IllegalArgumentException for null request");
         } catch (IllegalArgumentException e) {
+            // Expected exception - test passes
         }
 
         Executor executor = new Executor();
@@ -128,6 +128,7 @@ public class TaskInterfaceServiceTest {
             taskInterfaceService.dispatchTask(noExecutorRequest);
             fail("Should throw IllegalStateException when no executor available");
         } catch (IllegalStateException e) {
+            // Expected exception - test passes
         }
 
         when(sessionBindingRegistry.getSessionId("executor-002")).thenReturn(null);
@@ -138,8 +139,9 @@ public class TaskInterfaceServiceTest {
         noSessionRequest.setVersion("1.0");
         try {
             taskInterfaceService.dispatchTaskToAgent(noSessionRequest);
-            fail("Should throw RuntimeException when session not found");
-        } catch (RuntimeException e) {
+            fail("Should throw IllegalStateException when session not found");
+        } catch (IllegalStateException e) {
+            // Expected exception - test passes
         }
 
         when(sessionBindingRegistry.getSessionId("executor-003")).thenReturn("session-003");
@@ -196,7 +198,7 @@ public class TaskInterfaceServiceTest {
         stopRequest.setExecutorName(executorStop);
         stopRequest.setScriptName("test-script");
         stopRequest.setVersion("1.0");
-        stopRequest.setSerialNoList(java.util.Arrays.asList("UE001"));
+        stopRequest.setSerialNoList(Collections.singletonList("UE001"));
         taskInterfaceService.dispatchTaskToAgent(stopRequest);
         taskInterfaceService.handleTaskStopRequest(203);
         verify(wssMessageSender, atLeast(2)).sendJsonMessage(eq(sessionStop), any());
@@ -271,7 +273,7 @@ public class TaskInterfaceServiceTest {
         TestCaseSet testCaseSet = new TestCaseSet();
         testCaseSet.setName("test-case");
         testCaseSet.setVersion("v1.0");
-        testCaseSet.setFileContent("script content".getBytes());
+        testCaseSet.setFileContent("script content".getBytes(StandardCharsets.UTF_8));
         when(testCaseSetDao.findByNameAndVersion("test-case", "v1.0")).thenReturn(testCaseSet);
         taskInterfaceService.pushScriptToExecutor(executorName, "test-case", "v1.0");
         verify(wssMessageSender, atLeastOnce()).sendFile(eq(sessionId), any(), any());
@@ -281,7 +283,7 @@ public class TaskInterfaceServiceTest {
 
         SoftwarePackage softwarePackage = new SoftwarePackage();
         softwarePackage.setSoftwareName("test-app");
-        softwarePackage.setFileContent("app content".getBytes());
+        softwarePackage.setFileContent("app content".getBytes(StandardCharsets.UTF_8));
         softwarePackage.setFileSha256("abc123");
         when(softwarePackageDao.findBySoftwareName("test-app")).thenReturn(softwarePackage);
         taskInterfaceService.pushAppToUe(executorName, "UE001", "test-app", 301);
@@ -317,7 +319,7 @@ public class TaskInterfaceServiceTest {
         appItem.setPackageName("com.example.app");
         appItem.setName("Example App");
         appItem.setVersion("1.0");
-        appListResponse.setAppList(java.util.Arrays.asList(appItem));
+        appListResponse.setAppList(Collections.singletonList(appItem));
         taskInterfaceService.handleAppListResponse(appListResponse, session1);
 
         Session session2 = mock(Session.class);
@@ -355,7 +357,7 @@ public class TaskInterfaceServiceTest {
         ScriptUpdateRequest updateRequest = new ScriptUpdateRequest();
         updateRequest.setScriptName("test-script");
         updateRequest.setVersion("v2.0");
-        updateRequest.setScriptFile("script content".getBytes());
+        updateRequest.setScriptFile("script content".getBytes(StandardCharsets.UTF_8));
         updateRequest.setCrc("abc123");
         taskInterfaceService.sendScriptUpdate(executorName, updateRequest);
         verify(wssMessageSender, atLeast(1)).sendFile(eq(sessionId), any(), any());

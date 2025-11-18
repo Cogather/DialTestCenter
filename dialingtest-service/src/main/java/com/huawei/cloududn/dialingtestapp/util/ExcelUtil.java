@@ -80,7 +80,7 @@ public class ExcelUtil {
             }
             
         } catch (IOException e) {
-            throw new RuntimeException("Failed to generate Excel file", e);
+            throw new IllegalStateException("Failed to generate Excel file", e);
         }
     }
     
@@ -113,7 +113,7 @@ public class ExcelUtil {
             
             return generateExcelResource(workbook);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to generate validation result Excel file", e);
+            throw new IllegalStateException("Failed to generate validation result Excel file", e);
         }
     }
     

@@ -25,7 +25,9 @@ public interface DialUserDao {
      */
     @Select({
         "<script>",
-        "SELECT id, username, password, TO_CHAR(last_login_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as last_login_time FROM dial_users",
+        "SELECT id, username, password, " +
+        "TO_CHAR(last_login_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as last_login_time " +
+        "FROM dial_users",
         "WHERE 1=1",
         "<if test='username != null and username != \"\"'>",
         "AND username LIKE CONCAT('%', #{username}, '%')",
@@ -61,7 +63,9 @@ public interface DialUserDao {
      * @param id 用户ID
      * @return 用户信息
      */
-    @Select("SELECT id, username, password, TO_CHAR(last_login_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as last_login_time FROM dial_users WHERE id = #{id}")
+    @Select("SELECT id, username, password, " +
+            "TO_CHAR(last_login_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as last_login_time " +
+            "FROM dial_users WHERE id = #{id}")
     DialUser findById(@Param("id") Integer id);
     
     /**
@@ -70,7 +74,9 @@ public interface DialUserDao {
      * @param username 用户名
      * @return 用户信息
      */
-    @Select("SELECT id, username, password, TO_CHAR(last_login_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as last_login_time FROM dial_users WHERE username = #{username}")
+    @Select("SELECT id, username, password, " +
+            "TO_CHAR(last_login_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as last_login_time " +
+            "FROM dial_users WHERE username = #{username}")
     DialUser findByUsername(@Param("username") String username);
     
     /**

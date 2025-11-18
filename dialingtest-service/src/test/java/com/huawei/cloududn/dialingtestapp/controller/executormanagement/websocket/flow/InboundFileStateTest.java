@@ -7,6 +7,8 @@ package com.huawei.cloududn.dialingtestapp.controller.executormanagement.websock
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.Assert.*;
 
 /**
@@ -61,7 +63,7 @@ public class InboundFileStateTest {
      */
     @Test
     public void testVerifyCrc_ValidAndInvalid() {
-        byte[] data1 = "test data".getBytes();
+        byte[] data1 = "test data".getBytes(StandardCharsets.UTF_8);
         state.updateCrc(data1);
 
         java.util.zip.CRC32 expectedCrc = new java.util.zip.CRC32();
@@ -81,7 +83,7 @@ public class InboundFileStateTest {
         assertTrue(state.verifyCrc());
 
         InboundFileState state2 = new InboundFileState();
-        byte[] data2 = "different data".getBytes();
+        byte[] data2 = "different data".getBytes(StandardCharsets.UTF_8);
         state2.updateCrc(data2);
         state2.setExpectedCrc(crcValue);
         assertFalse(state2.verifyCrc());

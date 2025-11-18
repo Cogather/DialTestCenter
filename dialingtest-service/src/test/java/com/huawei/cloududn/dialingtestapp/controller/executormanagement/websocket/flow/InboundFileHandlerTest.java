@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -87,7 +88,7 @@ public class InboundFileHandlerTest {
         File tempFile = tempFolder.newFile("test-crc-valid.bin");
         String tempPath = tempFile.getAbsolutePath();
 
-        byte[] data = "test data".getBytes();
+        byte[] data = "test data".getBytes(StandardCharsets.UTF_8);
         String expectedCrc = Long.toHexString(calculateCrc32(data));
 
         handler.startReceiving(sessionId, data.length, expectedCrc, tempPath);
@@ -113,7 +114,7 @@ public class InboundFileHandlerTest {
         File tempFile = tempFolder.newFile("test-crc-invalid.bin");
         String tempPath = tempFile.getAbsolutePath();
 
-        byte[] data = "test data".getBytes();
+        byte[] data = "test data".getBytes(StandardCharsets.UTF_8);
         String wrongCrc = "ffffffff";
 
         handler.startReceiving(sessionId, data.length, wrongCrc, tempPath);

@@ -289,7 +289,8 @@ public class PreprocessRuleService {
         String packageName = file.getOriginalFilename();
         
         // 2. 检查包名和业务类型是否已存在
-        PreprocessRulePackageEntity existingPackage = preprocessRulePackageDao.findByPackageNameAndBusiness(packageName, businessZh);
+        PreprocessRulePackageEntity existingPackage = 
+                preprocessRulePackageDao.findByPackageNameAndBusiness(packageName, businessZh);
         
         if (existingPackage != null && !forceOverwrite) {
             // 已存在同名包且未强制覆盖，抛出异常

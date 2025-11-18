@@ -90,7 +90,10 @@ public class OperationLogController implements OperationLogsApi {
      * @return 操作记录响应
      */
     @Override
-    public ResponseEntity<OperationLogResponse> createOperationLog(@RequestHeader("X-Csrf-Token") String xCsrfToken, @RequestHeader("X-Username") String xUsername, @Valid CreateOperationLogRequest body) {
+    public ResponseEntity<OperationLogResponse> createOperationLog(
+            @RequestHeader("X-Csrf-Token") String xCsrfToken,
+            @RequestHeader("X-Username") String xUsername,
+            @Valid CreateOperationLogRequest body) {
         try {
             logger.info("Creating operation log for user: {}, operation: {} {}", 
                        body.getUsername(), body.getOperationType(), body.getOperationTarget());

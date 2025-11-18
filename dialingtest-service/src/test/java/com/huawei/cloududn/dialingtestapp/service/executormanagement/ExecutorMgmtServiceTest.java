@@ -221,7 +221,7 @@ public class ExecutorMgmtServiceTest {
         ueItem.setBrand("TestBrand");
         ueItem.setModel("TestModel");
 
-        reportMsg.setUeList(Arrays.asList(ueItem));
+        reportMsg.setUeList(Collections.singletonList(ueItem));
 
         // When
         service.handleReportMsg(reportMsg, session);
@@ -250,7 +250,7 @@ public class ExecutorMgmtServiceTest {
         ueItem.setSerialNo("  "); // empty/whitespace serial
         ueItem.setBrand("TestBrand");
 
-        reportMsg.setUeList(Arrays.asList(ueItem));
+        reportMsg.setUeList(Collections.singletonList(ueItem));
 
         // When
         service.handleReportMsg(reportMsg, session);
@@ -277,7 +277,7 @@ public class ExecutorMgmtServiceTest {
         ueItem.setSerialNo("null"); // "null" string
         ueItem.setBrand("TestBrand");
 
-        reportMsg.setUeList(Arrays.asList(ueItem));
+        reportMsg.setUeList(Collections.singletonList(ueItem));
 
         // When
         service.handleReportMsg(reportMsg, session);
@@ -425,14 +425,14 @@ public class ExecutorMgmtServiceTest {
         executor.setIp("192.168.1.10");
         executor.setStatus(1);
 
-        java.util.List<com.huawei.cloududn.dialingtest.model.Executor> executors = Arrays.asList(executor);
+        java.util.List<com.huawei.cloududn.dialingtest.model.Executor> executors = Collections.singletonList(executor);
         when(executorDao.findPage(isNull(), isNull(), eq(0), eq(1000))).thenReturn(executors);
 
         com.huawei.cloududn.dialingtest.model.Ue ue = new com.huawei.cloududn.dialingtest.model.Ue();
         ue.setMsisdn("8613800138000");
         ue.setOs("Android 12");
 
-        when(ueDao.findByExecutorName("Executor-Details")).thenReturn(Arrays.asList(ue));
+        when(ueDao.findByExecutorName("Executor-Details")).thenReturn(Collections.singletonList(ue));
 
         // When
         java.util.List<com.huawei.cloududn.dialingtestapp.service.executormanagement.dto.ExecutorDetailDto> result =
@@ -451,7 +451,7 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testGetExecutorDetails_NoExecutors_ReturnsEmptyList() {
         // Given
-        when(executorDao.findPage(isNull(), isNull(), eq(0), eq(1000))).thenReturn(Arrays.asList());
+        when(executorDao.findPage(isNull(), isNull(), eq(0), eq(1000))).thenReturn(Collections.emptyList());
 
         // When
         java.util.List<com.huawei.cloududn.dialingtestapp.service.executormanagement.dto.ExecutorDetailDto> result =

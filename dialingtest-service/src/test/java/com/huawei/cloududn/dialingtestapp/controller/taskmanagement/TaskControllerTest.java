@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -70,7 +71,7 @@ public class TaskControllerTest {
     @Test
     public void testGetTasks_Success_ReturnsOk() {
         // Arrange
-        List<TaskEntity> tasks = Arrays.asList(new TaskEntity());
+        List<TaskEntity> tasks = Collections.singletonList(new TaskEntity());
         when(taskMgmtService.findMainTasks(0, 20)).thenReturn(tasks);
         when(taskMgmtService.countMainTasks()).thenReturn(1L);
 
@@ -88,8 +89,8 @@ public class TaskControllerTest {
         // Arrange
         StartTaskRequest request = new StartTaskRequest();
         request.setBusinessType("test");
-        request.setScriptNames(Arrays.asList("script1"));
-        request.setTargetUes(Arrays.asList("ue1"));
+        request.setScriptNames(Collections.singletonList("script1"));
+        request.setTargetUes(Collections.singletonList("ue1"));
         TaskEntity task = new TaskEntity();
         when(triggerService.createTaskFromRequest(any())).thenReturn(task);
 
@@ -108,15 +109,15 @@ public class TaskControllerTest {
         
         // Test missing businessType
         StartTaskRequest req1 = new StartTaskRequest();
-        req1.setScriptNames(Arrays.asList("s1"));
-        req1.setTargetUes(Arrays.asList("u1"));
+        req1.setScriptNames(Collections.singletonList("s1"));
+        req1.setTargetUes(Collections.singletonList("u1"));
         assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", req1).getStatusCode());
         
         // Test empty scriptNames
         StartTaskRequest req2 = new StartTaskRequest();
         req2.setBusinessType("test");
-        req2.setScriptNames(Arrays.asList());
-        req2.setTargetUes(Arrays.asList("u1"));
+        req2.setScriptNames(Collections.emptyList());
+        req2.setTargetUes(Collections.singletonList("u1"));
         assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", req2).getStatusCode());
         
         verify(triggerService, never()).createTaskFromRequest(any());
@@ -127,8 +128,8 @@ public class TaskControllerTest {
         // Arrange
         StartTaskRequest request = new StartTaskRequest();
         request.setBusinessType("test");
-        request.setScriptNames(Arrays.asList("script1"));
-        request.setTargetUes(Arrays.asList("ue1"));
+        request.setScriptNames(Collections.singletonList("script1"));
+        request.setTargetUes(Collections.singletonList("ue1"));
 
         // Act
         ResponseEntity<TaskEntity> response = taskController.startTask("test-csrf-token", null, request);
@@ -143,8 +144,8 @@ public class TaskControllerTest {
         // Arrange
         StartTaskRequest request = new StartTaskRequest();
         request.setBusinessType("test");
-        request.setScriptNames(Arrays.asList("script1"));
-        request.setTargetUes(Arrays.asList("ue1"));
+        request.setScriptNames(Collections.singletonList("script1"));
+        request.setTargetUes(Collections.singletonList("ue1"));
 
         // Act
         ResponseEntity<TaskEntity> response = taskController.startTask(null, "admin", request);
@@ -157,7 +158,7 @@ public class TaskControllerTest {
     @Test
     public void testGetSubTasksByMainTaskId_Success_ReturnsOk() {
         // Arrange
-        List<TaskEntity> subTasks = Arrays.asList(new TaskEntity());
+        List<TaskEntity> subTasks = Collections.singletonList(new TaskEntity());
         when(taskMgmtService.findSubTasksByMainTaskId(1L)).thenReturn(subTasks);
 
         // Act

@@ -59,12 +59,18 @@ public class TestCaseSetService {
      * businessZh and businessEn are both required fields now.
      */
     @Deprecated
-    public TestCaseSet uploadTestCaseSet(MultipartFile file, String description, String businessZh, boolean overwrite, String operatorUsername) {
+    public TestCaseSet uploadTestCaseSet(
+            MultipartFile file, String description, String businessZh, 
+            boolean overwrite, String operatorUsername) {
         // This method is deprecated and will throw exception if businessEn is not provided
-        throw new UnsupportedOperationException("businessEn is required. Please use uploadTestCaseSet(file, description, businessZh, businessEn, overwrite, operatorUsername)");
+        throw new UnsupportedOperationException(
+                "businessEn is required. Please use uploadTestCaseSet(file, description, " +
+                "businessZh, businessEn, overwrite, operatorUsername)");
     }
     
-    public TestCaseSet uploadTestCaseSet(MultipartFile file, String description, String businessZh, String businessEn, boolean overwrite, String operatorUsername) {
+    public TestCaseSet uploadTestCaseSet(
+            MultipartFile file, String description, String businessZh, String businessEn, 
+            boolean overwrite, String operatorUsername) {
         // 1. File validation
         validateFile(file);
         
@@ -133,7 +139,7 @@ public class TestCaseSetService {
             
             return testCaseSet;
         } catch (Exception e) {
-            throw new RuntimeException("上传用例集失败: " + e.getMessage(), e);
+            throw new IllegalStateException("上传用例集失败: " + e.getMessage(), e);
         }
     }
     
@@ -334,7 +340,7 @@ public class TestCaseSetService {
             }
             return hexString.toString();
         } catch (Exception e) {
-            throw new RuntimeException("计算SHA256哈希值失败", e);
+            throw new IllegalStateException("计算SHA256哈希值失败", e);
         }
     }
     

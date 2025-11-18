@@ -145,7 +145,7 @@ public class SoftwarePackagesService {
                 zos.flush();
             } catch (IOException e) {
                 logger.error("Failed to create ZIP file for batch download", e);
-                throw new RuntimeException("创建ZIP文件失败", e);
+                throw new IllegalStateException("创建ZIP文件失败", e);
             }
             
             byte[] zipContent = baos.toByteArray();
@@ -169,7 +169,9 @@ public class SoftwarePackagesService {
     /**
      * 上传单个软件包
      */
-    public SoftwarePackage uploadSinglePackage(MultipartFile file, String description, boolean overwrite, String operatorUsername) throws IOException {
+    public SoftwarePackage uploadSinglePackage(
+            MultipartFile file, String description, boolean overwrite, String operatorUsername) 
+            throws IOException {
         // 验证文件格式
         validateFileFormat(file.getOriginalFilename());
         
@@ -228,7 +230,9 @@ public class SoftwarePackagesService {
     /**
      * 上传ZIP包（解压后按单个软件包存储）
      */
-    public List<SoftwarePackage> uploadZipPackage(MultipartFile file, boolean overwrite, String description, String operatorUsername) throws IOException {
+    public List<SoftwarePackage> uploadZipPackage(
+            MultipartFile file, boolean overwrite, String description, String operatorUsername) 
+            throws IOException {
         logger.info("Starting ZIP package upload: {}, overwrite: {}", file.getOriginalFilename(), overwrite);
         
         List<SoftwarePackage> uploadedPackages = new ArrayList<>();

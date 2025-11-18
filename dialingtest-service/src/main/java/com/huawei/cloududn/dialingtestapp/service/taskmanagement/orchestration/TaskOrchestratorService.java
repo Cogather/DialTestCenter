@@ -78,82 +78,223 @@ public class TaskOrchestratorService {
         TaskEntity task = taskMgmtService.findById(mainTaskId);
         if (task == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found: " + mainTaskId);
+        }
+
+        TaskContext ctx = readContext(task);
+        TaskState currentState = getCurrentState(ctx);
+        String newFingerprint = generateFingerprint(success, resultData);
+
+        if (isDuplicateCallback(ctx, newFingerprint, mainTaskId, currentState)) {
+            return;
+        }
+
+        updateContextWithResult(ctx, mainTaskId, resultData, newFingerprint);
+        TaskState newState = executeStateTransition(currentState, success, ctx, mainTaskId);
+        createSubTaskRecord(mainTaskId, success, resultData, currentState, newState, newFingerprint);
+        updateTaskStatus(mainTaskId, success, resultData, ctx, newState);
+    }
+
+    /**
+     * 获取当前任务状态
+     *
+     * @param ctx 任务上下文
+     * @return 当前任务状态
+     */
+    private TaskState getCurrentState(TaskContext ctx) {
+        return ctx.getStep() == null ? TaskState.START_VALIDATION : ctx.getStep();
+    }
+
+    /**
+     * 生成回调指纹
+     *
+     * @param success 是否成功
+     * @param resultData 结果数据
+     * @return 指纹字符串
+     */
+    private String generateFingerprint(boolean success, java.util.Map<String, Object> resultData) {
+        String fingerprintPrefix = success ? "S:" : "F:";
+        String resultTextForFp = serializeResultData(resultData);
+        return fingerprintPrefix + resultTextForFp;
+    }
+
+    /**
+     * 序列化结果数据为字符串
+     *
+     * @param resultData 结果数据
+     * @return 序列化后的字符串
+     */
+    private String serializeResultData(java.util.Map<String, Object> resultData) {
+        if (resultData == null || resultData.isEmpty()) {
+            return "null";
+        }
+
+        try {
+            return objectMapper.writeValueAsString(resultData);
+        } catch (JsonProcessingException e) {
+            return String.valueOf(resultData);
+        }
+    }
+
+    /**
+     * 检查是否为重复回调
+     *
+     * @param ctx 任务上下文
+     * @param newFingerprint 新指纹
+     * @param mainTaskId 主任务ID
+     * @param currentState 当前状态
+     * @return true表示重复回调
+     */
+    private boolean isDuplicateCallback(TaskContext ctx, String newFingerprint, Long mainTaskId, TaskState currentState) {
+        Object lastFpObj = ctx.getData().get("last_callback_fingerprint");
+        if (lastFpObj instanceof String) {
+            String lastFp = (String) lastFpObj;
+            if (lastFp.equals(newFingerprint)) {
+                logger.info("Task {} duplicate callback ignored for state {} with fingerprint {}", 
+                        mainTaskId, currentState, newFingerprint);
+                return true;
+            }
         } else {
-            TaskContext ctx = readContext(task);
-            TaskState currentState = ctx.getStep() == null ? TaskState.START_VALIDATION : ctx.getStep();
-            String fingerprintPrefix = success ? "S:" : "F:";
-            String resultTextForFp;
+            logger.debug("No previous fingerprint found, proceeding with state transition");
+        }
+        return false;
+    }
+
+    /**
+     * 更新任务上下文和结果数据
+     *
+     * @param ctx 任务上下文
+     * @param mainTaskId 主任务ID
+     * @param resultData 结果数据
+     * @param newFingerprint 新指纹
+     */
+    private void updateContextWithResult(
+            TaskContext ctx, Long mainTaskId, 
+            java.util.Map<String, Object> resultData, String newFingerprint) {
+        ctx.getData().put("taskId", mainTaskId);
+        if (resultData != null) {
+            ctx.getData().put("callback_result", resultData);
+        } else {
+            logger.debug("No result data provided for task: {}", mainTaskId);
+        }
+        ctx.getData().put("last_callback_fingerprint", newFingerprint);
+    }
+
+    /**
+     * 执行状态转换
+     *
+     * @param currentState 当前状态
+     * @param success 是否成功
+     * @param ctx 任务上下文
+     * @param mainTaskId 主任务ID
+     * @return 新状态
+     */
+    private TaskState executeStateTransition(TaskState currentState, boolean success, TaskContext ctx, Long mainTaskId) {
+        TaskEvent event = success ? TaskEvent.TASK_SUCCESS : TaskEvent.TASK_FAILED;
+        TaskState newState = taskStateMachine.sendEvent(currentState, event, ctx);
+        logger.info("Task {} sent event {} on {} -> {}", mainTaskId, event, currentState, newState);
+        return newState;
+    }
+
+    /**
+     * 创建子任务记录
+     *
+     * @param mainTaskId 主任务ID
+     * @param success 是否成功
+     * @param resultData 结果数据
+     * @param currentState 当前状态
+     * @param newState 新状态
+     * @param newFingerprint 新指纹
+     */
+    private void createSubTaskRecord(
+            Long mainTaskId, boolean success, java.util.Map<String, Object> resultData, 
+            TaskState currentState, TaskState newState, String newFingerprint) {
+        try {
+            TaskEntity sub = new TaskEntity();
+            sub.setCreator("CALLBACK");
+            sub.setStatus(success ? "COMPLETED" : "FAILED");
+            sub.setResult(success ? "SUCCESS" : "FAILED");
+            setSubTaskInput(sub, resultData);
+            setSubTaskContext(sub, currentState, newState, newFingerprint);
+            taskMgmtService.createSubTask(mainTaskId, mainTaskId, sub);
+        } catch (Exception ex) {
+            logger.warn("Create sub task record failed for mainTaskId={}", mainTaskId, ex);
+        }
+    }
+
+    /**
+     * 设置子任务输入数据
+     *
+     * @param sub 子任务实体
+     * @param resultData 结果数据
+     */
+    private void setSubTaskInput(TaskEntity sub, java.util.Map<String, Object> resultData) {
+        if (resultData != null && !resultData.isEmpty()) {
             try {
-                resultTextForFp = (resultData == null || resultData.isEmpty()) ? "null" : objectMapper.writeValueAsString(resultData);
+                sub.setInput(objectMapper.writeValueAsString(resultData));
             } catch (JsonProcessingException e) {
-                resultTextForFp = String.valueOf(resultData);
+                sub.setInput(String.valueOf(resultData));
             }
-            String newFingerprint = fingerprintPrefix + resultTextForFp;
-            Object lastFpObj = ctx.getData().get("last_callback_fingerprint");
-            if (lastFpObj instanceof String) {
-                String lastFp = (String) lastFpObj;
-                if (lastFp.equals(newFingerprint)) {
-                    logger.info("Task {} duplicate callback ignored for state {} with fingerprint {}", mainTaskId, currentState, newFingerprint);
-                    return;
-                }
-            } else {
-                logger.debug("No previous fingerprint found, proceeding with state transition");
-            }
-            ctx.getData().put("taskId", mainTaskId);
-            if (resultData != null) {
-                ctx.getData().put("callback_result", resultData);
-            } else {
-                logger.debug("No result data provided for task: {}", mainTaskId);
-            }
-            ctx.getData().put("last_callback_fingerprint", newFingerprint);
-            TaskEvent event = success ? TaskEvent.TASK_SUCCESS : TaskEvent.TASK_FAILED;
-            TaskState newState = taskStateMachine.sendEvent(currentState, event, ctx);
-            logger.info("Task {} sent event {} on {} -> {}", mainTaskId, event, currentState, newState);
-            try {
-                TaskEntity sub = new TaskEntity();
-                sub.setCreator("CALLBACK");
-                sub.setStatus(success ? "COMPLETED" : "FAILED");
-                sub.setResult(success ? "SUCCESS" : "FAILED");
-                if (resultData != null && !resultData.isEmpty()) {
-                    try {
-                        sub.setInput(objectMapper.writeValueAsString(resultData));
-                    } catch (JsonProcessingException e) {
-                        sub.setInput(String.valueOf(resultData));
-                    }
-                } else {
-                    sub.setInput("{}");
-                }
-                com.fasterxml.jackson.databind.node.ObjectNode subCtx = objectMapper.createObjectNode();
-                subCtx.put("from", "callback");
-                subCtx.put("state_before", currentState == null ? null : currentState.name());
-                subCtx.put("state_after", newState == null ? null : newState.name());
-                subCtx.put("fingerprint", newFingerprint);
-                sub.setContext(subCtx.toString());
-                taskMgmtService.createSubTask(mainTaskId, mainTaskId, sub);
-            } catch (Exception ex) {
-                logger.warn("Create sub task record failed for mainTaskId={}", mainTaskId, ex);
-            }
-            if (newState == TaskState.FINAL) {
-                String result = success ? "SUCCESS" : "FAILED";
-                String resultText = null;
-                if (resultData != null && !resultData.isEmpty()) {
-                    try {
-                        resultText = objectMapper.writeValueAsString(resultData);
-                    } catch (JsonProcessingException e) {
-                        resultText = String.valueOf(resultData);
-                    }
-                } else {
-                    logger.debug("No result data for finalized task: {}", mainTaskId);
-                }
-                taskMgmtService.updateStatusAndContext(mainTaskId, success ? "COMPLETED" : "FAILED", result, toJson(ctx));
-                if (!success && resultText != null) {
-                    logger.warn("Task {} finalized with failure: {}", mainTaskId, resultText);
-                } else {
-                    logger.info("Task {} finalized successfully", mainTaskId);
-                }
-            } else {
-                taskMgmtService.updateStatusAndContext(mainTaskId, "RUNNING", null, toJson(ctx));
-            }
+        } else {
+            sub.setInput("{}");
+        }
+    }
+
+    /**
+     * 设置子任务上下文
+     *
+     * @param sub 子任务实体
+     * @param currentState 当前状态
+     * @param newState 新状态
+     * @param newFingerprint 新指纹
+     */
+    private void setSubTaskContext(TaskEntity sub, TaskState currentState, TaskState newState, String newFingerprint) {
+        com.fasterxml.jackson.databind.node.ObjectNode subCtx = objectMapper.createObjectNode();
+        subCtx.put("from", "callback");
+        subCtx.put("state_before", currentState == null ? null : currentState.name());
+        subCtx.put("state_after", newState == null ? null : newState.name());
+        subCtx.put("fingerprint", newFingerprint);
+        sub.setContext(subCtx.toString());
+    }
+
+    /**
+     * 更新任务状态
+     *
+     * @param mainTaskId 主任务ID
+     * @param success 是否成功
+     * @param resultData 结果数据
+     * @param ctx 任务上下文
+     * @param newState 新状态
+     */
+    private void updateTaskStatus(
+            Long mainTaskId, boolean success, java.util.Map<String, Object> resultData, 
+            TaskContext ctx, TaskState newState) {
+        if (newState == TaskState.FINAL) {
+            updateFinalTaskStatus(mainTaskId, success, resultData, ctx);
+        } else {
+            taskMgmtService.updateStatusAndContext(mainTaskId, "RUNNING", null, toJson(ctx));
+        }
+    }
+
+    /**
+     * 更新最终任务状态
+     *
+     * @param mainTaskId 主任务ID
+     * @param success 是否成功
+     * @param resultData 结果数据
+     * @param ctx 任务上下文
+     */
+    private void updateFinalTaskStatus(
+            Long mainTaskId, boolean success, 
+            java.util.Map<String, Object> resultData, TaskContext ctx) {
+        String result = success ? "SUCCESS" : "FAILED";
+        String resultText = serializeResultData(resultData);
+
+        taskMgmtService.updateStatusAndContext(mainTaskId, success ? "COMPLETED" : "FAILED", result, toJson(ctx));
+
+        if (!success && resultText != null && !"null".equals(resultText)) {
+            logger.warn("Task {} finalized with failure: {}", mainTaskId, resultText);
+        } else {
+            logger.info("Task {} finalized successfully", mainTaskId);
         }
     }
 

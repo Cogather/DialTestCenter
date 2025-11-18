@@ -69,73 +69,184 @@ public class WssMessageDispatcher {
         try {
             JsonMessageEnvelope envelope = objectMapper.readValue(jsonMessage, JsonMessageEnvelope.class);
             String messageType = envelope.getType();
-
             logger.debug("Dispatching JSON message, sessionId={}, type={}", session.getId(), messageType);
 
             MessageType type = MessageType.fromJsonType(messageType);
-
-            switch (type) {
-                case REGISTER_REQUEST: {
-                    RegisterRequestDto dto = objectMapper.convertValue(envelope.getPayload(), RegisterRequestDto.class);
-                    authSessionService.handleRegisterRequest(dto, session);
-                    break;
-                }
-                case REGISTER_RESPONSE: {
-                    RegisterResponseDto dto = objectMapper.convertValue(envelope.getPayload(), RegisterResponseDto.class);
-                    authSessionService.handleRegisterResponse(dto, session);
-                    break;
-                }
-                case DEREGISTER_REQUEST: {
-                    DeRegisterRequestDto dto = objectMapper.convertValue(envelope.getPayload(), DeRegisterRequestDto.class);
-                    executorMgmtService.handleDeRegisterRequest(dto, session);
-                    break;
-                }
-                case REPORT_MSG: {
-                    ReportMsgDto dto = objectMapper.convertValue(envelope.getPayload(), ReportMsgDto.class);
-                    executorMgmtService.handleReportMsg(dto, session);
-                    break;
-                }
-                case APP_LIST_RESPONSE: {
-                    AppListResponseDto dto = objectMapper.convertValue(envelope.getPayload(), AppListResponseDto.class);
-                    taskInterfaceService.handleAppListResponse(dto, session);
-                    break;
-                }
-                case APP_INSTALL_RESPONSE: {
-                    AppInstallResponseDto dto = objectMapper.convertValue(envelope.getPayload(), AppInstallResponseDto.class);
-                    taskInterfaceService.handleAppInstallResponse(dto, session);
-                    break;
-                }
-                case SCREENCAP_RESPONSE: {
-                    ScreencapResponseDto dto = objectMapper.convertValue(envelope.getPayload(), ScreencapResponseDto.class);
-                    taskInterfaceService.handleScreencapResponse(dto, session);
-                    break;
-                }
-                case SCRIPT_UPDATE_ACK: {
-                    ScriptUpdateAckDto dto = objectMapper.convertValue(envelope.getPayload(), ScriptUpdateAckDto.class);
-                    taskInterfaceService.handleScriptUpdateAck(dto, session);
-                    break;
-                }
-                case TASK_START_RESPONSE: {
-                    TaskStartResponseDto dto = objectMapper.convertValue(envelope.getPayload(), TaskStartResponseDto.class);
-                    taskInterfaceService.handleTaskStartResponse(dto, session);
-                    break;
-                }
-                case TASK_STOP_RESPONSE: {
-                    TaskStopResponseDto dto = objectMapper.convertValue(envelope.getPayload(), TaskStopResponseDto.class);
-                    taskInterfaceService.handleTaskStopResponse(dto, session);
-                    break;
-                }
-                default: {
-                    logger.warn("Unknown or unsupported message type: {}", messageType);
-                    break;
-                }
-            }
+            dispatchByMessageType(type, envelope, session, messageType);
 
         } catch (IllegalArgumentException e) {
             logger.error("Invalid message type, sessionId={}", session.getId(), e);
         } catch (Exception e) {
             logger.error("Failed to dispatch JSON message, sessionId={}", session.getId(), e);
         }
+    }
+
+    /**
+     * 根据消息类型分发到具体的处理方法
+     *
+     * @param type 消息类型
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     * @param messageType 原始消息类型字符串
+     */
+    private void dispatchByMessageType(
+            MessageType type, JsonMessageEnvelope envelope, Session session, String messageType) {
+        switch (type) {
+            case REGISTER_REQUEST: {
+                handleRegisterRequest(envelope, session);
+                break;
+            }
+            case REGISTER_RESPONSE: {
+                handleRegisterResponse(envelope, session);
+                break;
+            }
+            case DEREGISTER_REQUEST: {
+                handleDeRegisterRequest(envelope, session);
+                break;
+            }
+            case REPORT_MSG: {
+                handleReportMsg(envelope, session);
+                break;
+            }
+            case APP_LIST_RESPONSE: {
+                handleAppListResponse(envelope, session);
+                break;
+            }
+            case APP_INSTALL_RESPONSE: {
+                handleAppInstallResponse(envelope, session);
+                break;
+            }
+            case SCREENCAP_RESPONSE: {
+                handleScreencapResponse(envelope, session);
+                break;
+            }
+            case SCRIPT_UPDATE_ACK: {
+                handleScriptUpdateAck(envelope, session);
+                break;
+            }
+            case TASK_START_RESPONSE: {
+                handleTaskStartResponse(envelope, session);
+                break;
+            }
+            case TASK_STOP_RESPONSE: {
+                handleTaskStopResponse(envelope, session);
+                break;
+            }
+            default: {
+                logger.warn("Unknown or unsupported message type: {}", messageType);
+                break;
+            }
+        }
+    }
+
+    /**
+     * 处理注册请求
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleRegisterRequest(JsonMessageEnvelope envelope, Session session) {
+        RegisterRequestDto dto = objectMapper.convertValue(envelope.getPayload(), RegisterRequestDto.class);
+        authSessionService.handleRegisterRequest(dto, session);
+    }
+
+    /**
+     * 处理注册响应
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleRegisterResponse(JsonMessageEnvelope envelope, Session session) {
+        RegisterResponseDto dto = objectMapper.convertValue(envelope.getPayload(), RegisterResponseDto.class);
+        authSessionService.handleRegisterResponse(dto, session);
+    }
+
+    /**
+     * 处理注销请求
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleDeRegisterRequest(JsonMessageEnvelope envelope, Session session) {
+        DeRegisterRequestDto dto = objectMapper.convertValue(envelope.getPayload(), DeRegisterRequestDto.class);
+        executorMgmtService.handleDeRegisterRequest(dto, session);
+    }
+
+    /**
+     * 处理上报消息
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleReportMsg(JsonMessageEnvelope envelope, Session session) {
+        ReportMsgDto dto = objectMapper.convertValue(envelope.getPayload(), ReportMsgDto.class);
+        executorMgmtService.handleReportMsg(dto, session);
+    }
+
+    /**
+     * 处理应用列表响应
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleAppListResponse(JsonMessageEnvelope envelope, Session session) {
+        AppListResponseDto dto = objectMapper.convertValue(envelope.getPayload(), AppListResponseDto.class);
+        taskInterfaceService.handleAppListResponse(dto, session);
+    }
+
+    /**
+     * 处理应用安装响应
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleAppInstallResponse(JsonMessageEnvelope envelope, Session session) {
+        AppInstallResponseDto dto = objectMapper.convertValue(envelope.getPayload(), AppInstallResponseDto.class);
+        taskInterfaceService.handleAppInstallResponse(dto, session);
+    }
+
+    /**
+     * 处理截屏响应
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleScreencapResponse(JsonMessageEnvelope envelope, Session session) {
+        ScreencapResponseDto dto = objectMapper.convertValue(envelope.getPayload(), ScreencapResponseDto.class);
+        taskInterfaceService.handleScreencapResponse(dto, session);
+    }
+
+    /**
+     * 处理脚本更新确认
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleScriptUpdateAck(JsonMessageEnvelope envelope, Session session) {
+        ScriptUpdateAckDto dto = objectMapper.convertValue(envelope.getPayload(), ScriptUpdateAckDto.class);
+        taskInterfaceService.handleScriptUpdateAck(dto, session);
+    }
+
+    /**
+     * 处理任务启动响应
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleTaskStartResponse(JsonMessageEnvelope envelope, Session session) {
+        TaskStartResponseDto dto = objectMapper.convertValue(envelope.getPayload(), TaskStartResponseDto.class);
+        taskInterfaceService.handleTaskStartResponse(dto, session);
+    }
+
+    /**
+     * 处理任务停止响应
+     *
+     * @param envelope 消息信封
+     * @param session WebSocket会话
+     */
+    private void handleTaskStopResponse(JsonMessageEnvelope envelope, Session session) {
+        TaskStopResponseDto dto = objectMapper.convertValue(envelope.getPayload(), TaskStopResponseDto.class);
+        taskInterfaceService.handleTaskStopResponse(dto, session);
     }
 
     /**

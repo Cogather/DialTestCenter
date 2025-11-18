@@ -87,8 +87,8 @@ public class SessionSendQueue {
                 }
 
             } catch (InterruptedException e) {
-                logger.warn("Send loop interrupted for sessionId={}", sessionId);
-                Thread.currentThread().interrupt();
+                logger.warn("Send loop interrupted for sessionId={}, stopping loop", sessionId);
+                // 线程被中断，退出循环
                 break;
             } catch (Exception e) {
                 logger.error("Error in send loop for sessionId={}", sessionId, e);
@@ -113,11 +113,13 @@ public class SessionSendQueue {
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                logger.warn("ExecutorService did not terminate in time for sessionId={}, forcing shutdown", sessionId);
                 executorService.shutdownNow();
             }
         } catch (InterruptedException e) {
+            logger.warn("Shutdown interrupted for sessionId={}, forcing shutdown", sessionId);
             executorService.shutdownNow();
-            Thread.currentThread().interrupt();
+            // 不重新设置中断状态，因为已经强制关闭了
         }
     }
 

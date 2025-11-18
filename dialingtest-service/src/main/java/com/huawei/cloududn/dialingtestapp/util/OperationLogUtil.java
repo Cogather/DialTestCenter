@@ -223,7 +223,8 @@ public class OperationLogUtil {
             "更新用例集: " + newValues.getName() + " v" + newValues.getVersion(),
             "Update test case set: " + newValues.getName() + " v" + newValues.getVersion(),
             builder -> builder.testCaseSetUpdate(oldValues, newValues),
-            "Logged test case set update: " + newValues.getName() + " v" + newValues.getVersion() + " by user: " + operatorUsername);
+            "Logged test case set update: " + newValues.getName() + " v" + newValues.getVersion() + 
+                    " by user: " + operatorUsername);
     }
     
     /**
@@ -237,7 +238,8 @@ public class OperationLogUtil {
             "删除用例集: " + testCaseSet.getName() + " v" + testCaseSet.getVersion(),
             "Delete test case set: " + testCaseSet.getName() + " v" + testCaseSet.getVersion(),
             builder -> builder.testCaseSetDelete(testCaseSet),
-            "Logged test case set delete: " + testCaseSet.getName() + " v" + testCaseSet.getVersion() + " by user: " + operatorUsername);
+            "Logged test case set delete: " + testCaseSet.getName() + " v" + testCaseSet.getVersion() + 
+                    " by user: " + operatorUsername);
     }
     
     /**
@@ -336,7 +338,8 @@ public class OperationLogUtil {
    * @param oldPackage 更新前的软件包信息
    * @param newPackage 更新后的软件包信息
      */
-  public void logSoftwarePackageUpdate(String operatorUsername, SoftwarePackageInfo oldPackage, SoftwarePackageInfo newPackage) {
+  public void logSoftwarePackageUpdate(
+          String operatorUsername, SoftwarePackageInfo oldPackage, SoftwarePackageInfo newPackage) {
     logOperation(operatorUsername, "UPDATE", "SOFTWARE_PACKAGE",
         "更新软件包: " + newPackage.getSoftwareName(),
         "Update software package: " + newPackage.getSoftwareName(),
@@ -369,7 +372,8 @@ public class OperationLogUtil {
         "校验用例集: " + testCaseSet.getName() + " v" + testCaseSet.getVersion(),
         "Validate test case set: " + testCaseSet.getName() + " v" + testCaseSet.getVersion(),
         builder -> builder.testCaseSetValidation(testCaseSet),
-        "Logged test case set validation: " + testCaseSet.getName() + " v" + testCaseSet.getVersion() + " by user: " + operatorUsername);
+        "Logged test case set validation: " + testCaseSet.getName() + " v" + testCaseSet.getVersion() + 
+                " by user: " + operatorUsername);
     }
     
     /**
@@ -379,7 +383,8 @@ public class OperationLogUtil {
    * @param oldPackage 被覆盖的软件包信息
    * @param newPackage 新的软件包信息
      */
-  public void logSoftwarePackageOverwrite(String operatorUsername, SoftwarePackageInfo oldPackage, SoftwarePackage newPackage) {
+  public void logSoftwarePackageOverwrite(
+          String operatorUsername, SoftwarePackageInfo oldPackage, SoftwarePackage newPackage) {
     logOperation(operatorUsername, "OVERWRITE", "SOFTWARE_PACKAGE",
         "覆盖软件包: " + newPackage.getSoftwareName(),
         "Overwrite software package: " + newPackage.getSoftwareName(),
@@ -390,7 +395,8 @@ public class OperationLogUtil {
     /**
      * 记录预处理规则ZIP包上传操作
      */
-  public void logPreprocessRulePackageUpload(String operatorUsername, String packageName, String businessZh, String businessEn) {
+  public void logPreprocessRulePackageUpload(
+          String operatorUsername, String packageName, String businessZh, String businessEn) {
     logOperation(operatorUsername, "UPLOAD", "PREPROCESS_RULE_PACKAGE",
         "上传预处理规则ZIP包: " + packageName + " (业务类型: " + businessZh + ")",
         "Upload preprocess rule package: " + packageName + " (Business: " + businessEn + ")",

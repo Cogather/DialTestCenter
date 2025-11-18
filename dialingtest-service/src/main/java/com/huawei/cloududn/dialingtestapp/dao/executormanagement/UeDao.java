@@ -13,7 +13,9 @@ import java.util.List;
 @Mapper
 public interface UeDao {
 
-    @Select("SELECT msisdn, executor_name AS executorName, vendor, os, info, task_info AS taskInfo FROM ue WHERE executor_name = #{executorName}")
+    @Select("SELECT msisdn, executor_name AS executorName, vendor, os, info, " +
+            "task_info AS taskInfo " +
+            "FROM ue WHERE executor_name = #{executorName}")
     List<Ue> findByExecutorName(@Param("executorName") String executorName);
 
     @Insert({

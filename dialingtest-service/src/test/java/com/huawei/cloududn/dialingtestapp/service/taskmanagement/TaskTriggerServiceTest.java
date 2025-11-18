@@ -4,9 +4,9 @@
 
 package com.huawei.cloududn.dialingtestapp.service.taskmanagement;
 
+import com.huawei.cloududn.dialingtest.model.StartTaskRequest;
 import com.huawei.cloududn.dialingtest.model.TaskEntity;
 import com.huawei.cloududn.dialingtest.model.TemplateEntity;
-import com.huawei.cloududn.dialingtestapp.service.taskmanagement.dto.StartTaskRequest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class TaskTriggerServiceTest {
     public void testCreateTaskFromRequest_TrainingScenario() {
         Mockito.when(taskMgmtService.create(Mockito.any(TaskEntity.class))).thenReturn(mockTask);
         StartTaskRequest request = new StartTaskRequest();
-        request.setScenario("TRAINING");
+        request.setScenario(StartTaskRequest.ScenarioEnum.TRAINING);
         TaskEntity result = taskTriggerService.createTaskFromRequest(request);
         assertNotNull(result);
         assertEquals("MANUAL", result.getCreator());
@@ -58,7 +58,7 @@ public class TaskTriggerServiceTest {
     public void testCreateTaskFromRequest_ValidationScenario() {
         Mockito.when(taskMgmtService.create(Mockito.any(TaskEntity.class))).thenReturn(mockTask);
         StartTaskRequest request = new StartTaskRequest();
-        request.setScenario("VALIDATION");
+        request.setScenario(StartTaskRequest.ScenarioEnum.VALIDATION);
         TaskEntity result = taskTriggerService.createTaskFromRequest(request);
         assertNotNull(result);
         assertEquals("MANUAL", result.getCreator());

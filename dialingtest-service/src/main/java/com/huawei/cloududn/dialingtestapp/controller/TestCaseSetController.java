@@ -13,6 +13,7 @@ import com.huawei.cloududn.dialingtestapp.service.TestCaseValidationService;
 import com.huawei.cloududn.dialingtestapp.service.UserRoleService;
 import com.huawei.cloududn.dialingtestapp.util.OperationLogUtil;
 import com.huawei.cloududn.dialingtestapp.util.PermissionValidator;
+import com.huawei.cloududn.dialingtestapp.util.PermissionValidator.PermissionValidationResult;
 import com.huawei.cloududn.dialingtestapp.util.ExcelUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,10 +113,12 @@ public class TestCaseSetController implements TestCaseSetsApi {
     
     
     @Override
-    public ResponseEntity<Resource> downloadTestCaseSet(Long id, @RequestHeader(value = "X-Username", required = true) String xUsername) {
+    public ResponseEntity<Resource> downloadTestCaseSet(
+            Long id, @RequestHeader(value = "X-Username", required = true) String xUsername) {
         try {
             // 检查权限（需要ADMIN或OPERATOR权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "下载用例集");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "下载用例集");
             if (!permissionResult.isValid()) {
                 logger.warn("用户权限不足 - username: {}", xUsername);
                 HttpStatus status = permissionResult.getErrorMessage().contains("未提供用户名") 
@@ -136,7 +139,8 @@ public class TestCaseSetController implements TestCaseSetsApi {
             ByteArrayResource resource = new ByteArrayResource(fileContent);
             
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + testCaseSet.getName() + "_" + testCaseSet.getVersion() + ".zip\"");
+            String filename = testCaseSet.getName() + "_" + testCaseSet.getVersion() + ".zip";
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
             headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
             
             logger.info("User {} downloaded test case set: {}", xUsername, id);
@@ -151,10 +155,12 @@ public class TestCaseSetController implements TestCaseSetsApi {
     }
     
     @Override
-    public ResponseEntity<TestCaseSetResponse> updateTestCaseSet(String xUsername, Long id, UpdateTestCaseSetRequest body) {
+    public ResponseEntity<TestCaseSetResponse> updateTestCaseSet(
+            String xUsername, Long id, UpdateTestCaseSetRequest body) {
         try {
             // 检查权限（需要ADMIN或OPERATOR权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "更新用例集");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "更新用例集");
             if (!permissionResult.isValid()) {
                 TestCaseSetResponse response = new TestCaseSetResponse();
                 response.setSuccess(false);
@@ -196,7 +202,8 @@ public class TestCaseSetController implements TestCaseSetsApi {
     public ResponseEntity<SuccessResponse> deleteTestCaseSet(Long id, String xUsername) {
         try {
             // 检查权限（需要ADMIN或OPERATOR权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "删除用例集");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "删除用例集");
             if (!permissionResult.isValid()) {
                 SuccessResponse response = new SuccessResponse();
                 response.setSuccess(false);
@@ -263,11 +270,13 @@ public class TestCaseSetController implements TestCaseSetsApi {
      * @return 校验任务响应
      */
     @Override
-    public ResponseEntity<ValidationTaskResponse> triggerTestCaseSetValidation(Long id, String xCsrfToken, String xUsername) {
+    public ResponseEntity<ValidationTaskResponse> triggerTestCaseSetValidation(
+            Long id, String xCsrfToken, String xUsername) {
         logger.info("触发用例集校验任务 - testCaseSetId: {}, username: {}", id, xUsername);
         try {
             // 检查用户权限（ADMIN或OPERATOR）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "触发用例集校验");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "触发用例集校验");
             if (!permissionResult.isValid()) {
                 logger.warn("用户权限不足 - username: {}", xUsername);
                 ValidationTaskResponse response = new ValidationTaskResponse();
@@ -453,9 +462,9 @@ public class TestCaseSetController implements TestCaseSetsApi {
      * @return API用例结果列表
      */
     private List<CaseValidationResult> convertCaseResults(
-            List<com.huawei.cloududn.dialingtest.model.CaseValidationResult> serviceCaseResults) {
+            List<CaseValidationResult> serviceCaseResults) {
         List<CaseValidationResult> caseResults = new ArrayList<>();
-        for (com.huawei.cloududn.dialingtest.model.CaseValidationResult caseResult : serviceCaseResults) {
+        for (CaseValidationResult caseResult : serviceCaseResults) {
             CaseValidationResult apiCaseResult = convertSingleCaseResult(caseResult);
             caseResults.add(apiCaseResult);
         }
@@ -468,8 +477,7 @@ public class TestCaseSetController implements TestCaseSetsApi {
      * @param caseResult 服务层用例结果
      * @return API用例结果
      */
-    private CaseValidationResult convertSingleCaseResult(
-            com.huawei.cloududn.dialingtest.model.CaseValidationResult caseResult) {
+    private CaseValidationResult convertSingleCaseResult(CaseValidationResult caseResult) {
         CaseValidationResult apiCaseResult = new CaseValidationResult();
         apiCaseResult.setCaseNumber(caseResult.getCaseNumber());
         apiCaseResult.setCaseName(caseResult.getCaseName());
@@ -519,10 +527,13 @@ public class TestCaseSetController implements TestCaseSetsApi {
      * @return Excel文件资源
      */
     @Override
-    public ResponseEntity<Resource> exportTestCaseSetValidation(Long id, String xCsrfToken, @RequestHeader(value = "X-Username", required = true) String xUsername) {
+    public ResponseEntity<Resource> exportTestCaseSetValidation(
+            Long id, String xCsrfToken,
+            @RequestHeader(value = "X-Username", required = true) String xUsername) {
         try {
             // 检查权限（需要ADMIN或OPERATOR权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdminOrOperator(xUsername, "导出用例集校验结果");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdminOrOperator(xUsername, "导出用例集校验结果");
             if (!permissionResult.isValid()) {
                 logger.warn("用户权限不足 - username: {}", xUsername);
                 HttpStatus status = permissionResult.getErrorMessage().contains("未提供用户名") 

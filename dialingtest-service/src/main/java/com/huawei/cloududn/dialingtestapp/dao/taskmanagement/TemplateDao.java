@@ -33,7 +33,8 @@ public interface TemplateDao {
     int insert(TemplateEntity template);
 
     @Update({
-        "UPDATE template_task SET name=#{name}, cron=#{cron}, is_enabled=#{enabled}, input=#{input}, description=#{description}, update_time=now() WHERE id=#{id}"
+        "UPDATE template_task SET name=#{name}, cron=#{cron}, is_enabled=#{enabled}, " +
+        "input=#{input}, description=#{description}, update_time=now() WHERE id=#{id}"
     })
     int update(TemplateEntity template);
 

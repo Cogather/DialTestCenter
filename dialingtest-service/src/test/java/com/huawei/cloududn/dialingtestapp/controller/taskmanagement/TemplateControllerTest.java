@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -74,7 +75,7 @@ public class TemplateControllerTest {
     @Test
     public void testGetTemplates_Success_ReturnsOk() {
         // Arrange
-        List<TemplateEntity> list = Arrays.asList(new TemplateEntity());
+        List<TemplateEntity> list = Collections.singletonList(new TemplateEntity());
         when(templateService.findAll()).thenReturn(list);
 
         // Act

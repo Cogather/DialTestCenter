@@ -40,7 +40,9 @@ public interface TestCaseDao {
     /**
      * 根据用例集ID分页查询测试用例
      */
-    @Select("SELECT * FROM test_case WHERE test_case_set_id = #{testCaseSetId} ORDER BY id LIMIT #{pageSize} OFFSET #{offset}")
+    @Select("SELECT * FROM test_case " +
+            "WHERE test_case_set_id = #{testCaseSetId} ORDER BY id " +
+            "LIMIT #{pageSize} OFFSET #{offset}")
     @Results({
         @Result(property = "id", column = "id"),
         @Result(property = "testCaseSetId", column = "test_case_set_id"),

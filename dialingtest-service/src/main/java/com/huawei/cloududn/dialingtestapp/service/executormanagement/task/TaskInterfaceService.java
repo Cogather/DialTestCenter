@@ -146,7 +146,7 @@ public class TaskInterfaceService {
         } catch (Exception e) {
             logger.error("Failed to dispatch task: taskId={}, executor={}",
                 request.getTaskId(), request.getExecutorName(), e);
-            throw new RuntimeException("Task dispatch failed", e);
+            throw new IllegalStateException("Task dispatch failed", e);
         }
     }
 

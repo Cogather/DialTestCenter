@@ -20,15 +20,12 @@ import static org.junit.Assert.assertTrue;
  * @since 2025-11-18
  */
 public class AppInstallRequestTest {
+    /**
+     * 测试默认构造器
+     * 验证默认构造器创建的对象所有字段均为null
+     */
     @Test
-    public void testAppInstallRequest_AllFunctionality_ShouldWorkCorrectly() {
-        String testSerialNo = "SN123456";
-        Integer testTaskId = 100;
-        String testAppName = "TestApp";
-        byte[] testScript = new byte[]{1, 2, 3, 4, 5};
-        byte[] testPackageFile = new byte[]{10, 20, 30, 40, 50};
-        String testCrc = "ABC123";
-
+    public void testDefaultConstructor_AllFieldsNull_ShouldBeNull() {
         AppInstallRequest defaultRequest = new AppInstallRequest();
         assertNotNull(defaultRequest);
         assertNull(defaultRequest.getSerialNo());
@@ -37,6 +34,20 @@ public class AppInstallRequestTest {
         assertNull(defaultRequest.getScript());
         assertNull(defaultRequest.getPackageFile());
         assertNull(defaultRequest.getCrc());
+    }
+
+    /**
+     * 测试参数化构造器
+     * 验证参数化构造器正确设置所有字段
+     */
+    @Test
+    public void testParameterizedConstructor_AllFields_ShouldBeSet() {
+        String testSerialNo = "SN123456";
+        Integer testTaskId = 100;
+        String testAppName = "TestApp";
+        byte[] testScript = new byte[]{1, 2, 3, 4, 5};
+        byte[] testPackageFile = new byte[]{10, 20, 30, 40, 50};
+        String testCrc = "ABC123";
 
         AppInstallRequest request = new AppInstallRequest(testSerialNo, testTaskId,
                 testAppName, testScript, testPackageFile, testCrc);
@@ -46,6 +57,20 @@ public class AppInstallRequestTest {
         assertEquals(testScript, request.getScript());
         assertEquals(testPackageFile, request.getPackageFile());
         assertEquals(testCrc, request.getCrc());
+    }
+
+    /**
+     * 测试Setter和Getter方法
+     * 验证所有setter方法正确设置字段值
+     */
+    @Test
+    public void testSettersAndGetters_AllFields_ShouldBeSet() {
+        String testSerialNo = "SN123456";
+        Integer testTaskId = 100;
+        String testAppName = "TestApp";
+        byte[] testScript = new byte[]{1, 2, 3, 4, 5};
+        byte[] testPackageFile = new byte[]{10, 20, 30, 40, 50};
+        String testCrc = "ABC123";
 
         AppInstallRequest setterRequest = new AppInstallRequest();
         setterRequest.setSerialNo(testSerialNo);
@@ -60,9 +85,19 @@ public class AppInstallRequestTest {
         assertEquals(testScript, setterRequest.getScript());
         assertEquals(testPackageFile, setterRequest.getPackageFile());
         assertEquals(testCrc, setterRequest.getCrc());
+    }
 
-        assertTrue(request.isApkInstall());
-        assertTrue(request.isScriptInstall());
+    /**
+     * 测试isApkInstall方法
+     * 验证APK安装检查逻辑（非空且长度>0）
+     */
+    @Test
+    public void testIsApkInstall_VariousConditions_ShouldReturnCorrectly() {
+        byte[] testPackageFile = new byte[]{10, 20, 30, 40, 50};
+
+        AppInstallRequest requestWithPackage = new AppInstallRequest();
+        requestWithPackage.setPackageFile(testPackageFile);
+        assertTrue(requestWithPackage.isApkInstall());
 
         AppInstallRequest emptyPackageRequest = new AppInstallRequest();
         emptyPackageRequest.setPackageFile(new byte[0]);
@@ -71,6 +106,19 @@ public class AppInstallRequestTest {
         AppInstallRequest nullPackageRequest = new AppInstallRequest();
         nullPackageRequest.setPackageFile(null);
         assertFalse(nullPackageRequest.isApkInstall());
+    }
+
+    /**
+     * 测试isScriptInstall方法
+     * 验证脚本安装检查逻辑（非空且长度>0）
+     */
+    @Test
+    public void testIsScriptInstall_VariousConditions_ShouldReturnCorrectly() {
+        byte[] testScript = new byte[]{1, 2, 3, 4, 5};
+
+        AppInstallRequest requestWithScript = new AppInstallRequest();
+        requestWithScript.setScript(testScript);
+        assertTrue(requestWithScript.isScriptInstall());
 
         AppInstallRequest emptyScriptRequest = new AppInstallRequest();
         emptyScriptRequest.setScript(new byte[0]);
@@ -79,7 +127,23 @@ public class AppInstallRequestTest {
         AppInstallRequest nullScriptRequest = new AppInstallRequest();
         nullScriptRequest.setScript(null);
         assertFalse(nullScriptRequest.isScriptInstall());
+    }
 
+    /**
+     * 测试toString方法
+     * 验证toString正确格式化所有字段，包括数组长度处理
+     */
+    @Test
+    public void testToString_AllFields_ShouldFormatCorrectly() {
+        String testSerialNo = "SN123456";
+        Integer testTaskId = 100;
+        String testAppName = "TestApp";
+        byte[] testScript = new byte[]{1, 2, 3, 4, 5};
+        byte[] testPackageFile = new byte[]{10, 20, 30, 40, 50};
+        String testCrc = "ABC123";
+
+        AppInstallRequest request = new AppInstallRequest(testSerialNo, testTaskId,
+                testAppName, testScript, testPackageFile, testCrc);
         String result = request.toString();
         assertTrue(result.contains("serialNo='" + testSerialNo + "'"));
         assertTrue(result.contains("taskId=" + testTaskId));

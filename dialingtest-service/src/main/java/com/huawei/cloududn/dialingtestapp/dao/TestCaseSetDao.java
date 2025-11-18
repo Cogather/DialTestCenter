@@ -17,8 +17,10 @@ public interface TestCaseSetDao {
     /**
      * 插入用例集
      */
-    @Insert("INSERT INTO test_case_set (name, version, file_content, file_size, description, sha256, business_zh, business_en) " +
-            "VALUES (#{name}, #{version}, #{fileContent}, #{fileSize}, #{description}, #{sha256}, #{businessZh}, #{businessEn})")
+    @Insert("INSERT INTO test_case_set " +
+            "(name, version, file_content, file_size, description, sha256, business_zh, business_en) " +
+            "VALUES (#{name}, #{version}, #{fileContent}, #{fileSize}, " +
+            "#{description}, #{sha256}, #{businessZh}, #{businessEn})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(TestCaseSet testCaseSet);
     
@@ -82,7 +84,9 @@ public interface TestCaseSetDao {
     /**
      * 更新用例集
      */
-    @Update("UPDATE test_case_set SET description = #{description}, business_zh = #{businessZh}, business_en = #{businessEn} WHERE id = #{id}")
+    @Update("UPDATE test_case_set " +
+            "SET description = #{description}, business_zh = #{businessZh}, business_en = #{businessEn} " +
+            "WHERE id = #{id}")
     int update(TestCaseSet testCaseSet);
     
     /**

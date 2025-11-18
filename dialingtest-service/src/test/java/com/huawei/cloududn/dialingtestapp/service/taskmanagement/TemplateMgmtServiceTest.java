@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -63,7 +64,7 @@ public class TemplateMgmtServiceTest {
 
     @Test
     public void testFindMethods_All_Enabled_ById() {
-        List<TemplateEntity> mockTemplates = Arrays.asList(mockTemplate);
+        List<TemplateEntity> mockTemplates = Collections.singletonList(mockTemplate);
         Mockito.when(templateDao.findAll()).thenReturn(mockTemplates);
         Mockito.when(templateDao.findEnabled()).thenReturn(mockTemplates);
         Mockito.when(templateDao.findById(Mockito.anyLong())).thenReturn(mockTemplate);

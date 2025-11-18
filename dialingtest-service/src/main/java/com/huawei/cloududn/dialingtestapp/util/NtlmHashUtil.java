@@ -15,6 +15,25 @@ import java.security.NoSuchAlgorithmException;
  * NTLM Hash工具类
  * 用于将明文密码转换为NTLM Hash格式，支持执行机CHAP认证
  *
+ * <p><b>安全说明：</b></p>
+ * <p>本工具类使用MD4算法生成NTLM Hash，这是为了符合微软Windows NTLM认证协议的标准规范。
+ * NTLM协议明确规定必须使用MD4算法，这是协议兼容性的硬性要求，而非安全设计缺陷。
+ * 虽然MD4算法已被证明存在安全漏洞，但为了与Windows系统互操作，必须遵循协议规范。</p>
+ *
+ * <p><b>使用场景：</b></p>
+ * <ul>
+ *   <li>与Windows系统或NTLM兼容系统进行身份认证</li>
+ *   <li>执行机CHAP认证（Challenge-Handshake Authentication Protocol）</li>
+ * </ul>
+ *
+ * <p><b>安全建议：</b></p>
+ * <ul>
+ *   <li>NTLM协议本身存在安全限制，建议仅在必要时使用</li>
+ *   <li>在条件允许时，应迁移到更安全的认证方式（如Kerberos、OAuth2、SAML等）</li>
+ *   <li>确保NTLM认证仅在受信任的网络环境中使用</li>
+ *   <li>建议使用NTLMv2而非NTLMv1（本工具类生成的是NTLMv1 Hash）</li>
+ * </ul>
+ *
  * @author g00940940
  * @since 2025-11-12
  */
@@ -66,12 +85,22 @@ public class NtlmHashUtil {
      * 获取MD4 MessageDigest实例
      * 优先尝试使用标准名称"MD4"，如果不支持则尝试使用BouncyCastle
      *
+     * <p><b>安全说明：</b></p>
+     * <p>MD4算法已被证明存在安全漏洞，不应在新的安全关键场景中使用。
+     * 但本工具类必须使用MD4是因为NTLM协议的标准规范强制要求使用MD4算法。
+     * NTLM是微软Windows定义的认证协议（RFC规范），为了与Windows系统互操作，
+     * 必须严格遵循协议规范使用MD4算法。这是协议兼容性要求，非安全设计缺陷。</p>
+     *
+     * <p><b>建议：</b>在条件允许时，应迁移到更安全的认证方式（如Kerberos、OAuth2等）</p>
+     *
      * @return MD4 MessageDigest实例
      * @throws NoSuchAlgorithmException 如果MD4算法不可用
      */
+    @SuppressWarnings("java:S4790")  // 抑制弱加密算法告警：NTLM协议强制要求使用MD4
     private static MessageDigest getMd4MessageDigest() throws NoSuchAlgorithmException {
         try {
             // 尝试使用标准MD4算法
+            // 注意：此处必须使用MD4以符合NTLM协议规范
             return MessageDigest.getInstance("MD4");
         } catch (NoSuchAlgorithmException e) {
             logger.warn("MD4 algorithm not available via standard API, attempting BouncyCastle");

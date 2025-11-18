@@ -291,13 +291,11 @@ public class AuthSessionServiceTest {
     }
 
     /**
-     * UT5: 测试边界条件和并发场景
-     * 覆盖: 空值/null参数, 多个并发请求
-     * 新增: hexStringToBytes异常分支（null值，奇数长度）
-     * 新增: computeChapResponseV3异常分支（NoSuchAlgorithmException）
+     * UT5-1: 测试空值和null hostname参数
+     * 覆盖: 空字符串和null hostname的边界条件
      */
     @Test
-    public void testAuthenticationFlow_BoundaryAndConcurrency_AllEdgeCases() {
+    public void testAuthenticationFlow_EmptyAndNullHostname_HandledCorrectly() {
         Session session1 = Mockito.mock(Session.class);
         when(session1.getId()).thenReturn("session-empty");
         RegisterRequestDto emptyRequest = new RegisterRequestDto();
@@ -311,7 +309,14 @@ public class AuthSessionServiceTest {
         nullRequest.setHostname(null);
         service.handleRegisterRequest(nullRequest, session2);
         verify(sender).sendJsonMessage(eq("session-null"), any());
+    }
 
+    /**
+     * UT5-2: 测试并发请求场景
+     * 覆盖: 多个并发认证请求的处理
+     */
+    @Test
+    public void testAuthenticationFlow_ConcurrentRequests_HandledIndependently() {
         Session session3 = Mockito.mock(Session.class);
         when(session3.getId()).thenReturn("session-multi-1");
         Session session4 = Mockito.mock(Session.class);
@@ -324,7 +329,14 @@ public class AuthSessionServiceTest {
         service.handleRegisterRequest(req2, session4);
         verify(sender).sendJsonMessage(eq("session-multi-1"), any());
         verify(sender).sendJsonMessage(eq("session-multi-2"), any());
+    }
 
+    /**
+     * UT5-3: 测试null username的场景
+     * 覆盖: hexStringToBytes异常分支（null username）
+     */
+    @Test
+    public void testAuthenticationFlow_NullUsername_ErrorHandled() {
         Session session5 = Mockito.mock(Session.class);
         when(session5.getId()).thenReturn("session-null-username");
         RegisterRequestDto requestDto5 = new RegisterRequestDto();
@@ -336,7 +348,14 @@ public class AuthSessionServiceTest {
         nullUsernameResp.setResponse("response");
         service.handleRegisterResponse(nullUsernameResp, session5);
         verify(sender, atLeast(2)).sendJsonMessage(eq("session-null-username"), any());
+    }
 
+    /**
+     * UT5-4: 测试奇数长度hex字符串的场景
+     * 覆盖: hexStringToBytes异常分支（奇数长度hex字符串）
+     */
+    @Test
+    public void testAuthenticationFlow_OddLengthHex_ExceptionHandled() {
         Session session6 = Mockito.mock(Session.class);
         when(session6.getId()).thenReturn("session-odd-hex");
         RegisterRequestDto requestDto6 = new RegisterRequestDto();
@@ -350,14 +369,21 @@ public class AuthSessionServiceTest {
         oddHexUser.setUsername("oddhexuser");
         oddHexUser.setPassword("abc");
         when(dialUserService.findByUsername("oddhexuser")).thenReturn(oddHexUser);
-        
+
         try {
             service.handleRegisterResponse(oddHexResp, session6);
         } catch (Exception e) {
             // Expected: hexStringToBytes will throw IllegalArgumentException for odd length
         }
         verify(sender, atLeast(1)).sendJsonMessage(eq("session-odd-hex"), any());
+    }
 
+    /**
+     * UT5-5: 测试null password的场景
+     * 覆盖: hexStringToBytes异常分支（null password）
+     */
+    @Test
+    public void testAuthenticationFlow_NullPassword_ExceptionHandled() {
         Session session7 = Mockito.mock(Session.class);
         when(session7.getId()).thenReturn("session-null-password");
         RegisterRequestDto requestDto7 = new RegisterRequestDto();
@@ -371,7 +397,7 @@ public class AuthSessionServiceTest {
         nullPasswordUser.setUsername("nullpassworduser");
         nullPasswordUser.setPassword(null);
         when(dialUserService.findByUsername("nullpassworduser")).thenReturn(nullPasswordUser);
-        
+
         try {
             service.handleRegisterResponse(nullPasswordResp, session7);
         } catch (Exception e) {

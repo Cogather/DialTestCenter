@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -128,7 +129,7 @@ public class WssMessageSenderImpl implements WssMessageSender {
         if (queue == null) {
             return "Queue not found";
         }
-        return String.format("HiPri=%d, LoPri=%d", 
+        return String.format(Locale.ROOT, "HiPri=%d, LoPri=%d", 
                 queue.getHighPriorityQueueSize(), 
                 queue.getLowPriorityQueueSize());
     }

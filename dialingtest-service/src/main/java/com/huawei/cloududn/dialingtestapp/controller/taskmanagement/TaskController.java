@@ -112,13 +112,11 @@ public class TaskController implements TasksApi {
                 logger.warn("Validation failed: targetUes is null or empty");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             } else {
-                com.huawei.cloududn.dialingtestapp.service.taskmanagement.dto.StartTaskRequest req = new com.huawei.cloududn.dialingtestapp.service.taskmanagement.dto.StartTaskRequest();
-                req.setBusinessType(businessType);
-                req.setScenario(body.getScenario() == null ? null : body.getScenario().toString());
-                req.setScriptNames(scriptNames);
-                req.setTargetUes(targetUes);
-                req.setFailedApps(body.getFailedApps());
-                TaskEntity task = triggerService.createTaskFromRequest(req);
+                // Reuse the API request directly (no conversion needed)
+                body.setBusinessType(businessType);
+                body.setScriptNames(scriptNames);
+                body.setTargetUes(targetUes);
+                TaskEntity task = triggerService.createTaskFromRequest(body);
                 
                 logger.info("Task started successfully with id: {} by user: {}", task.getId(), xUsername);
                 return ResponseEntity.status(HttpStatus.ACCEPTED)

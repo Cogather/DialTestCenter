@@ -34,7 +34,7 @@ public class ExcelParseService {
             // 读取表头
             Row headerRow = sheet.getRow(0);
             if (headerRow == null) {
-                throw new RuntimeException("Excel文件格式错误：缺少表头行");
+                throw new IllegalArgumentException("Excel文件格式错误：缺少表头行");
             }
             
             Map<String, Integer> columnIndexMap = buildColumnIndexMap(headerRow);
@@ -58,7 +58,7 @@ public class ExcelParseService {
                 testCases.add(testCase);
             }
         } catch (IOException e) {
-            throw new RuntimeException("解析Excel文件失败", e);
+            throw new IllegalStateException("解析Excel文件失败", e);
         }
         
         return testCases;

@@ -41,14 +41,16 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleValidationException(
+            MethodArgumentNotValidException e, HttpServletRequest request) {
         logger.error("参数验证异常 - URI: {}, Method: {}, Message: {}", 
                 request.getRequestURI(), request.getMethod(), e.getMessage(), e);
         
         StringBuilder errorMessage = new StringBuilder("参数验证失败: ");
         if (e.getBindingResult() != null && e.getBindingResult().getFieldErrors() != null) {
             e.getBindingResult().getFieldErrors().forEach(error -> 
-                    errorMessage.append(error.getField()).append(" ").append(error.getDefaultMessage()).append("; "));
+                    errorMessage.append(error.getField()).append(" ")
+                            .append(error.getDefaultMessage()).append("; "));
         } else {
             errorMessage.append("验证失败");
         }
@@ -65,7 +67,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Map<String, Object>> handleConstraintViolationException(ConstraintViolationException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleConstraintViolationException(
+            ConstraintViolationException e, HttpServletRequest request) {
         logger.error("约束违反异常 - URI: {}, Method: {}, Message: {}", 
                 request.getRequestURI(), request.getMethod(), e.getMessage(), e);
         
@@ -81,7 +84,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<Map<String, Object>> handleMissingParameterException(MissingServletRequestParameterException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleMissingParameterException(
+            MissingServletRequestParameterException e, HttpServletRequest request) {
         logger.error("缺少请求参数异常 - URI: {}, Method: {}, Parameter: {}", 
                 request.getRequestURI(), request.getMethod(), e.getParameterName(), e);
         
@@ -98,7 +102,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Map<String, Object>> handleTypeMismatchException(MethodArgumentTypeMismatchException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleTypeMismatchException(
+            MethodArgumentTypeMismatchException e, HttpServletRequest request) {
         logger.error("参数类型不匹配异常 - URI: {}, Method: {}, Parameter: {}, Required Type: {}", 
                 request.getRequestURI(), request.getMethod(), e.getName(), 
                 e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "未知类型", e);
@@ -117,7 +122,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException e, HttpServletRequest request) {
         logger.error("文件上传大小超限异常 - URI: {}, Method: {}, Max Size: {}", 
                 request.getRequestURI(), request.getMethod(), e.getMaxUploadSize(), e);
         
@@ -134,7 +140,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNoHandlerFoundException(NoHandlerFoundException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleNoHandlerFoundException(
+            NoHandlerFoundException e, HttpServletRequest request) {
         logger.error("404异常 - URI: {}, Method: {}", request.getRequestURI(), request.getMethod(), e);
         
         String message = "请求的资源不存在: " + e.getRequestURL();
@@ -150,7 +157,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(DuplicateKeyException.class)
-    public ResponseEntity<Map<String, Object>> handleDuplicateKeyException(DuplicateKeyException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleDuplicateKeyException(
+            DuplicateKeyException e, HttpServletRequest request) {
         logger.warn("重复键异常 - URI: {}, Method: {}, Message: {}", 
                 request.getRequestURI(), request.getMethod(), e.getMessage());
         
@@ -171,7 +179,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, Object>> handleResponseStatusException(ResponseStatusException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleResponseStatusException(
+            ResponseStatusException e, HttpServletRequest request) {
         HttpStatus status = e.getStatus();
         logger.warn("ResponseStatusException - URI: {}, Method: {}, Status: {}, Message: {}", 
                 request.getRequestURI(), request.getMethod(), status, e.getReason());
@@ -192,7 +201,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
+            IllegalArgumentException e, HttpServletRequest request) {
         logger.error("非法参数异常 - URI: {}, Method: {}, Message: {}", 
                 request.getRequestURI(), request.getMethod(), e.getMessage(), e);
         
@@ -208,7 +218,8 @@ public class GlobalExceptionHandler {
      * @return 错误响应
      */
     @ExceptionHandler(NullPointerException.class)
-    public ResponseEntity<Map<String, Object>> handleNullPointerException(NullPointerException e, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleNullPointerException(
+            NullPointerException e, HttpServletRequest request) {
         logger.error("空指针异常 - URI: {}, Method: {}", request.getRequestURI(), request.getMethod(), e);
         
         Map<String, Object> response = createErrorResponse("NULL_POINTER", "系统内部错误", 500);

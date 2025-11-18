@@ -13,22 +13,28 @@ import java.time.Instant;
 @Mapper
 public interface ExecutorDao {
 
-    @Select("SELECT name, ip, token, proxy, description, status, last_online_time AS lastOnlineTime FROM executor WHERE name = #{name}")
+    @Select("SELECT name, ip, token, proxy, description, status, " +
+            "last_online_time AS lastOnlineTime " +
+            "FROM executor WHERE name = #{name}")
     Executor findByName(@Param("name") String name);
 
     @Insert("INSERT INTO executor(name, ip, token, proxy, description, status, last_online_time) VALUES(" +
             "#{name}, #{ip}, #{token}, #{proxy}, #{description}, #{status}, #{lastOnlineTime}")
     int insert(Executor entity);
 
-    @Update("INSERT INTO executor(name, token, status, last_online_time) VALUES(#{name}, #{token}, #{status}, #{lastOnlineTime}) " +
-            "ON CONFLICT (name) DO UPDATE SET token = #{token}, status = #{status}, last_online_time = #{lastOnlineTime}")
+    @Update("INSERT INTO executor(name, token, status, last_online_time) " +
+            "VALUES(#{name}, #{token}, #{status}, #{lastOnlineTime}) " +
+            "ON CONFLICT (name) DO UPDATE SET " +
+            "token = #{token}, status = #{status}, last_online_time = #{lastOnlineTime}")
     int updateTokenAndStatus(@Param("name") String name,
                              @Param("token") String token,
                              @Param("status") Integer status,
                              @Param("lastOnlineTime") Instant lastOnlineTime);
 
-    @Insert("INSERT INTO executor(name, status, last_online_time) VALUES(#{name}, #{status}, #{lastOnlineTime}) " +
-            "ON CONFLICT (name) DO UPDATE SET status = EXCLUDED.status, last_online_time = EXCLUDED.last_online_time")
+    @Insert("INSERT INTO executor(name, status, last_online_time) " +
+            "VALUES(#{name}, #{status}, #{lastOnlineTime}) " +
+            "ON CONFLICT (name) DO UPDATE SET " +
+            "status = EXCLUDED.status, last_online_time = EXCLUDED.last_online_time")
     int updateStatus(@Param("name") String name,
                      @Param("status") Integer status,
                      @Param("lastOnlineTime") Instant lastOnlineTime);
@@ -76,10 +82,13 @@ public interface ExecutorDao {
      * @param status status string ("ONLINE", "OFFLINE", etc.)
      */
     @Insert("INSERT INTO executor(name, token, status, last_online_time) " +
-            "VALUES(#{name}, #{token}::TEXT, CASE WHEN #{status} = 'ONLINE' THEN 1 WHEN #{status} = 'OFFLINE' THEN 0 ELSE 2 END, NOW()) " +
+            "VALUES(#{name}, #{token}::TEXT, " +
+            "CASE WHEN #{status} = 'ONLINE' THEN 1 WHEN #{status} = 'OFFLINE' THEN 0 ELSE 2 END, " +
+            "NOW()) " +
             "ON CONFLICT (name) DO UPDATE SET " +
             "token = #{token}::TEXT, " +
-            "status = CASE WHEN #{status} = 'ONLINE' THEN 1 WHEN #{status} = 'OFFLINE' THEN 0 ELSE 2 END, " +
+            "status = CASE WHEN #{status} = 'ONLINE' THEN 1 " +
+            "WHEN #{status} = 'OFFLINE' THEN 0 ELSE 2 END, " +
             "last_online_time = NOW()")
     int saveOrUpdateExecutor(@Param("name") String name,
                              @Param("token") long token,

@@ -5,6 +5,7 @@ import com.huawei.cloududn.dialingtest.model.*;
 import com.huawei.cloududn.dialingtestapp.service.DialUserService;
 import com.huawei.cloududn.dialingtestapp.service.UserRoleService;
 import com.huawei.cloududn.dialingtestapp.util.PermissionValidator;
+import com.huawei.cloududn.dialingtestapp.util.PermissionValidator.PermissionValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -127,7 +128,8 @@ public class DialUserController implements DialusersApi {
      * @param permissionResult 权限校验结果
      * @return 错误响应，如果权限通过则返回null
      */
-    private ResponseEntity<DialUserResponse> handlePermissionError(PermissionValidator.PermissionValidationResult permissionResult) {
+    private ResponseEntity<DialUserResponse> handlePermissionError(
+            PermissionValidationResult permissionResult) {
         if (permissionResult.isValid()) {
             return null;
         }
@@ -262,7 +264,8 @@ public class DialUserController implements DialusersApi {
     public ResponseEntity<DialUserResponse> updateDialUser(String xUsername, Integer id, UpdateDialUserRequest body) {
         try {
             // 检查权限（需要ADMIN权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdmin(xUsername, "update dial user");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdmin(xUsername, "update dial user");
             ResponseEntity<DialUserResponse> permissionError = handlePermissionError(permissionResult);
             if (permissionError != null) {
                 return permissionError;
@@ -293,7 +296,8 @@ public class DialUserController implements DialusersApi {
     public ResponseEntity<Void> deleteDialUser(Integer id, String xUsername) {
         try {
             // 检查权限（需要ADMIN权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdmin(xUsername, "delete dial user");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdmin(xUsername, "delete dial user");
             if (!permissionResult.isValid()) {
                 HttpStatus status = permissionResult.getErrorMessage().contains("未提供用户名") 
                     ? HttpStatus.UNAUTHORIZED : HttpStatus.FORBIDDEN;
@@ -323,10 +327,14 @@ public class DialUserController implements DialusersApi {
      * @return 创建的用户信息
      */
     @Override
-    public ResponseEntity<DialUserResponse> createDialUser(@RequestHeader("X-Csrf-Token") String xCsrfToken, @RequestHeader("X-Username") String xUsername, CreateDialUserRequest body) {
+    public ResponseEntity<DialUserResponse> createDialUser(
+            @RequestHeader("X-Csrf-Token") String xCsrfToken,
+            @RequestHeader("X-Username") String xUsername,
+            CreateDialUserRequest body) {
         try {
             // 检查权限（需要ADMIN权限）
-            PermissionValidator.PermissionValidationResult permissionResult = permissionValidator.checkAdmin(xUsername, "create dial user");
+            PermissionValidationResult permissionResult = 
+                    permissionValidator.checkAdmin(xUsername, "create dial user");
             ResponseEntity<DialUserResponse> permissionError = handlePermissionError(permissionResult);
             if (permissionError != null) {
                 return permissionError;

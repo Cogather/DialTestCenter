@@ -25,8 +25,10 @@ import java.util.List;
 public interface TaskDao {
 
     @Insert({
-        "INSERT INTO task (main_task_id, parent_task_id, creator, status, result, input, output, context, template_task_id)",
-        "VALUES (#{mainTaskId}, #{parentTaskId}, #{creator}, #{status}, #{result}, #{input}, #{output}, #{context}, #{templateTaskId})"
+        "INSERT INTO task (main_task_id, parent_task_id, creator, status, result, " +
+        "input, output, context, template_task_id)",
+        "VALUES (#{mainTaskId}, #{parentTaskId}, #{creator}, #{status}, #{result}, " +
+        "#{input}, #{output}, #{context}, #{templateTaskId})"
     })
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(TaskEntity task);
@@ -73,7 +75,8 @@ public interface TaskDao {
         "TO_CHAR(start_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as startTime, ",
         "TO_CHAR(end_time, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') as endTime, ",
         "status, result, input, output, context, template_task_id as templateTaskId ",
-        "FROM task WHERE (main_task_id=#{mainTaskId} OR parent_task_id=#{mainTaskId}) AND id<>#{mainTaskId} ORDER BY start_time ASC"
+        "FROM task WHERE (main_task_id=#{mainTaskId} OR parent_task_id=#{mainTaskId}) " +
+        "AND id<>#{mainTaskId} ORDER BY start_time ASC"
     })
     List<TaskEntity> findSubTasksByMainTaskId(@Param("mainTaskId") Long mainTaskId);
 }
