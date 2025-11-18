@@ -43,12 +43,32 @@ public class TemplateControllerTest {
         when(templateService.create(any())).thenReturn(template);
 
         // Act
-        ResponseEntity<TemplateEntity> response = templateController.createTemplate(new TemplateEntity());
+        ResponseEntity<TemplateEntity> response = templateController.createTemplate("test-csrf-token", "admin", new TemplateEntity());
 
         // Assert
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(template, response.getBody());
         verify(templateService).create(any());
+    }
+
+    @Test
+    public void testCreateTemplate_MissingUsername_ReturnsUnauthorized() {
+        // Act
+        ResponseEntity<TemplateEntity> response = templateController.createTemplate("test-csrf-token", null, new TemplateEntity());
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        verify(templateService, never()).create(any());
+    }
+
+    @Test
+    public void testCreateTemplate_MissingCsrfToken_ReturnsForbidden() {
+        // Act
+        ResponseEntity<TemplateEntity> response = templateController.createTemplate(null, "admin", new TemplateEntity());
+
+        // Assert
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(templateService, never()).create(any());
     }
 
     @Test
@@ -99,7 +119,7 @@ public class TemplateControllerTest {
         when(templateService.update(any())).thenReturn(template);
 
         // Act
-        ResponseEntity<TemplateEntity> response = templateController.updateTemplate(1, new TemplateEntity());
+        ResponseEntity<TemplateEntity> response = templateController.updateTemplate("admin", 1, new TemplateEntity());
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -107,13 +127,33 @@ public class TemplateControllerTest {
     }
 
     @Test
+    public void testUpdateTemplate_MissingUsername_ReturnsUnauthorized() {
+        // Act
+        ResponseEntity<TemplateEntity> response = templateController.updateTemplate(null, 1, new TemplateEntity());
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        verify(templateService, never()).update(any());
+    }
+
+    @Test
     public void testDeleteTemplate_Success_ReturnsNoContent() {
         // Act
-        ResponseEntity<Void> response = templateController.deleteTemplate(1);
+        ResponseEntity<Void> response = templateController.deleteTemplate("admin", 1);
 
         // Assert
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         verify(templateService).delete(1L);
+    }
+
+    @Test
+    public void testDeleteTemplate_MissingUsername_ReturnsUnauthorized() {
+        // Act
+        ResponseEntity<Void> response = templateController.deleteTemplate(null, 1);
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        verify(templateService, never()).delete(anyLong());
     }
 }
 

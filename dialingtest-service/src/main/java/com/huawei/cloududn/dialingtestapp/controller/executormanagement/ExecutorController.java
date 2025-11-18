@@ -85,11 +85,28 @@ public class ExecutorController implements ExecutorsApi {
     }
 
     @Override
-    public ResponseEntity<OperationResponse> refreshExecutor(RefreshExecutorRequest refreshExecutorRequest) {
+    public ResponseEntity<OperationResponse> refreshExecutor(
+            String xCsrfToken,
+            String xUsername,
+            RefreshExecutorRequest refreshExecutorRequest) {
         String name = refreshExecutorRequest == null ? null : refreshExecutorRequest.getName();
-        logger.info("Refresh executor request received for: {}", name);
+        logger.info("Refresh executor request received for: {} by user: {}", name, xUsername);
 
         try {
+            // 验证用户名
+            if (xUsername == null || xUsername.trim().isEmpty()) {
+                logger.warn("Refresh executor request missing username");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(op(false, "Missing username"));
+            }
+
+            // 验证CSRF令牌
+            if (xCsrfToken == null || xCsrfToken.trim().isEmpty()) {
+                logger.warn("Refresh executor request missing CSRF token");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(op(false, "Missing CSRF token"));
+            }
+
             if (name == null || name.trim().isEmpty()) {
                 logger.warn("Refresh executor request missing executor name");
                 return ResponseEntity.badRequest()
@@ -114,13 +131,14 @@ public class ExecutorController implements ExecutorsApi {
             // 由于当前通信协议中没有专门的刷新消息类型，
             // 执行机信息刷新主要通过心跳机制（Report-Msg）自动进行
             // 这里我们记录刷新请求，并在下次心跳时可以特殊处理
-            logger.info("Executor refresh request acknowledged for: {}. Info will be updated on next heartbeat.", name);
+            logger.info("Executor refresh request acknowledged for: {} by user: {}. Info will be updated on next heartbeat.", 
+                name, xUsername);
 
             // 返回成功，实际刷新通过心跳机制进行
             return ResponseEntity.ok(op(true, "Refresh request acknowledged. Executor info will be updated on next heartbeat."));
 
         } catch (Exception e) {
-            logger.error("Failed to process refresh executor request for: {}", name, e);
+            logger.error("Failed to process refresh executor request for: {} by user: {}", name, xUsername, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(op(false, "Internal server error: " + e.getMessage()));
         }

@@ -94,7 +94,7 @@ public class TaskControllerTest {
         when(triggerService.createTaskFromRequest(any())).thenReturn(task);
 
         // Act
-        ResponseEntity<TaskEntity> response = taskController.startTask(request);
+        ResponseEntity<TaskEntity> response = taskController.startTask("test-csrf-token", "admin", request);
 
         // Assert
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
@@ -104,21 +104,53 @@ public class TaskControllerTest {
     @Test
     public void testStartTask_InvalidRequest_ReturnsBadRequest() {
         // Test null body
-        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask(null).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", null).getStatusCode());
         
         // Test missing businessType
         StartTaskRequest req1 = new StartTaskRequest();
         req1.setScriptNames(Arrays.asList("s1"));
         req1.setTargetUes(Arrays.asList("u1"));
-        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask(req1).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", req1).getStatusCode());
         
         // Test empty scriptNames
         StartTaskRequest req2 = new StartTaskRequest();
         req2.setBusinessType("test");
         req2.setScriptNames(Arrays.asList());
         req2.setTargetUes(Arrays.asList("u1"));
-        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask(req2).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", req2).getStatusCode());
         
+        verify(triggerService, never()).createTaskFromRequest(any());
+    }
+
+    @Test
+    public void testStartTask_MissingUsername_ReturnsUnauthorized() {
+        // Arrange
+        StartTaskRequest request = new StartTaskRequest();
+        request.setBusinessType("test");
+        request.setScriptNames(Arrays.asList("script1"));
+        request.setTargetUes(Arrays.asList("ue1"));
+
+        // Act
+        ResponseEntity<TaskEntity> response = taskController.startTask("test-csrf-token", null, request);
+
+        // Assert
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        verify(triggerService, never()).createTaskFromRequest(any());
+    }
+
+    @Test
+    public void testStartTask_MissingCsrfToken_ReturnsForbidden() {
+        // Arrange
+        StartTaskRequest request = new StartTaskRequest();
+        request.setBusinessType("test");
+        request.setScriptNames(Arrays.asList("script1"));
+        request.setTargetUes(Arrays.asList("ue1"));
+
+        // Act
+        ResponseEntity<TaskEntity> response = taskController.startTask(null, "admin", request);
+
+        // Assert
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         verify(triggerService, never()).createTaskFromRequest(any());
     }
 

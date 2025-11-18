@@ -34,15 +34,47 @@ public class TemplateController implements TemplatesApi {
     private TemplateMgmtService templateService;
 
     @Override
-    public ResponseEntity<TemplateEntity> createTemplate(@RequestBody TemplateEntity body) {
+    public ResponseEntity<TemplateEntity> createTemplate(
+            String xCsrfToken,
+            String xUsername,
+            @RequestBody TemplateEntity body) {
+        logger.info("Create template request received by user: {}", xUsername);
+
+        // 验证用户名
+        if (xUsername == null || xUsername.trim().isEmpty()) {
+            logger.warn("Create template request missing username");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // 验证CSRF令牌
+        if (xCsrfToken == null || xCsrfToken.trim().isEmpty()) {
+            logger.warn("Create template request missing CSRF token");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // 设置创建人
+        if (body != null) {
+            body.setCreator(xUsername);
+        }
+
         TemplateEntity saved = templateService.create(body);
+        logger.info("Template created successfully with id: {} by user: {}", saved.getId(), xUsername);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @Override
-    public ResponseEntity<Void> deleteTemplate(Integer id) {
+    public ResponseEntity<Void> deleteTemplate(String xUsername, Integer id) {
+        logger.info("Delete template request received for id: {} by user: {}", id, xUsername);
+
+        // 验证用户名
+        if (xUsername == null || xUsername.trim().isEmpty()) {
+            logger.warn("Delete template request missing username");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         Long longId = id == null ? null : id.longValue();
         templateService.delete(longId);
+        logger.info("Template deleted successfully with id: {} by user: {}", id, xUsername);
         return ResponseEntity.noContent().build();
     }
 
@@ -64,9 +96,21 @@ public class TemplateController implements TemplatesApi {
     }
 
     @Override
-    public ResponseEntity<TemplateEntity> updateTemplate(Integer id, @RequestBody TemplateEntity body) {
+    public ResponseEntity<TemplateEntity> updateTemplate(
+            String xUsername,
+            Integer id,
+            @RequestBody TemplateEntity body) {
+        logger.info("Update template request received for id: {} by user: {}", id, xUsername);
+
+        // 验证用户名
+        if (xUsername == null || xUsername.trim().isEmpty()) {
+            logger.warn("Update template request missing username");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         body.setId(id);
         TemplateEntity updated = templateService.update(body);
+        logger.info("Template updated successfully with id: {} by user: {}", id, xUsername);
         return ResponseEntity.ok(updated);
     }
 }

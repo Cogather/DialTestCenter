@@ -30,6 +30,16 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/TemplateEntity'
+        - name: "X-Csrf-Token"
+          in: "header"
+          required: true
+          type: "string"
+          description: "CSRF防护令牌"
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
       responses:
         '201':
           description: Created
@@ -57,6 +67,11 @@ paths:
       consumes:
         - application/json
       parameters:
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
         - name: id
           in: path
           required: true
@@ -75,6 +90,11 @@ paths:
       operationId: deleteTemplate
       summary: Delete template
       parameters:
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
         - name: id
           in: path
           required: true

@@ -147,7 +147,7 @@ public class ExecutorControllerTest {
         when(executorDao.findByName("executor1")).thenReturn(executor);
 
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(request);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", request);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -167,7 +167,7 @@ public class ExecutorControllerTest {
         request.setName(null);
 
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(request);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", request);
 
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -186,7 +186,7 @@ public class ExecutorControllerTest {
         request.setName("  ");
 
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(request);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", request);
 
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -207,7 +207,7 @@ public class ExecutorControllerTest {
         when(executorDao.findByName("nonexistent-executor")).thenReturn(null);
 
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(request);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", request);
 
         // Then
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -233,7 +233,7 @@ public class ExecutorControllerTest {
         when(executorDao.findByName("offline-executor")).thenReturn(executor);
 
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(request);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", request);
 
         // Then
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
@@ -259,7 +259,7 @@ public class ExecutorControllerTest {
         when(executorDao.findByName("numeric-status-executor")).thenReturn(executor);
 
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(request);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", request);
 
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -274,7 +274,7 @@ public class ExecutorControllerTest {
     @Test
     public void testRefreshExecutor_NullRequest() {
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(null);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", null);
 
         // Then
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -295,13 +295,51 @@ public class ExecutorControllerTest {
         when(executorDao.findByName("exception-executor")).thenThrow(new RuntimeException("Database error"));
 
         // When
-        ResponseEntity<OperationResponse> response = controller.refreshExecutor(request);
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", "admin", request);
 
         // Then
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertTrue(response.getBody().getMessage().contains("Internal server error"));
+    }
+
+    /**
+     * 测试refreshExecutor：缺少用户名
+     */
+    @Test
+    public void testRefreshExecutor_MissingUsername() {
+        // Given
+        RefreshExecutorRequest request = new RefreshExecutorRequest();
+        request.setName("executor1");
+
+        // When
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor("test-csrf-token", null, request);
+
+        // Then
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertTrue(response.getBody().getMessage().contains("Missing username"));
+    }
+
+    /**
+     * 测试refreshExecutor：缺少CSRF令牌
+     */
+    @Test
+    public void testRefreshExecutor_MissingCsrfToken() {
+        // Given
+        RefreshExecutorRequest request = new RefreshExecutorRequest();
+        request.setName("executor1");
+
+        // When
+        ResponseEntity<OperationResponse> response = controller.refreshExecutor(null, "admin", request);
+
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertTrue(response.getBody().getMessage().contains("Missing CSRF token"));
     }
 
     /**

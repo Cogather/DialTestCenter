@@ -74,8 +74,26 @@ public class TaskController implements TasksApi {
     }
 
     @Override
-    public ResponseEntity<TaskEntity> startTask(@RequestBody StartTaskRequest body) {
+    public ResponseEntity<TaskEntity> startTask(
+            String xCsrfToken,
+            String xUsername,
+            @RequestBody StartTaskRequest body) {
+        logger.info("Start task request received by user: {}", xUsername);
+
+        // 验证用户名
+        if (xUsername == null || xUsername.trim().isEmpty()) {
+            logger.warn("Start task request missing username");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // 验证CSRF令牌
+        if (xCsrfToken == null || xCsrfToken.trim().isEmpty()) {
+            logger.warn("Start task request missing CSRF token");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         if (body == null) {
+            logger.warn("Start task request body is null");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(null);
         } else {
@@ -101,6 +119,8 @@ public class TaskController implements TasksApi {
                 req.setTargetUes(targetUes);
                 req.setFailedApps(body.getFailedApps());
                 TaskEntity task = triggerService.createTaskFromRequest(req);
+                
+                logger.info("Task started successfully with id: {} by user: {}", task.getId(), xUsername);
                 return ResponseEntity.status(HttpStatus.ACCEPTED)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(task);

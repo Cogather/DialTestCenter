@@ -44,12 +44,19 @@ def load_request_config(env_prefix: Optional[str] = None,
     verify_key = f'{env_prefix}_API_VERIFY_SSL' if env_prefix else 'API_VERIFY_SSL'
     timeout = int(os.getenv(timeout_key, str(default_timeout)))
     verify_ssl = _get_bool_env(verify_key, default_verify_ssl)
+    
+    # 获取测试用户名和CSRF令牌（用于测试环境）
+    test_username = os.getenv('TEST_USERNAME', 'test_admin')
+    test_csrf_token = os.getenv('TEST_CSRF_TOKEN', 'test-csrf-token-12345')
+    
     return {
         'timeout': timeout,
         'verify_ssl': verify_ssl,
         'headers': {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
+            'X-Username': test_username,
+            'X-Csrf-Token': test_csrf_token,
         }
     }
 

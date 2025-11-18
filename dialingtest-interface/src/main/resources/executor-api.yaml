@@ -66,6 +66,16 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/RefreshExecutorRequest'
+        - name: "X-Csrf-Token"
+          in: "header"
+          required: true
+          type: "string"
+          description: "CSRF防护令牌"
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
       responses:
         '200':
           description: Refresh command sent
