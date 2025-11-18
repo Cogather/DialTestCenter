@@ -41,11 +41,14 @@ public class TaskOrchestratorServiceTest {
         task.setId(1);
         task.setContext("{}");
         Mockito.when(taskMgmtService.findById(1L)).thenReturn(task);
-        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class)))
+        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
+                        Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.START_TRAINING_DIALING);
         orchestrator.sendResultEvent(1L, true);
-        Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION), Mockito.eq(TaskEvent.TASK_SUCCESS), Mockito.any(TaskContext.class));
-        Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("RUNNING"), Mockito.isNull(), Mockito.anyString());
+        Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION),
+                Mockito.eq(TaskEvent.TASK_SUCCESS), Mockito.any(TaskContext.class));
+        Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("RUNNING"),
+                Mockito.isNull(), Mockito.anyString());
     }
 
     @Test
@@ -65,10 +68,12 @@ public class TaskOrchestratorServiceTest {
         task.setId(1);
         task.setContext("{\"step\":\"START_VALIDATION\",\"data\":{}}");
         Mockito.when(taskMgmtService.findById(1L)).thenReturn(task);
-        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class)))
+        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
+                        Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.START_TRAINING_DIALING);
         orchestrator.sendResultEvent(1L, false);
-        Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION), Mockito.eq(TaskEvent.TASK_FAILED), Mockito.any(TaskContext.class));
+        Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION),
+                Mockito.eq(TaskEvent.TASK_FAILED), Mockito.any(TaskContext.class));
     }
 
     @Test
@@ -77,11 +82,14 @@ public class TaskOrchestratorServiceTest {
         task.setId(1);
         task.setContext("{\"step\":\"START_VALIDATION\",\"data\":{}}");
         Mockito.when(taskMgmtService.findById(1L)).thenReturn(task);
-        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class)))
+        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
+                        Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.FINAL);
         orchestrator.stopTask(1L);
-        Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION), Mockito.eq(TaskEvent.STOP), Mockito.any(TaskContext.class));
-        Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("STOPPED"), Mockito.eq("STOPPED"), Mockito.anyString());
+        Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION),
+                Mockito.eq(TaskEvent.STOP), Mockito.any(TaskContext.class));
+        Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("STOPPED"),
+                Mockito.eq("STOPPED"), Mockito.anyString());
     }
 
     @Test
@@ -90,10 +98,12 @@ public class TaskOrchestratorServiceTest {
         task.setId(1);
         task.setContext("{\"step\":\"START_FULL_RELEASE\",\"data\":{}}");
         Mockito.when(taskMgmtService.findById(1L)).thenReturn(task);
-        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class)))
+        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
+                        Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.FINAL);
         orchestrator.sendResultEvent(1L, true);
-        Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("COMPLETED"), Mockito.eq("SUCCESS"), Mockito.anyString());
+        Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("COMPLETED"),
+                Mockito.eq("SUCCESS"), Mockito.anyString());
     }
 
     @Test
@@ -103,15 +113,18 @@ public class TaskOrchestratorServiceTest {
         task1.setContext("{\"step\":\"START_VALIDATION\",\"data\":{\"last_callback_fingerprint\":\"S:null\"}}");
         Mockito.when(taskMgmtService.findById(1L)).thenReturn(task1);
         orchestrator.sendResultEvent(1L, true);
-        Mockito.verify(taskStateMachine, Mockito.never()).sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class));
+        Mockito.verify(taskStateMachine, Mockito.never()).sendEvent(Mockito.any(TaskState.class),
+                Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class));
         TaskEntity task2 = new TaskEntity();
         task2.setId(2);
         task2.setContext("");
         Mockito.when(taskMgmtService.findById(2L)).thenReturn(task2);
-        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class)))
+        Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
+                        Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.FINAL);
         orchestrator.sendResultEvent(2L, true);
-        Mockito.verify(taskStateMachine).sendEvent(Mockito.any(TaskState.class), Mockito.eq(TaskEvent.TASK_SUCCESS), Mockito.any(TaskContext.class));
+        Mockito.verify(taskStateMachine).sendEvent(Mockito.any(TaskState.class),
+                Mockito.eq(TaskEvent.TASK_SUCCESS), Mockito.any(TaskContext.class));
     }
 }
 

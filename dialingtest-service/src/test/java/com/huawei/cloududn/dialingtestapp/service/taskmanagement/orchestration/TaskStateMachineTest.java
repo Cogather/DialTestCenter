@@ -60,7 +60,8 @@ public class TaskStateMachineTest {
     public void testSendEvent_TrainingDialingSuccess() {
         TaskContext context = new TaskContext();
         context.getData().put("taskId", 1L);
-        TaskState result = taskStateMachine.sendEvent(TaskState.START_TRAINING_DIALING, TaskEvent.TASK_SUCCESS, context);
+        TaskState result = taskStateMachine.sendEvent(TaskState.START_TRAINING_DIALING,
+                TaskEvent.TASK_SUCCESS, context);
         assertEquals(TaskState.START_MODEL_TRAIN, result);
     }
 

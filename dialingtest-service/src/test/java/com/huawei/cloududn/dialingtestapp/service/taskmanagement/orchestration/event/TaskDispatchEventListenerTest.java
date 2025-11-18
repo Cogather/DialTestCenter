@@ -53,7 +53,8 @@ public class TaskDispatchEventListenerTest {
     public void testHandleTaskDispatch_InvalidPayload() {
         TaskDispatchEvent event = new TaskDispatchEvent(this, "session-2", "invalid-payload", "124");
         listener.handleTaskDispatch(event);
-        Mockito.verify(taskInterfaceService, Mockito.never()).dispatchTaskToAgent(Mockito.any(TaskDispatchRequest.class));
+        Mockito.verify(taskInterfaceService, Mockito.never())
+                .dispatchTaskToAgent(Mockito.any(TaskDispatchRequest.class));
     }
 }
 

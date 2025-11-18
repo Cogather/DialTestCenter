@@ -134,8 +134,10 @@ public class WssMessageSenderImplTest {
             java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             field.set(target, value);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to set field: " + fieldName, e);
+        } catch (NoSuchFieldException e) {
+            throw new AssertionError("Failed to find field: " + fieldName, e);
+        } catch (IllegalAccessException e) {
+            throw new AssertionError("Failed to access field: " + fieldName, e);
         }
     }
 }

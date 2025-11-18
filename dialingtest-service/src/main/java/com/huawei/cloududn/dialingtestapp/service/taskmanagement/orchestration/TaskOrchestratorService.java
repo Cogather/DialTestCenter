@@ -143,8 +143,9 @@ public class TaskOrchestratorService {
      * @param mainTaskId 主任务ID
      * @param currentState 当前状态
      * @return true表示重复回调
-     */
-    private boolean isDuplicateCallback(TaskContext ctx, String newFingerprint, Long mainTaskId, TaskState currentState) {
+      */
+     private boolean isDuplicateCallback(TaskContext ctx, String newFingerprint, Long mainTaskId,
+             TaskState currentState) {
         Object lastFpObj = ctx.getData().get("last_callback_fingerprint");
         if (lastFpObj instanceof String) {
             String lastFp = (String) lastFpObj;
@@ -187,8 +188,9 @@ public class TaskOrchestratorService {
      * @param ctx 任务上下文
      * @param mainTaskId 主任务ID
      * @return 新状态
-     */
-    private TaskState executeStateTransition(TaskState currentState, boolean success, TaskContext ctx, Long mainTaskId) {
+      */
+     private TaskState executeStateTransition(TaskState currentState, boolean success, TaskContext ctx,
+             Long mainTaskId) {
         TaskEvent event = success ? TaskEvent.TASK_SUCCESS : TaskEvent.TASK_FAILED;
         TaskState newState = taskStateMachine.sendEvent(currentState, event, ctx);
         logger.info("Task {} sent event {} on {} -> {}", mainTaskId, event, currentState, newState);

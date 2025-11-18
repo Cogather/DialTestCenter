@@ -18,7 +18,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -105,20 +104,23 @@ public class TaskControllerTest {
     @Test
     public void testStartTask_InvalidRequest_ReturnsBadRequest() {
         // Test null body
-        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", null).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST,
+                taskController.startTask("test-csrf-token", "admin", null).getStatusCode());
         
         // Test missing businessType
         StartTaskRequest req1 = new StartTaskRequest();
         req1.setScriptNames(Collections.singletonList("s1"));
         req1.setTargetUes(Collections.singletonList("u1"));
-        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", req1).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST,
+                taskController.startTask("test-csrf-token", "admin", req1).getStatusCode());
         
         // Test empty scriptNames
         StartTaskRequest req2 = new StartTaskRequest();
         req2.setBusinessType("test");
         req2.setScriptNames(Collections.emptyList());
         req2.setTargetUes(Collections.singletonList("u1"));
-        assertEquals(HttpStatus.BAD_REQUEST, taskController.startTask("test-csrf-token", "admin", req2).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST,
+                taskController.startTask("test-csrf-token", "admin", req2).getStatusCode());
         
         verify(triggerService, never()).createTaskFromRequest(any());
     }

@@ -15,7 +15,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +58,8 @@ public class TaskDispatchEventListener {
                 String executorName = (String) payload.get("executor_name");
                 if (executorName == null || executorName.isEmpty()) {
                     // 自动选择执行机
-                    ExecutorSelectionService.ExecutorUeInfo executorUeInfo = executorSelectionService.selectIdleExecutorAndUe();
+                    ExecutorSelectionService.ExecutorUeInfo executorUeInfo =
+                            executorSelectionService.selectIdleExecutorAndUe();
                     if (executorUeInfo != null) {
                         executorName = executorUeInfo.getExecutor().getName();
                         logger.info("Auto-selected executor: {}", executorName);

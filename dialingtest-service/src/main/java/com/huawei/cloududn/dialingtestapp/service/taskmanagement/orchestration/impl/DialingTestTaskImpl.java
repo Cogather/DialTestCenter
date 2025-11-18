@@ -77,7 +77,8 @@ public class DialingTestTaskImpl {
                     TaskDispatchEvent event = new TaskDispatchEvent(this, sessionId, taskPayload, taskId);
                     if (eventPublisher != null) {
                         eventPublisher.publishEvent(event);
-                        logger.info("Task dispatch event published: taskId={}, executor={}, ue={}", taskId, executorName, ueSerial);
+                        logger.info("Task dispatch event published: taskId={}, executor={}, ue={}",
+                                taskId, executorName, ueSerial);
                     } else {
                         logger.warn("EventPublisher is null, skipping event publish: taskId={}", taskId);
                     }

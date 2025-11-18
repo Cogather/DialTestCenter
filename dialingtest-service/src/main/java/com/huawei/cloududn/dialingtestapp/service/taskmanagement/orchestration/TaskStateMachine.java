@@ -108,9 +108,12 @@ public class TaskStateMachine {
     private void initTransitionTable() {
         transitionTable = new HashMap<StateEventKey, TaskState>();
         transitionTable.put(key(TaskState.START_VALIDATION, TaskEvent.TASK_SUCCESS), TaskState.FINAL);
-        transitionTable.put(key(TaskState.START_VALIDATION, TaskEvent.TASK_FAILED), TaskState.START_TRAINING_DIALING);
-        transitionTable.put(key(TaskState.START_TRAINING_DIALING, TaskEvent.TASK_SUCCESS), TaskState.START_MODEL_TRAIN);
-        transitionTable.put(key(TaskState.START_TRAINING_DIALING, TaskEvent.TASK_FAILED), TaskState.START_TRAINING_DIALING);
+        transitionTable.put(key(TaskState.START_VALIDATION, TaskEvent.TASK_FAILED),
+                TaskState.START_TRAINING_DIALING);
+        transitionTable.put(key(TaskState.START_TRAINING_DIALING, TaskEvent.TASK_SUCCESS),
+                TaskState.START_MODEL_TRAIN);
+        transitionTable.put(key(TaskState.START_TRAINING_DIALING, TaskEvent.TASK_FAILED),
+                TaskState.START_TRAINING_DIALING);
         transitionTable.put(key(TaskState.START_MODEL_TRAIN, TaskEvent.TASK_SUCCESS), TaskState.START_MODEL_REPLAY);
         transitionTable.put(key(TaskState.START_MODEL_TRAIN, TaskEvent.TASK_FAILED), TaskState.FINAL);
         transitionTable.put(key(TaskState.START_MODEL_REPLAY, TaskEvent.TASK_SUCCESS), TaskState.START_GRAY_VALIDATION);

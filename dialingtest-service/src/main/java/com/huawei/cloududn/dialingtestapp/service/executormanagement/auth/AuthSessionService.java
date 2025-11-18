@@ -78,8 +78,9 @@ public class AuthSessionService {
         byte[] challengeBytes = generateChallenge();
         
         // Store pending context with empty username (will be provided in response)
-        pendingMap.put(session.getId(), 
-            new PendingAuthContext("", hostname, Base64.getEncoder().encodeToString(challengeBytes), Instant.now(), challengeId));
+        pendingMap.put(session.getId(),
+            new PendingAuthContext("", hostname, Base64.getEncoder().encodeToString(challengeBytes),
+                    Instant.now(), challengeId));
         
         // Send RegisterChallenge (V4 JSON format)
         RegisterChallengeDto challengeDto = new RegisterChallengeDto(challengeId, 
@@ -291,7 +292,8 @@ public class AuthSessionService {
         private final int challengeId;
 
         
-        private PendingAuthContext(String username, String executorName, String challenge, Instant createdAt, int challengeId) {
+        private PendingAuthContext(String username, String executorName, String challenge, Instant createdAt,
+                int challengeId) {
             this.username = username;
             this.executorName = executorName;
             this.challenge = challenge;

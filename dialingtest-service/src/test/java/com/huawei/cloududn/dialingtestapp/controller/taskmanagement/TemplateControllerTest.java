@@ -15,7 +15,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,7 +43,8 @@ public class TemplateControllerTest {
         when(templateService.create(any())).thenReturn(template);
 
         // Act
-        ResponseEntity<TemplateEntity> response = templateController.createTemplate("test-csrf-token", "admin", new TemplateEntity());
+        ResponseEntity<TemplateEntity> response =
+                templateController.createTemplate("test-csrf-token", "admin", new TemplateEntity());
 
         // Assert
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
@@ -55,7 +55,8 @@ public class TemplateControllerTest {
     @Test
     public void testCreateTemplate_MissingUsername_ReturnsUnauthorized() {
         // Act
-        ResponseEntity<TemplateEntity> response = templateController.createTemplate("test-csrf-token", null, new TemplateEntity());
+        ResponseEntity<TemplateEntity> response =
+                templateController.createTemplate("test-csrf-token", null, new TemplateEntity());
 
         // Assert
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
@@ -65,7 +66,8 @@ public class TemplateControllerTest {
     @Test
     public void testCreateTemplate_MissingCsrfToken_ReturnsForbidden() {
         // Act
-        ResponseEntity<TemplateEntity> response = templateController.createTemplate(null, "admin", new TemplateEntity());
+        ResponseEntity<TemplateEntity> response =
+                templateController.createTemplate(null, "admin", new TemplateEntity());
 
         // Assert
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());

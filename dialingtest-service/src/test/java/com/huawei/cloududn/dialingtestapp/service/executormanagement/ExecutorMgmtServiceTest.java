@@ -59,7 +59,8 @@ public class ExecutorMgmtServiceTest {
     @Test
     public void testHandleReportMsg_WithUeItems_PersistsAndAckOk() {
         Session session = session("session-1", "executor-1");
-        ReportMsgDto dto = reportMsg(123L, ueItem("SN1", "Huawei", "HarmonyOS", "4.0", 80), ueItem("SN2", null, null, "13", null));
+        ReportMsgDto dto = reportMsg(123L, ueItem("SN1", "Huawei", "HarmonyOS", "4.0", 80),
+                ueItem("SN2", null, null, "13", null));
         service.handleReportMsg(dto, session);
         ArgumentCaptor<Ue> ueCaptor = ArgumentCaptor.forClass(Ue.class);
         verify(ueDao, times(2)).upsert(ueCaptor.capture());
@@ -106,7 +107,8 @@ public class ExecutorMgmtServiceTest {
     public void testHeartbeatStatusAndTimeoutFlow() {
         Session session = session("hb-session", "exec-hb");
         ObjectNode payload = mapper.createObjectNode();
-        payload.putArray("ue_list").add(mapper.createObjectNode().put("msisdn", "1001")).add(mapper.createObjectNode().put("msisdn", "1002"));
+        payload.putArray("ue_list").add(mapper.createObjectNode().put("msisdn", "1001"))
+                .add(mapper.createObjectNode().put("msisdn", "1002"));
         service.handleHeartbeatStatus(payload, session);
         verify(executorDao).updateStatus(eq("exec-hb"), eq(1), any(Instant.class));
         verify(ueDao, times(2)).upsert(any(Ue.class));
@@ -142,18 +144,22 @@ public class ExecutorMgmtServiceTest {
         verify(registry, times(1)).unbind("session-old");
         service.handleDeregister(mapper.createObjectNode(), session);
         clearInvocations(ueDao);
-        ObjectNode execInfo = mapper.createObjectNode().put("executor_name", "exec-info"); execInfo.putArray("ue_details")
+        ObjectNode execInfo = mapper.createObjectNode().put("executor_name", "exec-info");
+        execInfo.putArray("ue_details")
             .add(mapper.createObjectNode().put("msisdn", "msisdn-1").put("vendor", "v"))
             .add(mapper.createObjectNode());
         service.handleExecutorInfoResponse(execInfo, session);
-        ObjectNode noList = mapper.createObjectNode().put("executor_name", "exec-info"); service.handleExecutorInfoResponse(noList, session);
+        ObjectNode noList = mapper.createObjectNode().put("executor_name", "exec-info");
+        service.handleExecutorInfoResponse(noList, session);
         verify(ueDao, times(1)).upsert(any(Ue.class));
     }
     @Test
     public void testGetExecutorDetailsAndPublicAck() {
-        Executor executor = new Executor().name("exec-detail").ip("10.0.0.1").status(1).lastOnlineTime("2025-11-18T00:00:00Z");
+        Executor executor = new Executor().name("exec-detail").ip("10.0.0.1").status(1)
+                .lastOnlineTime("2025-11-18T00:00:00Z");
         when(executorDao.findPage(any(), any(), anyInt(), anyInt())).thenReturn(Collections.singletonList(executor));
-        when(ueDao.findByExecutorName("exec-detail")).thenReturn(Collections.singletonList(new Ue().msisdn("msisdn-1").os("Android")));
+        when(ueDao.findByExecutorName("exec-detail"))
+                .thenReturn(Collections.singletonList(new Ue().msisdn("msisdn-1").os("Android")));
         List<ExecutorDetailDto> details = service.getExecutorDetails();
         assertEquals(1, details.size());
         ExecutorDetailDto detail = details.get(0);
@@ -296,8 +302,7 @@ public class ExecutorMgmtServiceTest {
         when(session.getId()).thenReturn("session-dereg-001");
         when(registry.getExecutorName("session-dereg-001")).thenReturn("Executor-Dereg");
 
-        com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto dto =
-                new com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto();
+        DeRegisterRequestDto dto = new DeRegisterRequestDto();
         dto.setToken(98765L);
 
         // When
@@ -319,8 +324,7 @@ public class ExecutorMgmtServiceTest {
         when(session.getId()).thenReturn("session-dereg-002");
         when(registry.getExecutorName("session-dereg-002")).thenReturn(null);
 
-        com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto dto =
-                new com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto();
+        DeRegisterRequestDto dto = new DeRegisterRequestDto();
         dto.setToken(98765L);
 
         // When
@@ -345,8 +349,7 @@ public class ExecutorMgmtServiceTest {
         doThrow(new IllegalArgumentException("Database error")).when(executorDao)
                 .updateStatus(eq("Executor-DbError"), eq(0), any(Instant.class));
 
-        com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto dto =
-                new com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto();
+        DeRegisterRequestDto dto = new DeRegisterRequestDto();
         dto.setToken(98765L);
 
         // When

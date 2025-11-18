@@ -75,7 +75,8 @@ public class ExecutorSelectionService {
         // 记录候选执行机信息
         for (int i = 0; i < candidates.size(); i++) {
             ExecutorCandidate candidate = candidates.get(i);
-            logger.debug("Candidate {}: executor={}, idleUEs={}, healthScore={:.2f}, loadScore={:.2f}, priorityScore={:.2f}",
+            logger.debug("Candidate {}: executor={}, idleUEs={}, healthScore={:.2f}, " +
+                    "loadScore={:.2f}, priorityScore={:.2f}",
                 i + 1, candidate.getExecutor().getName(), candidate.getIdleUes().size(),
                 candidate.getHealthScore(), candidate.getLoadScore(), candidate.getPriorityScore());
         }

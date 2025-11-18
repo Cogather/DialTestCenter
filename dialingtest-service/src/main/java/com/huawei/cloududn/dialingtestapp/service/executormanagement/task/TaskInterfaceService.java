@@ -85,7 +85,8 @@ public class TaskInterfaceService {
         }
 
         if (request.getExecutorName() == null || request.getExecutorName().trim().isEmpty()) {
-            logger.info("No executor specified in request, trying to select one automatically for taskId={}", request.getTaskId());
+            logger.info("No executor specified in request, trying to select one automatically for taskId={}",
+                    request.getTaskId());
             ExecutorUeInfo selected = executorSelectionService.selectIdleExecutorAndUe();
             if (selected == null) {
                 logger.error("No available executor/UE for taskId={}", request.getTaskId());
@@ -196,7 +197,8 @@ public class TaskInterfaceService {
 
         taskOrchestratorService.sendResultEvent((long) dto.getTaskId(), isSuccess, resultData);
 
-        logger.info("Task start response processed successfully: taskId={}, result={}", dto.getTaskId(), dto.getResult());
+        logger.info("Task start response processed successfully: taskId={}, result={}",
+                dto.getTaskId(), dto.getResult());
     }
 
     /**
@@ -250,7 +252,8 @@ public class TaskInterfaceService {
             // 清理任务映射
             taskToExecutorMap.remove(dto.getTaskId());
 
-            logger.info("Task stop response processed successfully: taskId={}, state={}", dto.getTaskId(), dto.getState());
+            logger.info("Task stop response processed successfully: taskId={}, state={}",
+                    dto.getTaskId(), dto.getState());
 
         } catch (Exception e) {
             logger.error("Failed to handle task stop response: taskId={}", dto.getTaskId(), e);

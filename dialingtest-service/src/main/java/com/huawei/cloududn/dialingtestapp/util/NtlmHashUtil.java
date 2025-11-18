@@ -109,11 +109,13 @@ public class NtlmHashUtil {
             try {
                 // 动态加载BouncyCastle提供商（如果存在）
                 Class<?> providerClass = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
-                java.security.Provider provider = (java.security.Provider) providerClass.getDeclaredConstructor().newInstance();
+                java.security.Provider provider =
+                        (java.security.Provider) providerClass.getDeclaredConstructor().newInstance();
                 return MessageDigest.getInstance("MD4", provider);
             } catch (ClassNotFoundException ex) {
                 logger.error("BouncyCastle provider not found in classpath");
-                throw new NoSuchAlgorithmException("MD4 algorithm not available. Please add BouncyCastle dependency.", e);
+                throw new NoSuchAlgorithmException(
+                        "MD4 algorithm not available. Please add BouncyCastle dependency.", e);
             } catch (NoSuchAlgorithmException ex) {
                 throw e;
             } catch (IllegalArgumentException ex) {

@@ -54,7 +54,8 @@ public class CallbackController {
                         mainTaskId = Long.parseLong(String.valueOf(idObj));
                     }
                 } catch (Exception e) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error("VALIDATION_ERROR", "参数格式错误: mainTaskId", 400));
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(error("VALIDATION_ERROR", "参数格式错误: mainTaskId", 400));
                 }
 
                 Object statusObj = body.get("status");

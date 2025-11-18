@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * TaskInterfaceService单元测试 - 优化版本
- * 使用6个综合测试覆盖所有关键场景，包括未覆盖的方法
+ * 使用7个综合测试覆盖所有关键场景，包括未覆盖的方法
  *
  * @author g00940940
  * @since 2025-11-18
@@ -294,11 +294,11 @@ public class TaskInterfaceServiceTest {
     }
 
     /**
-     * UT4: 综合测试应用管理场景
-     * 覆盖: sendAppListQuery, handleAppListResponse, handleAppInstallResponse
+     * UT4: 综合测试应用列表查询场景
+     * 覆盖: sendAppListQuery, handleAppListResponse
      */
     @Test
-    public void testAppManagement_AllScenarios() {
+    public void testAppListQuery_AllScenarios() {
         String executorName = "executor-app";
         String sessionId = "session-app";
         when(sessionBindingRegistry.getSessionId(executorName)).thenReturn(sessionId);
@@ -328,24 +328,31 @@ public class TaskInterfaceServiceTest {
         failResponse.setSerialNo("UE001");
         failResponse.setState(1);
         taskInterfaceService.handleAppListResponse(failResponse, session2);
-
-        Session session3 = mock(Session.class);
-        when(session3.getId()).thenReturn("session-app-install");
-        AppInstallResponseDto installSuccess = new AppInstallResponseDto();
-        installSuccess.setSerialNo("UE001");
-        installSuccess.setState(0);
-        taskInterfaceService.handleAppInstallResponse(installSuccess, session3);
-
-        Session session4 = mock(Session.class);
-        when(session4.getId()).thenReturn("session-app-install-fail");
-        AppInstallResponseDto installFail = new AppInstallResponseDto();
-        installFail.setSerialNo("UE001");
-        installFail.setState(1);
-        taskInterfaceService.handleAppInstallResponse(installFail, session4);
     }
 
     /**
-     * UT5: 综合测试脚本更新场景
+     * UT5: 综合测试应用安装响应场景
+     * 覆盖: handleAppInstallResponse
+     */
+    @Test
+    public void testAppInstallResponse_AllScenarios() {
+        Session session1 = mock(Session.class);
+        when(session1.getId()).thenReturn("session-app-install");
+        AppInstallResponseDto installSuccess = new AppInstallResponseDto();
+        installSuccess.setSerialNo("UE001");
+        installSuccess.setState(0);
+        taskInterfaceService.handleAppInstallResponse(installSuccess, session1);
+
+        Session session2 = mock(Session.class);
+        when(session2.getId()).thenReturn("session-app-install-fail");
+        AppInstallResponseDto installFail = new AppInstallResponseDto();
+        installFail.setSerialNo("UE001");
+        installFail.setState(1);
+        taskInterfaceService.handleAppInstallResponse(installFail, session2);
+    }
+
+    /**
+     * UT6: 综合测试脚本更新场景
      * 覆盖: sendScriptUpdate, handleScriptUpdateAck
      */
     @Test
@@ -380,7 +387,7 @@ public class TaskInterfaceServiceTest {
     }
 
     /**
-     * UT6: 综合测试截屏功能场景 (新增覆盖handleScreencapResponse)
+     * UT7: 综合测试截屏功能场景 (新增覆盖handleScreencapResponse)
      * 覆盖: sendScreencapQuery, handleScreencapResponse
      */
     @Test

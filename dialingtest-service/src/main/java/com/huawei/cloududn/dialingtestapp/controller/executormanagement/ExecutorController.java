@@ -131,11 +131,13 @@ public class ExecutorController implements ExecutorsApi {
             // 由于当前通信协议中没有专门的刷新消息类型，
             // 执行机信息刷新主要通过心跳机制（Report-Msg）自动进行
             // 这里我们记录刷新请求，并在下次心跳时可以特殊处理
-            logger.info("Executor refresh request acknowledged for: {} by user: {}. Info will be updated on next heartbeat.", 
+            logger.info("Executor refresh request acknowledged for: {} by user: {}. " +
+                    "Info will be updated on next heartbeat.",
                 name, xUsername);
 
             // 返回成功，实际刷新通过心跳机制进行
-            return ResponseEntity.ok(op(true, "Refresh request acknowledged. Executor info will be updated on next heartbeat."));
+            return ResponseEntity.ok(op(true,
+                    "Refresh request acknowledged. Executor info will be updated on next heartbeat."));
 
         } catch (Exception e) {
             logger.error("Failed to process refresh executor request for: {} by user: {}", name, xUsername, e);
