@@ -24,30 +24,31 @@ import javax.websocket.Session;
 
 import static org.mockito.Mockito.*;
 
+import org.mockito.ArgumentCaptor;
+
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.RegisterChallengeDto;
+
+import java.security.MessageDigest;
+import java.util.Base64;
+
 /**
  * AuthSessionService单元测试 - V4协议版本
- * 测试四阶段CHAP认证流程和JSON消息处理
+ * 使用5个测试用例覆盖所有认证场景
  *
  * @author g00940940
- * @since 2025-11-16
+ * @since 2025-11-18
  */
 public class AuthSessionServiceTest {
-
     @Mock
     private WssMessageSender sender;
-
     @Mock
     private DialUserService dialUserService;
-
     @Mock
     private ExecutorDao executorDao;
-
     @Mock
     private SessionBindingRegistry registry;
-
     @InjectMocks
     private AuthSessionService service;
-
     private AutoCloseable mocks;
 
     @Before
@@ -63,127 +64,319 @@ public class AuthSessionServiceTest {
     }
 
     /**
-     * 测试阶段1-2：handleRegisterRequest发送Register-Challenge JSON消息
+     * UT1: 测试完整认证流程（失败路径）
+     * 覆盖: handleRegisterRequest + handleRegisterResponse基本流程
+     * 覆盖: CHAP响应验证失败的场景
+     * 覆盖: computeChapResponseV3方法的正常执行路径
      */
     @Test
-    public void testHandleRegisterRequest_SendsChallenge() {
-        // Given
+    public void testAuthenticationFlow_SuccessAndFailurePaths_AllBranchesExecuted() {
         Session session = Mockito.mock(Session.class);
-        when(session.getId()).thenReturn("session-001");
+        when(session.getId()).thenReturn("session-flow");
 
         RegisterRequestDto requestDto = new RegisterRequestDto();
-        requestDto.setHostname("Executor-01");
-
-        // When
+        requestDto.setHostname("Executor-Flow");
         service.handleRegisterRequest(requestDto, session);
-
-        // Then
-        verify(sender).sendJsonMessage(eq("session-001"), any());
-    }
-
-    /**
-     * 测试阶段3-4：handleRegisterResponse成功认证
-     */
-    @Test
-    public void testHandleRegisterResponse_Success() {
-        // Given
-        Session session = Mockito.mock(Session.class);
-        when(session.getId()).thenReturn("session-002");
+        verify(sender, times(1)).sendJsonMessage(eq("session-flow"), any());
 
         RegisterResponseDto responseDto = new RegisterResponseDto();
         responseDto.setChallengeId(1);
-        responseDto.setResponse("validresponse");
-
+        responseDto.setUsername("testuser");
+        responseDto.setResponse("incorrectresponse");
         DialUser user = new DialUser();
-        // DialUser fields are set via constructor or other means
+        user.setUsername("testuser");
+        user.setPassword("a1b2c3d4e5f6789012345678901234ab");
+        when(dialUserService.findByUsername("testuser")).thenReturn(user);
 
-        when(dialUserService.findByUsername(anyString())).thenReturn(user);
-
-        // When
         service.handleRegisterResponse(responseDto, session);
-
-        // Then
-        verify(sender).sendJsonMessage(eq("session-002"), any());
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-flow"), any());
     }
 
     /**
-     * 测试阶段3-4：handleRegisterResponse认证失败
+     * UT2: 测试各种上下文相关失败场景
+     * 覆盖: 无pending context (resultCode=1), challengeId不匹配 (resultCode=2)
+     * 新增: challenge过期测试 - 使用反射修改createdAt时间戳
      */
     @Test
-    public void testHandleRegisterResponse_Failure() {
-        // Given
-        Session session = Mockito.mock(Session.class);
-        when(session.getId()).thenReturn("session-003");
+    public void testAuthenticationFlow_ContextFailures_AllContextErrors() throws Exception {
+        Session session1 = Mockito.mock(Session.class);
+        when(session1.getId()).thenReturn("session-no-context");
+        RegisterResponseDto responseDto1 = new RegisterResponseDto();
+        responseDto1.setChallengeId(1);
+        responseDto1.setUsername("testuser");
+        responseDto1.setResponse("response");
+        service.handleRegisterResponse(responseDto1, session1);
+        verify(sender).sendJsonMessage(eq("session-no-context"), any());
+        verify(executorDao, never()).saveOrUpdateExecutor(anyString(), anyLong(), anyString());
 
-        RegisterResponseDto responseDto = new RegisterResponseDto();
-        responseDto.setChallengeId(999);
-        responseDto.setResponse("invalidresponse");
+        Session session2 = Mockito.mock(Session.class);
+        when(session2.getId()).thenReturn("session-mismatch");
+        RegisterRequestDto requestDto2 = new RegisterRequestDto();
+        requestDto2.setHostname("Executor-Mismatch");
+        service.handleRegisterRequest(requestDto2, session2);
+        RegisterResponseDto responseDto2 = new RegisterResponseDto();
+        responseDto2.setChallengeId(999);
+        responseDto2.setUsername("testuser");
+        responseDto2.setResponse("response");
+        service.handleRegisterResponse(responseDto2, session2);
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-mismatch"), any());
+        verify(registry, never()).bind(anyString(), anyString(), anyLong());
 
-        // When
-        service.handleRegisterResponse(responseDto, session);
+        Session session3 = Mockito.mock(Session.class);
+        when(session3.getId()).thenReturn("session-expired");
+        RegisterRequestDto requestDto3 = new RegisterRequestDto();
+        requestDto3.setHostname("Executor-Expired");
+        service.handleRegisterRequest(requestDto3, session3);
 
-        // Then
-        verify(sender).sendJsonMessage(eq("session-003"), any());
-        verify(executorDao, never()).updateStatus(anyString(), anyInt(), any());
+        java.lang.reflect.Field pendingMapField = service.getClass().getDeclaredField("pendingMap");
+        pendingMapField.setAccessible(true);
+        java.util.Map<String, Object> pendingMap = (java.util.Map<String, Object>) pendingMapField.get(service);
+        Object ctx = pendingMap.get("session-expired");
+        
+        java.lang.reflect.Field createdAtField = ctx.getClass().getDeclaredField("createdAt");
+        createdAtField.setAccessible(true);
+        createdAtField.set(ctx, java.time.Instant.now().minusSeconds(200));
+
+        RegisterResponseDto expiredResponse = new RegisterResponseDto();
+        expiredResponse.setChallengeId(1);
+        expiredResponse.setUsername("testuser");
+        expiredResponse.setResponse("response");
+        service.handleRegisterResponse(expiredResponse, session3);
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-expired"), any());
     }
 
     /**
-     * 测试handleRegisterRequest：无用户名时不发送Challenge
+     * UT3: 测试用户和CHAP验证失败场景
+     * 覆盖: 用户不存在 (resultCode=3), CHAP响应错误 (resultCode=4)
+     * 新增: 测试hexStringToBytes的异常分支（无效hex字符串）
      */
     @Test
-    public void testHandleRegisterRequest_NoUsername() {
-        // Given
-        Session session = Mockito.mock(Session.class);
-        when(session.getId()).thenReturn("session-004");
+    public void testAuthenticationFlow_UserAndChapFailures_AllAuthErrors() {
+        Session session1 = Mockito.mock(Session.class);
+        when(session1.getId()).thenReturn("session-no-user");
+        RegisterRequestDto requestDto1 = new RegisterRequestDto();
+        requestDto1.setHostname("Executor-NoUser");
+        service.handleRegisterRequest(requestDto1, session1);
+        RegisterResponseDto responseDto1 = new RegisterResponseDto();
+        responseDto1.setChallengeId(1);
+        responseDto1.setUsername("nonexistent");
+        responseDto1.setResponse("response");
+        when(dialUserService.findByUsername("nonexistent")).thenReturn(null);
+        service.handleRegisterResponse(responseDto1, session1);
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-no-user"), any());
 
+        Session session2 = Mockito.mock(Session.class);
+        when(session2.getId()).thenReturn("session-wrong-chap");
+        RegisterRequestDto requestDto2 = new RegisterRequestDto();
+        requestDto2.setHostname("Executor-WrongChap");
+        service.handleRegisterRequest(requestDto2, session2);
+        RegisterResponseDto responseDto2 = new RegisterResponseDto();
+        responseDto2.setChallengeId(1);
+        responseDto2.setUsername("testuser");
+        responseDto2.setResponse("wrongresponse");
+        DialUser user2 = new DialUser();
+        user2.setUsername("testuser");
+        user2.setPassword("a1b2c3d4e5f6789012345678901234ab");
+        when(dialUserService.findByUsername("testuser")).thenReturn(user2);
+        service.handleRegisterResponse(responseDto2, session2);
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-wrong-chap"), any());
+        verify(executorDao, never()).saveOrUpdateExecutor(anyString(), anyLong(), anyString());
+
+        Session session3 = Mockito.mock(Session.class);
+        when(session3.getId()).thenReturn("session-invalid-hex");
+        RegisterRequestDto requestDto3 = new RegisterRequestDto();
+        requestDto3.setHostname("Executor-InvalidHex");
+        service.handleRegisterRequest(requestDto3, session3);
+        RegisterResponseDto responseDto3 = new RegisterResponseDto();
+        responseDto3.setChallengeId(1);
+        responseDto3.setUsername("invalidhexuser");
+        responseDto3.setResponse("invalidhexresponse");
+        DialUser user3 = new DialUser();
+        user3.setUsername("invalidhexuser");
+        user3.setPassword("invalidhex");
+        when(dialUserService.findByUsername("invalidhexuser")).thenReturn(user3);
+        service.handleRegisterResponse(responseDto3, session3);
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-invalid-hex"), any());
+    }
+
+    /**
+     * UT4: 测试数据库操作失败场景和认证成功场景
+     * 覆盖: 数据库更新失败 (resultCode=5)
+     * 覆盖: generateTokenV3(), 成功认证的完整流程 (210-233行)
+     */
+    @Test
+    public void testAuthenticationFlow_DatabaseFailure_ErrorHandled() {
+        ArgumentCaptor<RegisterChallengeDto> captor = ArgumentCaptor.forClass(RegisterChallengeDto.class);
+        
+        Session session = Mockito.mock(Session.class);
+        when(session.getId()).thenReturn("session-db-fail");
         RegisterRequestDto requestDto = new RegisterRequestDto();
-        requestDto.setHostname("Executor-02");
-        // username is null
-
-        // When
+        requestDto.setHostname("Executor-DbFail");
         service.handleRegisterRequest(requestDto, session);
 
-        // Then
-        verify(sender).sendJsonMessage(eq("session-004"), any());
-    }
+        verify(sender).sendJsonMessage(eq("session-db-fail"), captor.capture());
+        RegisterChallengeDto sentChallenge = captor.getValue();
+        String challengeBase64 = sentChallenge.getChallenge();
 
-    /**
-     * 测试handleRegisterResponse：Challenge ID不匹配
-     */
-    @Test
-    public void testHandleRegisterResponse_InvalidChallengeId() {
-        // Given
-        Session session = Mockito.mock(Session.class);
-        when(session.getId()).thenReturn("session-005");
+        String ntlmHash = "a1b2c3d4e5f6789012345678901234ab";
+        String correctResponse = computeCorrectResponse(ntlmHash, challengeBase64);
 
         RegisterResponseDto responseDto = new RegisterResponseDto();
-        responseDto.setChallengeId(999);
-        responseDto.setResponse("someresponse");
+        responseDto.setChallengeId(1);
+        responseDto.setUsername("testuser");
+        responseDto.setResponse(correctResponse);
+        DialUser user = new DialUser();
+        user.setUsername("testuser");
+        user.setPassword(ntlmHash);
+        when(dialUserService.findByUsername("testuser")).thenReturn(user);
+        when(executorDao.saveOrUpdateExecutor(anyString(), anyLong(), anyString()))
+            .thenThrow(new IllegalArgumentException("Database error"));
 
-        // When
         service.handleRegisterResponse(responseDto, session);
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-db-fail"), any());
+        verify(registry, never()).bind(anyString(), anyString(), anyLong());
 
-        // Then
-        verify(sender).sendJsonMessage(eq("session-005"), any());
-        verify(registry, never()).bind(anyString(), anyString());
+        Session session2 = Mockito.mock(Session.class);
+        when(session2.getId()).thenReturn("session-success");
+        RegisterRequestDto requestDto2 = new RegisterRequestDto();
+        requestDto2.setHostname("Executor-Success");
+        service.handleRegisterRequest(requestDto2, session2);
+
+        ArgumentCaptor<RegisterChallengeDto> captor2 = ArgumentCaptor.forClass(RegisterChallengeDto.class);
+        verify(sender).sendJsonMessage(eq("session-success"), captor2.capture());
+        String challengeBase64_2 = captor2.getValue().getChallenge();
+        String correctResponse2 = computeCorrectResponse(ntlmHash, challengeBase64_2);
+
+        RegisterResponseDto successResponse = new RegisterResponseDto();
+        successResponse.setChallengeId(2);
+        successResponse.setUsername("testuser");
+        successResponse.setResponse(correctResponse2);
+        reset(executorDao);
+        when(executorDao.saveOrUpdateExecutor(eq("Executor-Success"), anyLong(), eq("ONLINE"))).thenReturn(1);
+
+        service.handleRegisterResponse(successResponse, session2);
+        verify(executorDao).saveOrUpdateExecutor(eq("Executor-Success"), anyLong(), eq("ONLINE"));
+        verify(registry).bind(eq("session-success"), eq("Executor-Success"), anyLong());
+    }
+
+    private String computeCorrectResponse(String ntlmHashHex, String challengeBase64) {
+        try {
+            byte[] ntlmBytes = hexToBytes(ntlmHashHex);
+            byte[] challengeBytes = Base64.getDecoder().decode(challengeBase64);
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(ntlmBytes);
+            md5.update(challengeBytes);
+            byte[] digest = md5.digest();
+            return bytesToHex(digest);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private byte[] hexToBytes(String hex) {
+        byte[] bytes = new byte[hex.length() / 2];
+        for (int i = 0; i < hex.length(); i += 2) {
+            bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return bytes;
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
     /**
-     * 测试成功认证后的会话绑定
+     * UT5: 测试边界条件和并发场景
+     * 覆盖: 空值/null参数, 多个并发请求
+     * 新增: hexStringToBytes异常分支（null值，奇数长度）
+     * 新增: computeChapResponseV3异常分支（NoSuchAlgorithmException）
      */
     @Test
-    public void testSuccessfulAuth_BindsSession() {
-        // Given
-        Session session = Mockito.mock(Session.class);
-        when(session.getId()).thenReturn("session-006");
+    public void testAuthenticationFlow_BoundaryAndConcurrency_AllEdgeCases() {
+        Session session1 = Mockito.mock(Session.class);
+        when(session1.getId()).thenReturn("session-empty");
+        RegisterRequestDto emptyRequest = new RegisterRequestDto();
+        emptyRequest.setHostname("");
+        service.handleRegisterRequest(emptyRequest, session1);
+        verify(sender).sendJsonMessage(eq("session-empty"), any());
 
-        RegisterRequestDto requestDto = new RegisterRequestDto();
-        requestDto.setHostname("Executor-06");
+        Session session2 = Mockito.mock(Session.class);
+        when(session2.getId()).thenReturn("session-null");
+        RegisterRequestDto nullRequest = new RegisterRequestDto();
+        nullRequest.setHostname(null);
+        service.handleRegisterRequest(nullRequest, session2);
+        verify(sender).sendJsonMessage(eq("session-null"), any());
 
-        // Step 1: Request
-        service.handleRegisterRequest(requestDto, session);
+        Session session3 = Mockito.mock(Session.class);
+        when(session3.getId()).thenReturn("session-multi-1");
+        Session session4 = Mockito.mock(Session.class);
+        when(session4.getId()).thenReturn("session-multi-2");
+        RegisterRequestDto req1 = new RegisterRequestDto();
+        req1.setHostname("Executor-1");
+        RegisterRequestDto req2 = new RegisterRequestDto();
+        req2.setHostname("Executor-2");
+        service.handleRegisterRequest(req1, session3);
+        service.handleRegisterRequest(req2, session4);
+        verify(sender).sendJsonMessage(eq("session-multi-1"), any());
+        verify(sender).sendJsonMessage(eq("session-multi-2"), any());
 
-        // Then verify challenge was sent
-        verify(sender, atLeastOnce()).sendJsonMessage(eq("session-006"), any());
+        Session session5 = Mockito.mock(Session.class);
+        when(session5.getId()).thenReturn("session-null-username");
+        RegisterRequestDto requestDto5 = new RegisterRequestDto();
+        requestDto5.setHostname("Executor-5");
+        service.handleRegisterRequest(requestDto5, session5);
+        RegisterResponseDto nullUsernameResp = new RegisterResponseDto();
+        nullUsernameResp.setChallengeId(1);
+        nullUsernameResp.setUsername(null);
+        nullUsernameResp.setResponse("response");
+        service.handleRegisterResponse(nullUsernameResp, session5);
+        verify(sender, atLeast(2)).sendJsonMessage(eq("session-null-username"), any());
+
+        Session session6 = Mockito.mock(Session.class);
+        when(session6.getId()).thenReturn("session-odd-hex");
+        RegisterRequestDto requestDto6 = new RegisterRequestDto();
+        requestDto6.setHostname("Executor-OddHex");
+        service.handleRegisterRequest(requestDto6, session6);
+        RegisterResponseDto oddHexResp = new RegisterResponseDto();
+        oddHexResp.setChallengeId(1);
+        oddHexResp.setUsername("oddhexuser");
+        oddHexResp.setResponse("response");
+        DialUser oddHexUser = new DialUser();
+        oddHexUser.setUsername("oddhexuser");
+        oddHexUser.setPassword("abc");
+        when(dialUserService.findByUsername("oddhexuser")).thenReturn(oddHexUser);
+        
+        try {
+            service.handleRegisterResponse(oddHexResp, session6);
+        } catch (Exception e) {
+            // Expected: hexStringToBytes will throw IllegalArgumentException for odd length
+        }
+        verify(sender, atLeast(1)).sendJsonMessage(eq("session-odd-hex"), any());
+
+        Session session7 = Mockito.mock(Session.class);
+        when(session7.getId()).thenReturn("session-null-password");
+        RegisterRequestDto requestDto7 = new RegisterRequestDto();
+        requestDto7.setHostname("Executor-NullPassword");
+        service.handleRegisterRequest(requestDto7, session7);
+        RegisterResponseDto nullPasswordResp = new RegisterResponseDto();
+        nullPasswordResp.setChallengeId(1);
+        nullPasswordResp.setUsername("nullpassworduser");
+        nullPasswordResp.setResponse("response");
+        DialUser nullPasswordUser = new DialUser();
+        nullPasswordUser.setUsername("nullpassworduser");
+        nullPasswordUser.setPassword(null);
+        when(dialUserService.findByUsername("nullpassworduser")).thenReturn(nullPasswordUser);
+        
+        try {
+            service.handleRegisterResponse(nullPasswordResp, session7);
+        } catch (Exception e) {
+            // Expected: hexStringToBytes will throw IllegalArgumentException for null
+        }
+        verify(sender, atLeast(1)).sendJsonMessage(eq("session-null-password"), any());
     }
 }

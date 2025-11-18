@@ -297,4 +297,278 @@ public class ExecutorMgmtServiceTest {
         // Then
         verify(ueDao).upsert(any()); // UE should be upserted with correct mapping
     }
+
+    /**
+     * 测试handleReportMsg：UE serialNo为null时跳过
+     */
+    @Test
+    public void testHandleReportMsg_UeSerialNoNull_SkipsUpsert() {
+        // Given
+        Session session = Mockito.mock(Session.class);
+        when(session.getId()).thenReturn("session-null-serial");
+        when(registry.getExecutorName("session-null-serial")).thenReturn("Executor-NullSerial");
+
+        ReportMsgDto reportMsg = new ReportMsgDto();
+        reportMsg.setToken(12345L);
+        reportMsg.setState("Normal");
+
+        UeItemDto ueItem = new UeItemDto();
+        ueItem.setSerialNo(null); // null serial
+        ueItem.setBrand("TestBrand");
+        ueItem.setModel("TestModel");
+
+        reportMsg.setUeList(Arrays.asList(ueItem));
+
+        // When
+        service.handleReportMsg(reportMsg, session);
+
+        // Then
+        verify(executorDao).updateStatus(eq("Executor-NullSerial"), eq(1), any(Instant.class));
+        verify(ueDao, never()).upsert(any()); // Should not upsert null serial
+        verify(wssMessageSender).sendJsonMessage(eq("session-null-serial"), any());
+    }
+
+    /**
+     * 测试handleReportMsg：UE serialNo为空字符串时跳过
+     */
+    @Test
+    public void testHandleReportMsg_UeSerialNoEmpty_SkipsUpsert() {
+        // Given
+        Session session = Mockito.mock(Session.class);
+        when(session.getId()).thenReturn("session-empty-serial");
+        when(registry.getExecutorName("session-empty-serial")).thenReturn("Executor-EmptySerial");
+
+        ReportMsgDto reportMsg = new ReportMsgDto();
+        reportMsg.setToken(12345L);
+        reportMsg.setState("Normal");
+
+        UeItemDto ueItem = new UeItemDto();
+        ueItem.setSerialNo("  "); // empty/whitespace serial
+        ueItem.setBrand("TestBrand");
+
+        reportMsg.setUeList(Arrays.asList(ueItem));
+
+        // When
+        service.handleReportMsg(reportMsg, session);
+
+        // Then
+        verify(ueDao, never()).upsert(any()); // Should not upsert empty serial
+    }
+
+    /**
+     * 测试handleReportMsg：UE serialNo为"null"字符串时跳过
+     */
+    @Test
+    public void testHandleReportMsg_UeSerialNoNullString_SkipsUpsert() {
+        // Given
+        Session session = Mockito.mock(Session.class);
+        when(session.getId()).thenReturn("session-null-string");
+        when(registry.getExecutorName("session-null-string")).thenReturn("Executor-NullString");
+
+        ReportMsgDto reportMsg = new ReportMsgDto();
+        reportMsg.setToken(12345L);
+        reportMsg.setState("Normal");
+
+        UeItemDto ueItem = new UeItemDto();
+        ueItem.setSerialNo("null"); // "null" string
+        ueItem.setBrand("TestBrand");
+
+        reportMsg.setUeList(Arrays.asList(ueItem));
+
+        // When
+        service.handleReportMsg(reportMsg, session);
+
+        // Then
+        verify(ueDao, never()).upsert(any()); // Should not upsert "null" string
+    }
+
+    /**
+     * 测试handleDeRegisterRequest：成功注销
+     */
+    @Test
+    public void testHandleDeRegisterRequest_Success() {
+        // Given
+        Session session = Mockito.mock(Session.class);
+        when(session.getId()).thenReturn("session-dereg-001");
+        when(registry.getExecutorName("session-dereg-001")).thenReturn("Executor-Dereg");
+
+        com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto dto =
+                new com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto();
+        dto.setToken(98765L);
+
+        // When
+        service.handleDeRegisterRequest(dto, session);
+
+        // Then
+        verify(executorDao).updateStatus(eq("Executor-Dereg"), eq(0), any(Instant.class));
+        verify(registry).unbind("session-dereg-001");
+        verify(wssMessageSender).sendJsonMessage(eq("session-dereg-001"), any());
+    }
+
+    /**
+     * 测试handleDeRegisterRequest：无绑定时发送错误应答
+     */
+    @Test
+    public void testHandleDeRegisterRequest_NoBinding_SendsError() {
+        // Given
+        Session session = Mockito.mock(Session.class);
+        when(session.getId()).thenReturn("session-dereg-002");
+        when(registry.getExecutorName("session-dereg-002")).thenReturn(null);
+
+        com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto dto =
+                new com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto();
+        dto.setToken(98765L);
+
+        // When
+        service.handleDeRegisterRequest(dto, session);
+
+        // Then
+        verify(executorDao, never()).updateStatus(anyString(), anyInt(), any(Instant.class));
+        verify(registry, never()).unbind(anyString());
+        verify(wssMessageSender).sendJsonMessage(eq("session-dereg-002"), any());
+    }
+
+    /**
+     * 测试handleDeRegisterRequest：数据库异常时发送错误应答
+     */
+    @Test
+    public void testHandleDeRegisterRequest_DatabaseError_SendsError() {
+        // Given
+        Session session = Mockito.mock(Session.class);
+        when(session.getId()).thenReturn("session-dereg-003");
+        when(registry.getExecutorName("session-dereg-003")).thenReturn("Executor-DbError");
+
+        doThrow(new IllegalArgumentException("Database error")).when(executorDao)
+                .updateStatus(eq("Executor-DbError"), eq(0), any(Instant.class));
+
+        com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto dto =
+                new com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto();
+        dto.setToken(98765L);
+
+        // When
+        service.handleDeRegisterRequest(dto, session);
+
+        // Then
+        verify(wssMessageSender).sendJsonMessage(eq("session-dereg-003"), any());
+    }
+
+    /**
+     * 测试handleHeartbeatTimeout：正常处理超时
+     */
+    @Test
+    public void testHandleHeartbeatTimeout_Success() {
+        // Given
+        when(registry.getSessionId("Executor-Timeout")).thenReturn("session-timeout");
+
+        // When
+        service.handleHeartbeatTimeout("Executor-Timeout");
+
+        // Then
+        verify(executorDao).updateStatus(eq("Executor-Timeout"), eq(0), any(Instant.class));
+        verify(registry).unbind("session-timeout");
+    }
+
+    /**
+     * 测试handleHeartbeatTimeout：执行机名称为null
+     */
+    @Test
+    public void testHandleHeartbeatTimeout_NullExecutorName_NoUpdate() {
+        // When
+        service.handleHeartbeatTimeout(null);
+
+        // Then
+        verify(executorDao, never()).updateStatus(anyString(), anyInt(), any(Instant.class));
+        verify(registry, never()).unbind(anyString());
+    }
+
+    /**
+     * 测试handleHeartbeatTimeout：执行机名称为空字符串
+     */
+    @Test
+    public void testHandleHeartbeatTimeout_EmptyExecutorName_NoUpdate() {
+        // When
+        service.handleHeartbeatTimeout("  ");
+
+        // Then
+        verify(executorDao, never()).updateStatus(anyString(), anyInt(), any(Instant.class));
+        verify(registry, never()).unbind(anyString());
+    }
+
+    /**
+     * 测试handleHeartbeatTimeout：无会话绑定
+     */
+    @Test
+    public void testHandleHeartbeatTimeout_NoSession_UpdatesStatusOnly() {
+        // Given
+        when(registry.getSessionId("Executor-NoSession")).thenReturn(null);
+
+        // When
+        service.handleHeartbeatTimeout("Executor-NoSession");
+
+        // Then
+        verify(executorDao).updateStatus(eq("Executor-NoSession"), eq(0), any(Instant.class));
+        verify(registry, never()).unbind(anyString());
+    }
+
+    /**
+     * 测试getExecutorDetails：成功获取执行机详情
+     */
+    @Test
+    public void testGetExecutorDetails_Success() {
+        // Given
+        com.huawei.cloududn.dialingtest.model.Executor executor = new com.huawei.cloududn.dialingtest.model.Executor();
+        executor.setName("Executor-Details");
+        executor.setIp("192.168.1.10");
+        executor.setStatus(1);
+
+        java.util.List<com.huawei.cloududn.dialingtest.model.Executor> executors = Arrays.asList(executor);
+        when(executorDao.findPage(isNull(), isNull(), eq(0), eq(1000))).thenReturn(executors);
+
+        com.huawei.cloududn.dialingtest.model.Ue ue = new com.huawei.cloududn.dialingtest.model.Ue();
+        ue.setMsisdn("8613800138000");
+        ue.setOs("Android 12");
+
+        when(ueDao.findByExecutorName("Executor-Details")).thenReturn(Arrays.asList(ue));
+
+        // When
+        java.util.List<com.huawei.cloududn.dialingtestapp.service.executormanagement.dto.ExecutorDetailDto> result =
+                service.getExecutorDetails();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Executor-Details", result.get(0).getName());
+        assertEquals("192.168.1.10", result.get(0).getIp());
+    }
+
+    /**
+     * 测试getExecutorDetails：无执行机时返回空列表
+     */
+    @Test
+    public void testGetExecutorDetails_NoExecutors_ReturnsEmptyList() {
+        // Given
+        when(executorDao.findPage(isNull(), isNull(), eq(0), eq(1000))).thenReturn(Arrays.asList());
+
+        // When
+        java.util.List<com.huawei.cloududn.dialingtestapp.service.executormanagement.dto.ExecutorDetailDto> result =
+                service.getExecutorDetails();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * 测试getExecutorDetails：数据库异常时抛出RuntimeException
+     */
+    @Test(expected = RuntimeException.class)
+    public void testGetExecutorDetails_DatabaseError_ThrowsException() {
+        // Given
+        when(executorDao.findPage(isNull(), isNull(), eq(0), eq(1000)))
+                .thenThrow(new RuntimeException("Database error"));
+
+        // When & Then - 期望抛出RuntimeException
+        service.getExecutorDetails();
+    }
+
 }
