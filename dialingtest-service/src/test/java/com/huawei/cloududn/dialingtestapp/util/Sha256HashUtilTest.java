@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
+
 import static org.junit.Assert.*;
 
 /**
@@ -84,8 +86,8 @@ public class Sha256HashUtilTest {
         assertTrue("Valid hash should pass", Sha256HashUtil.isValidSha256Hash(validHash));
 
         // isValidSha256Hash：小写也有效
-        assertTrue("Lowercase hash should be valid", 
-            Sha256HashUtil.isValidSha256Hash(validHash.toLowerCase()));
+        assertTrue("Lowercase hash should be valid",
+            Sha256HashUtil.isValidSha256Hash(validHash.toLowerCase(Locale.ROOT)));
 
         // isValidSha256Hash：长度不足
         assertFalse("Short hash should be invalid", 

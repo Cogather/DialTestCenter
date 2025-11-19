@@ -1,7 +1,6 @@
 package com.huawei.cloududn.dialingtestapp.service.executormanagement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.cloududn.dialingtest.model.Executor;
 import com.huawei.cloududn.dialingtest.model.Ue;

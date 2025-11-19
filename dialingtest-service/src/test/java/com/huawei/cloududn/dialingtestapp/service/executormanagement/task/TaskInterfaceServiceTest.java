@@ -216,14 +216,12 @@ public class TaskInterfaceServiceTest {
     }
 
     /**
-     * UT3: 综合测试文件传输场景 (新增覆盖handleFileComplete)
-     * 覆盖: handleFileComplete (TaskStart/Screencap/Error), pushScriptToExecutor, pushAppToUe
+     * UT3: 综合测试文件接收场景
+     * 覆盖: handleFileComplete (Success/Error/CrcFail/Screencap)
      */
     @Test
-    public void testFileTransfer_AllScenarios() {
-        String executorName = "executor-file";
+    public void testFileTransfer_ReceiveScenarios() {
         String sessionId = "session-file";
-        when(sessionBindingRegistry.getSessionId(executorName)).thenReturn(sessionId);
 
         InboundFileState successState = mock(InboundFileState.class);
         when(successState.getSessionId()).thenReturn(sessionId);
@@ -269,6 +267,17 @@ public class TaskInterfaceServiceTest {
         InboundFileCompleteEvent screencapEvent = new InboundFileCompleteEvent(this, screencapState);
         taskInterfaceService.handleFileComplete(screencapEvent);
         verify(taskOrchestratorService, times(1)).sendResultEvent(anyLong(), anyBoolean(), any());
+    }
+
+    /**
+     * UT3.2: 综合测试文件推送场景
+     * 覆盖: pushScriptToExecutor, pushAppToUe
+     */
+    @Test
+    public void testFileTransfer_PushScenarios() {
+        String executorName = "executor-file";
+        String sessionId = "session-file";
+        when(sessionBindingRegistry.getSessionId(executorName)).thenReturn(sessionId);
 
         TestCaseSet testCaseSet = new TestCaseSet();
         testCaseSet.setName("test-case");

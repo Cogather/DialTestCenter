@@ -62,9 +62,9 @@ public class InboundFileHandler {
      * @param crc 预期CRC校验值
      * @param tempPath 临时文件路径
      * @param businessContext 业务上下文对象
-      */
-     public void startReceiving(String sessionId, int expectedSize, String crc, String tempPath,
-             Object businessContext) {
+     */
+    public void startReceiving(String sessionId, int expectedSize, String crc, String tempPath,
+            Object businessContext) {
         InboundFileState state = new InboundFileState();
         state.setSessionId(sessionId);
         state.setExpectedSize(expectedSize);
