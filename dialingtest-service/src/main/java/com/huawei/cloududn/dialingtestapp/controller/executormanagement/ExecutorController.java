@@ -49,8 +49,10 @@ public class ExecutorController implements ExecutorsApi {
     private ExecutorWebsocketEndpoint endpoint;
 
     @Override
-    public ResponseEntity<ExecutorPageResponse> listExecutors(Integer page, Integer size, Integer status, String keyword) {
-        logger.info("Listing executors, page={}, size={}, status={}, keyword={}", page, size, status, keyword);
+    public ResponseEntity<ExecutorPageResponse> listExecutors(
+            Integer page, Integer size, Integer status, String keyword) {
+        logger.info("Listing executors, page={}, size={}, status={}, keyword={}",
+                page, size, status, keyword);
         int p = page == null ? 0 : page;
         int s = size == null ? 20 : size;
         if (p < 0 || s <= 0 || s > 200) {

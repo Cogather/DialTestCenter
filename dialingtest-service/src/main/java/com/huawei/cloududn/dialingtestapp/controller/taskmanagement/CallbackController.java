@@ -131,15 +131,14 @@ public class CallbackController {
      * @param body 请求体
      * @return 结果数据Map，不存在时返回null
      */
+    @SuppressWarnings("unchecked")
     private Map<String, Object> extractResultData(Map<String, Object> body) {
         Object rd = body.get("result_data");
         if (rd == null) {
             rd = body.get("resultData");
         }
         if (rd instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> tempMap = (Map<String, Object>) rd;
-            return tempMap;
+            return (Map<String, Object>) rd;
         }
         return null;
     }
