@@ -4,13 +4,13 @@
 
 package com.huawei.cloududn.dialingtestapp.util;
 
-import com.huawei.cloududn.dialingtestapp.entity.SoftwarePackage;
+import com.huawei.cloududn.dialingtestapp.entity.basicDataManage.SoftwarePackage;
 import com.huawei.cloududn.dialingtest.model.CreateOperationLogRequest;
 import com.huawei.cloududn.dialingtest.model.DialUser;
 import com.huawei.cloududn.dialingtest.model.SoftwarePackageInfo;
 import com.huawei.cloududn.dialingtest.model.TestCaseSet;
 import com.huawei.cloududn.dialingtest.model.UserRole;
-import com.huawei.cloududn.dialingtestapp.service.OperationLogService;
+import com.huawei.cloududn.dialingtestapp.service.basicDataManage.OperationLogService;
 
 import java.util.Map;
 import java.util.function.Function;

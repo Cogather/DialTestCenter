@@ -158,12 +158,15 @@ com.huawei.cloududn.dialingtestapp
 ├── config
 │   └── WebSocketJsr356Config.java        // [V4] 确保同时支持 Text 和 Binary 消息, 并配置缓冲区
 └── application.yml                       // [V4] 调整 WSS Text (JSON) 与 Binary (分片) 的最大消息大小
+│
+└── util
+    └── Sha256HashUtil.java               // [V4 新增] SHA256哈希工具 (替代 NTLM)
 ```
 
 ### 2.3.1 V4版本文件变更统计（通信层相关）
 
 * **删除**：`TlvEncoder`, `TlvDecoder`, `TlvField`, `FieldTag`
-* **新增**：`WssMessageSenderImpl.java`, `InboundFileHandler.java`, `InboundFileCompleteCallback.java`, `JsonMessageEnvelope.java`
+* **新增**：`WssMessageSenderImpl.java`, `InboundFileHandler.java`, `InboundFileCompleteCallback.java`, `JsonMessageEnvelope.java`, `Sha256HashUtil.java`
 * **保留**：`MessageType.java` (作为JSON枚举)
 * **重大修改**：
   - `ExecutorWebsocketEndpoint`：重构为同时处理 `onMessage(String json)` 和 `onMessage(ByteBuffer chunk)`
@@ -272,7 +275,7 @@ SessionSendQueue .up.> ExecutorWebsocketEndpoint : "sendText/Binary()"
 ### 3.2 认证与会话服务 (Auth & Session Service)
 
 本通信层不实现业务逻辑，仅回调业务层处理；需业务层实现四阶段CHAP并通过本层回传消息。
-业务层通过DialUserService查询dial\_users表获取NTLM Hash进行认证验证。
+业务层通过DialUserService查询dial\_users表获取SHA256 Hash进行认证验证。
 
 ### 3.3 执行机服务 (Executor Service)
 
@@ -349,7 +352,7 @@ SessionSendQueue .up.> ExecutorWebsocketEndpoint : "sendText/Binary()"
 
 业务层相关表：
 
-- `dial_users`：执行机用户表，密码字段存储NTLM Hash（32位16进制）用于CHAP认证
+- `dial_users`：执行机用户表，密码字段存储SHA256 Hash（64位16进制）用于CHAP认证
 - `executor`：执行机状态表，存储token、状态、最后在线时间等
 - `ue`：UE设备表，存储绑定的执行机、设备信息等
 
@@ -436,7 +439,7 @@ public class ScriptUpdateNotifyDto {
 | :--- | :--- | :--- |
 | challenge-id | int | 复制Register-Challenge消息中的值 |
 | username | string | 认证用户名 |
-| response | **string** | 经Challenge进行MD5加密后的密码，**Hex编码** |
+| response | **string** | 经Challenge进行SHA256加密后的密码，**Hex编码(64位)** |
 
 ###### Register-Result (0x04)
 

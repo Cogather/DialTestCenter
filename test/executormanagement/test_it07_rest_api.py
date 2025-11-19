@@ -51,15 +51,29 @@ class TestRestAPIIT07(BaseTestCase):
 
     def test_it_07_003_refresh_executors(self):
         """IT-07-003: 刷新执行机信息"""
-        # 确保有一个执行机
+        # 确保有一个执行机在线
         self.db.ensure_executor_exists(AGENT_NAME)
+        self.db.update_executor_status(AGENT_NAME, 1)  # 设置为在线
 
-        # 刷新接口简单测试（APIClient可能不支持完整的POST参数）
-        # 这个测试主要验证接口存在，具体功能测试通过其他集成测试完成
-        response = self.api.post(API_ENDPOINTS['REFRESH_EXECUTOR'])
-        # 接口可能返回400因为缺少参数，这是预期的
-        self.assertIn(response.status_code, [200, 202, 400, 500], 
+        # 发送刷新请求（包含必需的name字段）
+        refresh_data = {
+            'name': AGENT_NAME
+        }
+        response = self.api.post(API_ENDPOINTS['REFRESH_EXECUTOR'], data=refresh_data)
+        
+        # 验证响应
+        # 如果执行机在线，应该返回200或202表示刷新请求已发送
+        # 如果执行机离线，返回404
+        # 如果缺少认证信息，返回401或403
+        self.assertIn(response.status_code, [200, 202, 401, 403, 404], 
                      f"刷新接口返回了预期外的状态码: {response.status_code}")
+        
+        # 如果成功，验证响应格式
+        if response.status_code in [200, 202]:
+            result = response.json()
+            self.assertIn('success', result)
+            if result.get('success'):
+                self.assertIn('message', result)
 
     def test_it_07_004_list_executors_offline(self):
         """IT-07-004: 查询离线执行机"""

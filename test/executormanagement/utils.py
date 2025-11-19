@@ -345,22 +345,24 @@ def _decode_challenge(challenge: str) -> bytes:
     return challenge.encode('utf-8')
 
 
-def compute_chap_response(ntlm_hash_hex: str, challenge_hex: str) -> str:
+def compute_chap_response(sha256_hash_hex: str, challenge_hex: str) -> str:
     """
     计算 CHAP 摘要，符合设计文档规范。
 
-    根据《执行机管理软件实现设计》文档：
-    Formula: Response = MD5(NTLM-Hash bytes + Challenge bytes)
+    根据《执行机管理软件实现设计》文档（V4更新）：
+    Formula: Response = SHA256(SHA256-Hash bytes + Challenge bytes)
 
     Args:
-        ntlm_hash_hex: NTLM Hash（十六进制字符串）
+        sha256_hash_hex: SHA256 Hash（十六进制字符串，64字符表示32字节）
         challenge_hex: Challenge（十六进制字符串，32字符表示16字节）
 
     Returns:
-        MD5 hex 字符串（小写，32字符）
+        SHA256 hex 字符串（小写，64字符）
+        
+    Note: 此函数已废弃，建议使用 binary_codec.BinaryCodec.compute_chap_response()
     """
-    # Decode NTLM Hash from hex string
-    ntlm_bytes = binascii.unhexlify(ntlm_hash_hex)
+    # Decode SHA256 Hash from hex string
+    sha256_bytes = binascii.unhexlify(sha256_hash_hex)
 
     # Decode Challenge from hex string (兼容处理，如果已经是bytes则直接使用)
     if isinstance(challenge_hex, bytes):
@@ -368,10 +370,10 @@ def compute_chap_response(ntlm_hash_hex: str, challenge_hex: str) -> str:
     else:
         challenge_bytes = binascii.unhexlify(challenge_hex)
 
-    # Concatenate and compute MD5
-    combined = ntlm_bytes + challenge_bytes
-    md5 = hashlib.md5()
-    md5.update(combined)
-    return md5.hexdigest()
+    # Concatenate and compute SHA256
+    combined = sha256_bytes + challenge_bytes
+    sha256 = hashlib.sha256()
+    sha256.update(combined)
+    return sha256.hexdigest()
 
 

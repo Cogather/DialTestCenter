@@ -75,9 +75,9 @@ psql -h localhost -p 5432 -U postgres -d dialingtest -f test\executormanagement\
 
 执行成功后会创建测试用户：
 - 用户名：`test_agent`
-- NTLM Hash：`cc03e747a6afbbcbf8be7668acfebee5`（对应密码 `test123`）
+- SHA256 Hash：`ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE`（对应密码 `test123`）
 
-**注意**：配置文件已包含此默认 NTLM Hash，无需额外设置环境变量！
+**注意**：配置文件已包含此默认 SHA256 Hash，无需额外设置环境变量！
 
 ### 1. 安装依赖
 
@@ -107,7 +107,7 @@ export EXEC_WS_ENABLE=1
 # Agent 认证凭据（WebSocket 测试必需）
 export EXEC_AGENT_NAME=Executor_PC_001
 export EXEC_AGENT_USERNAME=test_agent
-export EXEC_AGENT_NTLM_HASH=cc03e747a6afbbcbf8be7668acfebee5  # 已有默认值，可不设置
+export EXEC_AGENT_SHA256_HASH=ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE  # 已有默认值，可不设置
 
 # 数据库配置
 export DB_HOST=localhost
@@ -190,9 +190,9 @@ python -m pytest --cov=. --cov-report=html
 
 ```sql
 -- 创建 Agent 用户（用于 CHAP 认证）
-INSERT INTO agent_user (id, username, password, last_login_time)
-VALUES (1, 'agent_user', '<NTLM_HASH>', NOW())
-ON CONFLICT (username) DO NOTHING;
+INSERT INTO dial_users (username, password)
+VALUES ('test_agent', '<SHA256_HASH>')
+ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password;
 
 -- 创建测试执行机
 INSERT INTO executor (name, ip, token, proxy, description, status, last_online_time)
@@ -200,23 +200,23 @@ VALUES ('Executor_PC_001', '10.0.0.10', NULL, NULL, '测试执行机', 0, NULL)
 ON CONFLICT (name) DO NOTHING;
 ```
 
-**注意：** `password` 字段存储 NTLM Hash，需要使用工具生成对应的哈希值。
+**注意：** `password` 字段存储 SHA256 Hash（64位十六进制），需要使用工具生成对应的哈希值。
 
-### NTLM Hash 生成
+### SHA256 Hash 生成
 
-可以使用以下 Python 脚本生成 NTLM Hash：
+可以使用以下 Python 脚本生成 SHA256 Hash：
 
 ```python
 import hashlib
 
-def generate_ntlm_hash(password: str) -> str:
-    """生成 NTLM Hash"""
-    return hashlib.new('md4', password.encode('utf-16le')).hexdigest()
+def generate_sha256_hash(password: str) -> str:
+    """生成 SHA256 Hash（大写）"""
+    return hashlib.sha256(password.encode('utf-8')).hexdigest().upper()
 
 # 示例
 password = "your_password_here"
-ntlm_hash = generate_ntlm_hash(password)
-print(f"NTLM Hash: {ntlm_hash}")
+sha256_hash = generate_sha256_hash(password)
+print(f"SHA256 Hash: {sha256_hash}")
 ```
 
 ## 工具类说明
@@ -255,7 +255,7 @@ HTTP API 客户端，支持：
 | `EXEC_WS_ENABLE` | WebSocket 测试开关 | `0` (关闭) |
 | `EXEC_AGENT_NAME` | 执行机名称 | `Executor_PC_001` |
 | `EXEC_AGENT_USERNAME` | Agent 用户名 | `test_agent` |
-| `EXEC_AGENT_NTLM_HASH` | NTLM Hash | `cc03e747a6afbbcbf8be7668acfebee5` |
+| `EXEC_AGENT_SHA256_HASH` | SHA256 Hash | `ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE` |
 | `EXEC_WS_TIMEOUT` | WebSocket 超时（秒） | `10` |
 | `EXEC_WS_WAIT_OFFLINE_SEC` | 等待离线超时（秒） | `5` |
 | `DB_HOST` | 数据库主机 | `localhost` |
@@ -282,7 +282,7 @@ HTTP API 客户端，支持：
 
 ### WebSocket 测试
 - WebSocket 测试默认关闭，需要设置 `EXEC_WS_ENABLE=1` 启用
-- 配置文件已包含默认 NTLM Hash（`cc03e747a6afbbcbf8be7668acfebee5`），对应测试用户 `test_agent`
+- 配置文件已包含默认 SHA256 Hash（`ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE`），对应测试用户 `test_agent`
 - 测试会建立真实的 WebSocket 连接，确保服务端已启动
 
 ### 数据库测试
@@ -314,8 +314,8 @@ AssertionError: Expected message_type 'register_ack', got 'register_challenge'
 ```
 解决方案：
 - 确认已执行 `setup_test_user.sql` 创建测试用户
-- 检查数据库中的 agent_user 表是否包含 `test_agent` 用户
-- 验证 NTLM Hash 是否为 `cc03e747a6afbbcbf8be7668acfebee5`
+- 检查数据库中的 dial_users 表是否包含 `test_agent` 用户
+- 验证 SHA256 Hash 是否为 `ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE`
 
 **3. 数据库连接失败**
 ```

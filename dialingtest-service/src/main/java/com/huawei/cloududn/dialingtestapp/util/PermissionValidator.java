@@ -1,6 +1,6 @@
 package com.huawei.cloududn.dialingtestapp.util;
 
-import com.huawei.cloududn.dialingtestapp.service.UserRoleService;
+import com.huawei.cloududn.dialingtestapp.service.basicDataManage.UserRoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

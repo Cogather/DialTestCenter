@@ -40,6 +40,7 @@ public class CallbackControllerTest {
         Map<String, Object> request = new HashMap<>();
         request.put("mainTaskId", 1L);
         request.put("status", "SUCCESS");
+        when(orchestratorService.sendResultEvent(eq(1L), eq(true))).thenReturn(true);
 
         // Act
         ResponseEntity<Object> response = callbackController.notifyCallback(request);
@@ -56,6 +57,7 @@ public class CallbackControllerTest {
         request.put("main_task_id", Integer.valueOf(2));
         request.put("status", "FAILED");
         request.put("result_data", new HashMap<String, Object>());
+        when(orchestratorService.sendResultEvent(eq(2L), eq(false), any(Map.class))).thenReturn(true);
 
         // Act
         ResponseEntity<Object> response = callbackController.notifyCallback(request);
@@ -63,6 +65,28 @@ public class CallbackControllerTest {
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(orchestratorService).sendResultEvent(eq(2L), eq(false), any(Map.class));
+    }
+
+    @Test
+    public void testNotifyCallback_TaskNotFound_ReturnsNotFound() {
+        // Arrange
+        Map<String, Object> request = new HashMap<>();
+        request.put("mainTaskId", 999L);
+        request.put("status", "SUCCESS");
+        when(orchestratorService.sendResultEvent(eq(999L), eq(true))).thenReturn(false);
+
+        // Act
+        ResponseEntity<Object> response = callbackController.notifyCallback(request);
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(orchestratorService).sendResultEvent(eq(999L), eq(true));
+        
+        // Verify response body contains error information
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertNotNull(body);
+        assertEquals("TASK_NOT_FOUND", body.get("errorCode"));
     }
 
     @Test

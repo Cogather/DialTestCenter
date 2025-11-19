@@ -46,7 +46,7 @@ class BaseTestCase(unittest.TestCase):
             cls.db.ensure_schema()
             # 准备刷新接口所需的基础数据
             cls.db.ensure_executor_exists("Executor_PC_001")
-            # 创建测试用户（用于CHAP认证）
+            # 创建测试用户（用于SHA256 CHAP认证）
             cls.db.ensure_agent_user_exists(AGENT_USERNAME, AGENT_NTLM_HASH)
         except Exception:
             # 不中断收集；具体用例执行时再报错便于定位
@@ -80,13 +80,13 @@ class BaseTestCase(unittest.TestCase):
 
     def _ws_register_and_get_token(self) -> str:
         """
-        使用 JSON 协议完成四阶段认证，返回 token。
+        使用 JSON 协议完成四阶段CHAP认证（SHA256算法），返回 token。
         连接在方法结束时关闭。
         """
         if not WS_ENABLE:
             self.skipTest("WS 未启用")
         if not AGENT_NTLM_HASH:
-            self.skipTest("未提供 EXEC_AGENT_NTLM_HASH，无法计算CHAP摘要")
+            self.skipTest("未提供 EXEC_AGENT_SHA256_HASH，无法计算CHAP摘要")
 
         client = self._open_ws()
         helper = JsonMessageHelper()
@@ -134,12 +134,12 @@ class BaseTestCase(unittest.TestCase):
 
     def _ws_register_and_keep_connection(self):
         """
-        使用 JSON 协议完成认证，返回 (ExecutorWsClient, token)；调用者负责关闭连接。
+        使用 JSON 协议完成CHAP认证（SHA256算法），返回 (ExecutorWsClient, token)；调用者负责关闭连接。
         """
         if not WS_ENABLE:
             self.skipTest("WS 未启用")
         if not AGENT_NTLM_HASH:
-            self.skipTest("未提供 EXEC_AGENT_NTLM_HASH，无法计算CHAP摘要")
+            self.skipTest("未提供 EXEC_AGENT_SHA256_HASH，无法计算CHAP摘要")
 
         client = self._open_ws()
         helper = JsonMessageHelper()

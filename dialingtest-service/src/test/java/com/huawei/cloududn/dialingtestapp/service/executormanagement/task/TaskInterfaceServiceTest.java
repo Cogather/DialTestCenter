@@ -9,9 +9,9 @@ import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocke
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.InboundFileHandler;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.InboundFileState;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.WssMessageSender;
-import com.huawei.cloududn.dialingtestapp.dao.SoftwarePackageDao;
-import com.huawei.cloududn.dialingtestapp.dao.TestCaseSetDao;
-import com.huawei.cloududn.dialingtestapp.entity.SoftwarePackage;
+import com.huawei.cloududn.dialingtestapp.dao.basicDataManage.SoftwarePackageDao;
+import com.huawei.cloududn.dialingtestapp.dao.basicDataManage.TestCaseSetDao;
+import com.huawei.cloududn.dialingtestapp.entity.basicDataManage.SoftwarePackage;
 import com.huawei.cloududn.dialingtest.model.TestCaseSet;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.ExecutorSelectionService;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.ExecutorSelectionService.ExecutorUeInfo;
@@ -185,7 +185,7 @@ public class TaskInterfaceServiceTest {
         TaskStartResponseDto fileResponse = new TaskStartResponseDto();
         fileResponse.setTaskId(202);
         fileResponse.setResult("success");
-        fileResponse.setFileLen(1024);
+        fileResponse.setFilelen(1024);
         fileResponse.setSubResult(new java.util.ArrayList<>());
         taskInterfaceService.handleTaskStartResponse(fileResponse, session3);
         verify(inboundFileHandler).startReceiving(eq("session-start-file"), eq(1024), any(), any(), any());

@@ -9,7 +9,7 @@ import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocke
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.WssMessageSender;
 import com.huawei.cloududn.dialingtestapp.dao.executormanagement.ExecutorDao;
 import com.huawei.cloududn.dialingtest.model.DialUser;
-import com.huawei.cloududn.dialingtestapp.service.DialUserService;
+import com.huawei.cloududn.dialingtestapp.service.basicDataManage.DialUserService;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.SessionBindingRegistry;
 
 import org.junit.After;
@@ -32,11 +32,11 @@ import java.security.MessageDigest;
 import java.util.Base64;
 
 /**
- * AuthSessionService单元测试 - V4协议版本
+ * AuthSessionService单元测试 - V4协议版本（SHA256升级）
  * 使用5个测试用例覆盖所有认证场景
  *
  * @author g00940940
- * @since 2025-11-18
+ * @since 2025-11-19
  */
 public class AuthSessionServiceTest {
     @Mock
@@ -67,7 +67,7 @@ public class AuthSessionServiceTest {
      * UT1: 测试完整认证流程（失败路径）
      * 覆盖: handleRegisterRequest + handleRegisterResponse基本流程
      * 覆盖: CHAP响应验证失败的场景
-     * 覆盖: computeChapResponseV3方法的正常执行路径
+     * 覆盖: computeChapResponseSha256方法的正常执行路径
      */
     @Test
     public void testAuthenticationFlow_SuccessAndFailurePaths_AllBranchesExecuted() {
@@ -85,7 +85,7 @@ public class AuthSessionServiceTest {
         responseDto.setResponse("incorrectresponse");
         DialUser user = new DialUser();
         user.setUsername("testuser");
-        user.setPassword("a1b2c3d4e5f6789012345678901234ab");
+        user.setPassword("a1b2c3d4e5f6789012345678901234aba1b2c3d4e5f6789012345678901234ab");
         when(dialUserService.findByUsername("testuser")).thenReturn(user);
 
         service.handleRegisterResponse(responseDto, session);
@@ -176,7 +176,7 @@ public class AuthSessionServiceTest {
         responseDto2.setResponse("wrongresponse");
         DialUser user2 = new DialUser();
         user2.setUsername("testuser");
-        user2.setPassword("a1b2c3d4e5f6789012345678901234ab");
+        user2.setPassword("a1b2c3d4e5f6789012345678901234aba1b2c3d4e5f6789012345678901234ab");
         when(dialUserService.findByUsername("testuser")).thenReturn(user2);
         service.handleRegisterResponse(responseDto2, session2);
         verify(sender, atLeast(2)).sendJsonMessage(eq("session-wrong-chap"), any());
@@ -218,8 +218,8 @@ public class AuthSessionServiceTest {
         RegisterChallengeDto sentChallenge = captor.getValue();
         String challengeBase64 = sentChallenge.getChallenge();
 
-        String ntlmHash = "a1b2c3d4e5f6789012345678901234ab";
-        String correctResponse = computeCorrectResponse(ntlmHash, challengeBase64);
+        String sha256Hash = "a1b2c3d4e5f6789012345678901234aba1b2c3d4e5f6789012345678901234ab";
+        String correctResponse = computeCorrectResponse(sha256Hash, challengeBase64);
 
         RegisterResponseDto responseDto = new RegisterResponseDto();
         responseDto.setChallengeId(1);
@@ -227,7 +227,7 @@ public class AuthSessionServiceTest {
         responseDto.setResponse(correctResponse);
         DialUser user = new DialUser();
         user.setUsername("testuser");
-        user.setPassword(ntlmHash);
+        user.setPassword(sha256Hash);
         when(dialUserService.findByUsername("testuser")).thenReturn(user);
         when(executorDao.saveOrUpdateExecutor(anyString(), anyLong(), anyString()))
             .thenThrow(new IllegalArgumentException("Database error"));
@@ -245,7 +245,7 @@ public class AuthSessionServiceTest {
         ArgumentCaptor<RegisterChallengeDto> captor2 = ArgumentCaptor.forClass(RegisterChallengeDto.class);
         verify(sender).sendJsonMessage(eq("session-success"), captor2.capture());
         String challengeBase64_2 = captor2.getValue().getChallenge();
-        String correctResponse2 = computeCorrectResponse(ntlmHash, challengeBase64_2);
+        String correctResponse2 = computeCorrectResponse(sha256Hash, challengeBase64_2);
 
         RegisterResponseDto successResponse = new RegisterResponseDto();
         successResponse.setChallengeId(2);
@@ -259,14 +259,14 @@ public class AuthSessionServiceTest {
         verify(registry).bind(eq("session-success"), eq("Executor-Success"), anyLong());
     }
 
-    private String computeCorrectResponse(String ntlmHashHex, String challengeBase64) {
+    private String computeCorrectResponse(String sha256HashHex, String challengeBase64) {
         try {
-            byte[] ntlmBytes = hexToBytes(ntlmHashHex);
+            byte[] hashBytes = hexToBytes(sha256HashHex);
             byte[] challengeBytes = Base64.getDecoder().decode(challengeBase64);
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            md5.update(ntlmBytes);
-            md5.update(challengeBytes);
-            byte[] digest = md5.digest();
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            sha256.update(hashBytes);
+            sha256.update(challengeBytes);
+            byte[] digest = sha256.digest();
             return bytesToHex(digest);
         } catch (Exception e) {
             return "";

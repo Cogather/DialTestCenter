@@ -4,6 +4,7 @@
 
 package com.huawei.cloududn.dialingtestapp.entity;
 
+import com.huawei.cloududn.dialingtestapp.entity.basicDataManage.PreprocessRulePackageEntity;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

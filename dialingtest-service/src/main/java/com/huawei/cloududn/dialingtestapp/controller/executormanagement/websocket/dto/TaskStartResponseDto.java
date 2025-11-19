@@ -35,7 +35,7 @@ public class TaskStartResponseDto {
     private List<SubResultItemDto> subResult;
 
     @JsonProperty("filelen")
-    private int fileLen;
+    private int filelen;
 
     @JsonProperty("crc")
     private String crc;
@@ -92,19 +92,12 @@ public class TaskStartResponseDto {
         this.subResult = subResult;
     }
     
-    public int getFileLen() {
-        return fileLen;
-    }
-    
-    /**
-     * V4版本：filelen字段的getter（兼容方法）
-     */
     public int getFilelen() {
-        return fileLen;
+        return filelen;
     }
     
-    public void setFileLen(int fileLen) {
-        this.fileLen = fileLen;
+    public void setFilelen(int filelen) {
+        this.filelen = filelen;
     }
     
     public String getCrc() {
@@ -122,7 +115,7 @@ public class TaskStartResponseDto {
                 ", taskId=" + taskId +
                 ", result='" + result + '\'' +
                 ", subResultCount=" + (subResult != null ? subResult.size() : 0) +
-                ", fileLen=" + fileLen +
+                ", filelen=" + filelen +
                 '}';
     }
 }

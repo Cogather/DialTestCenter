@@ -76,12 +76,18 @@ public class CallbackController {
                         java.util.Map<String, Object> tempMap = (java.util.Map<String, Object>) rd;
                         resultData = tempMap;
                     }
+                    boolean sent;
                     if (resultData == null) {
-                        orchestratorService.sendResultEvent(mainTaskId, success);
+                        sent = orchestratorService.sendResultEvent(mainTaskId, success);
                     } else {
-                        orchestratorService.sendResultEvent(mainTaskId, success, resultData);
+                        sent = orchestratorService.sendResultEvent(mainTaskId, success, resultData);
                     }
-                    return ResponseEntity.ok().build();
+                    if (sent) {
+                        return ResponseEntity.ok().build();
+                    } else {
+                        return ResponseEntity.status(404)
+                                .body(error("TASK_NOT_FOUND", "Task not found: " + mainTaskId, 404));
+                    }
                 }
             }
         }

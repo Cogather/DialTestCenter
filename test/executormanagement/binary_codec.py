@@ -31,19 +31,21 @@ class BinaryCodec:
         return f"{value:08x}"
 
     @staticmethod
-    def compute_chap_response(ntlm_hash_hex: str, challenge: Union[str, bytes]) -> str:
+    def compute_chap_response(sha256_hash_hex: str, challenge: Union[str, bytes]) -> str:
         """
-        CHAP 摘要：MD5(NTLM-Hash bytes + Challenge bytes) -> 32 字符十六进制。
-        challenge 可以是十六进制字符串或原始 bytes。
+        CHAP 摘要：SHA256(SHA256-Hash bytes + Challenge bytes) -> 64 字符十六进制。
+        sha256_hash_hex: 数据库中的SHA256 Hash（64位十六进制字符串）
+        challenge: 可以是十六进制字符串或原始 bytes（16字节随机数）
+        返回: 64位十六进制字符串
         """
-        ntlm_bytes = binascii.unhexlify(ntlm_hash_hex)
+        sha256_bytes = binascii.unhexlify(sha256_hash_hex)
         if isinstance(challenge, bytes):
             challenge_bytes = challenge
         else:
             challenge_bytes = binascii.unhexlify(challenge)
-        combined = ntlm_bytes + challenge_bytes
-        md5 = hashlib.md5()
-        md5.update(combined)
-        return md5.hexdigest()
+        combined = sha256_bytes + challenge_bytes
+        sha256 = hashlib.sha256()
+        sha256.update(combined)
+        return sha256.hexdigest()
 
 

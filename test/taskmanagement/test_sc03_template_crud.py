@@ -11,6 +11,7 @@ SC-03: 模板管理完整流程
 """
 
 import unittest
+import time
 
 from taskmanagement.base import BaseTestCase
 from taskmanagement.utils import measure_response_time
@@ -23,6 +24,8 @@ class TestTemplateCrud(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.truncate_template_table()
+        # 使用时间戳生成唯一的模板名称，避免并发测试冲突
+        self.test_template_name = f"每周VPN全量验证_{int(time.time() * 1000)}"
 
     # ==================== TC-03-001 ====================
     def test_tc_03_001_create_template_success(self):
@@ -33,7 +36,7 @@ class TestTemplateCrud(BaseTestCase):
         # Act
         response, response_time = measure_response_time(
             self.create_template,
-            name='每周VPN全量验证'
+            name=self.test_template_name
         )
 
         # Assert
@@ -43,7 +46,7 @@ class TestTemplateCrud(BaseTestCase):
             PERFORMANCE_BASELINE['create_template']
         )
         self.assertions.assert_json_field_not_null(response, 'id')
-        self.assertions.assert_json_field(response, 'name', '每周VPN全量验证')
+        self.assertions.assert_json_field(response, 'name', self.test_template_name)
 
     # ==================== TC-03-002 ====================
     def test_tc_03_002_create_template_unique_name(self):
@@ -52,11 +55,12 @@ class TestTemplateCrud(BaseTestCase):
         期望：重复name返回409/400
         """
         # Arrange
-        resp1 = self.create_template(name='每周VPN全量验证')
+        unique_name = f"模板唯一性测试_{int(time.time() * 1000)}"
+        resp1 = self.create_template(name=unique_name)
         self.assertions.assert_status_code(resp1, 201)
 
         # Act
-        resp2 = self.create_template(name='每周VPN全量验证')
+        resp2 = self.create_template(name=unique_name)
 
         # Assert
         self.assertIn(resp2.status_code, [400, 409])
@@ -68,14 +72,16 @@ class TestTemplateCrud(BaseTestCase):
         期望：200 OK，updateTime更新
         """
         # Arrange
-        create_resp = self.create_template(name='每周VPN全量验证')
+        template_name = f"更新测试模板_{int(time.time() * 1000)}"
+        create_resp = self.create_template(name=template_name)
         self.assertions.assert_status_code(create_resp, 201)
         template_id = create_resp.json()['id']
 
         # Act
+        updated_name = f"{template_name}_v2"
         update_resp = self.update_template(
             template_id,
-            name='每周VPN全量验证-v2',
+            name=updated_name,
             cron='0 0 2 ? * 1',
             enabled=False,
             input='{"businessType":"VPN_BLOCK","scenario":"TRAINING"}',
@@ -87,7 +93,7 @@ class TestTemplateCrud(BaseTestCase):
         self.assertions.assert_status_code(update_resp, 200)
         data = update_resp.json()
         self.assertEqual(data['id'], template_id)
-        self.assertEqual(data['name'], '每周VPN全量验证-v2')
+        self.assertEqual(data['name'], updated_name)
         self.assertIn('updateTime', data)
 
     # ==================== TC-03-004 ====================

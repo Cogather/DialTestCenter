@@ -11,7 +11,7 @@ import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocke
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.RegisterResultDto;
 import com.huawei.cloududn.dialingtestapp.dao.executormanagement.ExecutorDao;
 import com.huawei.cloududn.dialingtest.model.DialUser;
-import com.huawei.cloududn.dialingtestapp.service.DialUserService;
+import com.huawei.cloududn.dialingtestapp.service.basicDataManage.DialUserService;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.SessionBindingRegistry;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.WssMessageSender;
 
@@ -131,8 +131,8 @@ public class AuthSessionService {
             return;
         }
         
-        // Verify CHAP response using NTLM Hash
-        byte[] expectedResponse = computeChapResponseV3(user.getPassword(), ctx.challenge);
+        // Verify CHAP response using SHA256
+        byte[] expectedResponse = computeChapResponseSha256(user.getPassword(), ctx.challenge);
         String expectedHex = bytesToHexString(expectedResponse);
         
         logger.debug("Auth verification: username={}, expectedHex={}, actualHex={}",
@@ -240,32 +240,32 @@ public class AuthSessionService {
     }
     
     /**
-     * Compute CHAP response for V3: MD5(NTLM-Hash + Challenge).
+     * Compute CHAP response: SHA256(StoredHashBytes + ChallengeBytes)
      *
-     * @param ntlmHash       NTLM hash stored in database (hex string)
+     * @param storedHashHex SHA256 hash stored in database (hex string, 64 characters)
      * @param challengeBase64 challenge bytes (Base64 encoded)
-     * @return MD5 response (16 bytes)
+     * @return SHA256 response (32 bytes)
      */
-    private byte[] computeChapResponseV3(String ntlmHash, String challengeBase64) {
+    private byte[] computeChapResponseSha256(String storedHashHex, String challengeBase64) {
         try {
-            byte[] ntlmBytes = hexStringToBytes(ntlmHash);
+            byte[] hashBytes = hexStringToBytes(storedHashHex);
             byte[] challengeBytes = Base64.getDecoder().decode(challengeBase64);
 
-            logger.debug("CHAP calculation: ntlmBytes.length={}, challengeBytes.length={}", 
-                    ntlmBytes.length, challengeBytes.length);
-            logger.debug("NTLM bytes (hex): {}", bytesToHexString(ntlmBytes));
+            logger.debug("CHAP calculation (SHA256): hashBytes.length={}, challengeBytes.length={}", 
+                    hashBytes.length, challengeBytes.length);
+            logger.debug("Hash bytes (hex): {}", bytesToHexString(hashBytes));
             logger.debug("Challenge bytes (hex): {}", bytesToHexString(challengeBytes));
 
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            md5.update(ntlmBytes);
-            md5.update(challengeBytes);
-            byte[] result = md5.digest();
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(hashBytes);
+            digest.update(challengeBytes);
+            byte[] result = digest.digest();
 
             logger.debug("CHAP result (hex): {}", bytesToHexString(result));
             return result;
         } catch (NoSuchAlgorithmException e) {
             logger.error("Failed to compute CHAP response", e);
-            return new byte[16];
+            return new byte[32];
         }
     }
     

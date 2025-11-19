@@ -1,6 +1,6 @@
 package com.huawei.cloududn.dialingtestapp.config;
 
-import com.huawei.cloududn.dialingtestapp.dao.UserRoleDao;
+import com.huawei.cloududn.dialingtestapp.dao.basicDataManage.UserRoleDao;
 import com.huawei.cloududn.dialingtest.model.UserRole;
 import org.junit.Before;
 import org.junit.Test;

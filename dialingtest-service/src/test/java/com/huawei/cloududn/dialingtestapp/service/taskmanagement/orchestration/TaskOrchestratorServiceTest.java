@@ -44,7 +44,8 @@ public class TaskOrchestratorServiceTest {
         Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
                         Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.START_TRAINING_DIALING);
-        orchestrator.sendResultEvent(1L, true);
+        boolean result = orchestrator.sendResultEvent(1L, true);
+        assertTrue("sendResultEvent should return true for existing task", result);
         Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION),
                 Mockito.eq(TaskEvent.TASK_SUCCESS), Mockito.any(TaskContext.class));
         Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("RUNNING"),
@@ -54,12 +55,10 @@ public class TaskOrchestratorServiceTest {
     @Test
     public void testSendResultEvent_TaskNotFound() {
         Mockito.when(taskMgmtService.findById(999L)).thenReturn(null);
-        try {
-            orchestrator.sendResultEvent(999L, true);
-            fail("Expected ResponseStatusException to be thrown");
-        } catch (org.springframework.web.server.ResponseStatusException e) {
-            assertTrue(e.getMessage().contains("Task not found"));
-        }
+        boolean result = orchestrator.sendResultEvent(999L, true);
+        assertFalse("sendResultEvent should return false for non-existent task", result);
+        Mockito.verify(taskStateMachine, Mockito.never()).sendEvent(Mockito.any(TaskState.class),
+                Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class));
     }
 
     @Test
@@ -71,7 +70,8 @@ public class TaskOrchestratorServiceTest {
         Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
                         Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.START_TRAINING_DIALING);
-        orchestrator.sendResultEvent(1L, false);
+        boolean result = orchestrator.sendResultEvent(1L, false);
+        assertTrue("sendResultEvent should return true for failed event on existing task", result);
         Mockito.verify(taskStateMachine).sendEvent(Mockito.eq(TaskState.START_VALIDATION),
                 Mockito.eq(TaskEvent.TASK_FAILED), Mockito.any(TaskContext.class));
     }
@@ -93,6 +93,16 @@ public class TaskOrchestratorServiceTest {
     }
 
     @Test
+    public void testStopTask_TaskNotFound() {
+        Mockito.when(taskMgmtService.findById(999L)).thenReturn(null);
+        orchestrator.stopTask(999L);
+        Mockito.verify(taskStateMachine, Mockito.never()).sendEvent(Mockito.any(TaskState.class),
+                Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class));
+        Mockito.verify(taskMgmtService, Mockito.never()).updateStatusAndContext(Mockito.anyLong(),
+                Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+    }
+
+    @Test
     public void testSendResultEvent_FinalState() {
         TaskEntity task = new TaskEntity();
         task.setId(1);
@@ -101,7 +111,8 @@ public class TaskOrchestratorServiceTest {
         Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
                         Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.FINAL);
-        orchestrator.sendResultEvent(1L, true);
+        boolean result = orchestrator.sendResultEvent(1L, true);
+        assertTrue("sendResultEvent should return true for final state", result);
         Mockito.verify(taskMgmtService).updateStatusAndContext(Mockito.eq(1L), Mockito.eq("COMPLETED"),
                 Mockito.eq("SUCCESS"), Mockito.anyString());
     }
@@ -112,7 +123,8 @@ public class TaskOrchestratorServiceTest {
         task1.setId(1);
         task1.setContext("{\"step\":\"START_VALIDATION\",\"data\":{\"last_callback_fingerprint\":\"S:null\"}}");
         Mockito.when(taskMgmtService.findById(1L)).thenReturn(task1);
-        orchestrator.sendResultEvent(1L, true);
+        boolean result1 = orchestrator.sendResultEvent(1L, true);
+        assertTrue("sendResultEvent should return true for duplicate callback", result1);
         Mockito.verify(taskStateMachine, Mockito.never()).sendEvent(Mockito.any(TaskState.class),
                 Mockito.any(TaskEvent.class), Mockito.any(TaskContext.class));
         TaskEntity task2 = new TaskEntity();
@@ -122,7 +134,8 @@ public class TaskOrchestratorServiceTest {
         Mockito.when(taskStateMachine.sendEvent(Mockito.any(TaskState.class), Mockito.any(TaskEvent.class),
                         Mockito.any(TaskContext.class)))
                 .thenReturn(TaskState.FINAL);
-        orchestrator.sendResultEvent(2L, true);
+        boolean result2 = orchestrator.sendResultEvent(2L, true);
+        assertTrue("sendResultEvent should return true for empty context", result2);
         Mockito.verify(taskStateMachine).sendEvent(Mockito.any(TaskState.class),
                 Mockito.eq(TaskEvent.TASK_SUCCESS), Mockito.any(TaskContext.class));
     }

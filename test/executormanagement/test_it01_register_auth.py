@@ -2,7 +2,7 @@ import unittest
 import binascii
 
 from .base import BaseTestCase
-from .config import WS_ENABLE, AGENT_NTLM_HASH, AGENT_NAME, AGENT_USERNAME
+from .config import WS_ENABLE, AGENT_SHA256_HASH, AGENT_NAME, AGENT_USERNAME, AGENT_NTLM_HASH
 from .utils import wait_for_condition
 from .json_message import JsonMessageHelper
 from .binary_codec import BinaryCodec
@@ -10,9 +10,9 @@ from .binary_codec import BinaryCodec
 
 @unittest.skipUnless(WS_ENABLE, "WS测试默认关闭，设置 EXEC_WS_ENABLE=1 以启用")
 class TestRegisterAuthIT01(BaseTestCase):
-    """IT-01: Agent注册认证流程 - 四阶段CHAP认证"""
+    """IT-01: Agent注册认证流程 - 四阶段CHAP认证（SHA256算法）"""
 
-    @unittest.skipUnless(AGENT_NTLM_HASH, "未提供 EXEC_AGENT_NTLM_HASH，无法计算CHAP摘要")
+    @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算CHAP摘要")
     def test_it_01_001_register_success(self):
         """IT-01-001: 成功注册并获取token"""
         ws, token = self._ws_register_and_keep_connection()
@@ -69,8 +69,8 @@ class TestRegisterAuthIT01(BaseTestCase):
             challenge_id = payload.get("challenge-id", 0)
             self.assertIsNotNone(challenge_b64, "Challenge 不应为空")
 
-            # 发送错误 response
-            fake_response = "0" * 32
+            # 发送错误 response（SHA256为64位十六进制）
+            fake_response = "0" * 64
             resp_env = helper.build(
                 "RegisterResponse",
                 {"challenge-id": challenge_id, "username": "__not_exists__", "response": fake_response},
@@ -96,9 +96,9 @@ class TestRegisterAuthIT01(BaseTestCase):
         finally:
             client.close()
 
-    @unittest.skipUnless(AGENT_NTLM_HASH, "未提供 EXEC_AGENT_NTLM_HASH，无法计算")
+    @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算")
     def test_it_01_003_register_auth_response_mismatch(self):
-        """IT-01-003: 响应摘要不匹配"""
+        """IT-01-003: 响应摘要不匹配（SHA256算法）"""
         client = self._open_ws()
         helper = JsonMessageHelper()
         try:
@@ -117,8 +117,8 @@ class TestRegisterAuthIT01(BaseTestCase):
             challenge_id = payload.get("challenge-id", 0)
             self.assertIsNotNone(challenge_b64)
 
-            # 发送错误的 response（不使用正确 CHAP 计算）
-            wrong_response = "0" * 32
+            # 发送错误的 response（不使用正确 CHAP 计算，SHA256为64位十六进制）
+            wrong_response = "0" * 64
             resp_env = helper.build(
                 "RegisterResponse",
                 {"challenge-id": challenge_id, "username": AGENT_USERNAME, "response": wrong_response},
@@ -143,7 +143,7 @@ class TestRegisterAuthIT01(BaseTestCase):
         finally:
             client.close()
 
-    @unittest.skipUnless(AGENT_NTLM_HASH, "未提供 EXEC_AGENT_NTLM_HASH，无法计算")
+    @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算")
     def test_it_01_004_register_challenge_format(self):
         """IT-01-004: 验证Challenge格式（16字节随机数）"""
         client = self._open_ws()
@@ -169,9 +169,9 @@ class TestRegisterAuthIT01(BaseTestCase):
         finally:
             client.close()
 
-    @unittest.skipUnless(AGENT_NTLM_HASH, "未提供 EXEC_AGENT_NTLM_HASH，无法计算")
-    def test_it_01_005_register_md5_calculation(self):
-        """IT-01-005: 验证MD5摘要算法正确性"""
+    @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算")
+    def test_it_01_005_register_sha256_calculation(self):
+        """IT-01-005: 验证SHA256摘要算法正确性"""
         client = self._open_ws()
         helper = JsonMessageHelper()
         try:
@@ -192,8 +192,10 @@ class TestRegisterAuthIT01(BaseTestCase):
 
             challenge_bytes = BinaryCodec.decode_base64(challenge_b64)
 
-            # 使用 BinaryCodec 计算正确的 CHAP 摘要
-            correct_response = BinaryCodec.compute_chap_response(AGENT_NTLM_HASH, challenge_bytes)
+            # 使用 BinaryCodec 计算正确的 CHAP 摘要（SHA256算法）
+            correct_response = BinaryCodec.compute_chap_response(AGENT_SHA256_HASH, challenge_bytes)
+            # 验证response为64位十六进制字符串
+            self.assertEqual(len(correct_response), 64, "SHA256摘要应该是64位十六进制字符串")
 
             resp_env = helper.build(
                 "RegisterResponse",
@@ -207,7 +209,7 @@ class TestRegisterAuthIT01(BaseTestCase):
             result = payload2.get("result")
             status = payload2.get("status")
             if result is not None:
-                self.assertEqual(result, 0, f"使用正确MD5摘要应该认证成功，错误: {payload2}")
+                self.assertEqual(result, 0, f"使用正确SHA256摘要应该认证成功，错误: {payload2}")
             if status is not None:
                 self.assertIn(status, ("success", 0))
             token = payload2.get("token")

@@ -30,7 +30,7 @@ public class TaskStartResponseDtoTest {
         dto.setResult("success");
         dto.setBlock("block1");
         dto.setDescription("test description");
-        dto.setFileLen(1024);
+        dto.setFilelen(1024);
         dto.setCrc("abc123");
         
         List<SubResultItemDto> subResults = new ArrayList<>();
@@ -41,7 +41,6 @@ public class TaskStartResponseDtoTest {
         assertEquals("success", dto.getResult());
         assertEquals("block1", dto.getBlock());
         assertEquals("test description", dto.getDescription());
-        assertEquals(1024, dto.getFileLen());
         assertEquals(1024, dto.getFilelen());
         assertEquals("abc123", dto.getCrc());
         assertNotNull(dto.getSubResult());

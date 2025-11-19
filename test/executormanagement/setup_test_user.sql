@@ -1,44 +1,44 @@
--- 为执行机管理集成测试创建测试用户
+-- Setup test user for executor management integration tests
 -- 
--- 根据《执行机管理软件实现设计》文档：
--- - agent_user.password 字段存储 NTLM Hash
--- - CHAP 认证：Response = MD5(NTLM-Hash + Challenge)
+-- According to "Executor Management Implementation Design" (V4):
+-- - dial_users.password field stores SHA256 Hash (64-bit hexadecimal)
+-- - CHAP authentication: Response = SHA256(SHA256-Hash + Challenge)
 --
--- 使用说明：
--- 1. 连接到 PostgreSQL 数据库
--- 2. 执行此脚本创建测试用户
--- 3. 记录 password 的值（NTLM Hash），用于设置 EXEC_AGENT_NTLM_HASH 环境变量
+-- Usage:
+-- 1. Connect to PostgreSQL database
+-- 2. Execute this script to create test user
+-- 3. Record the password value (SHA256 Hash) for EXEC_AGENT_SHA256_HASH environment variable
 --
--- 测试用户密码：test123
--- 对应 NTLM Hash：cc03e747a6afbbcbf8be7668acfebee5
+-- Test user password: test123
+-- SHA256 Hash: ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE
 -- 
--- NTLM Hash 生成方法（Python）：
+-- Generate SHA256 Hash (Python):
 -- import hashlib
 -- password = "test123"
--- ntlm_hash = hashlib.new('md4', password.encode('utf-16le')).hexdigest()
--- print(ntlm_hash)  # cc03e747a6afbbcbf8be7668acfebee5
+-- sha256_hash = hashlib.sha256(password.encode('utf-8')).hexdigest().upper()
+-- print(sha256_hash)
 
--- 清理可能存在的测试用户
+-- Clean up existing test users (compatible with old table names)
 DELETE FROM agent_user WHERE username = 'test_agent';
+DELETE FROM dial_users WHERE username = 'test_agent';
 
--- 插入测试用户
+-- Insert test user into dial_users table
 -- username: test_agent
--- password: cc03e747a6afbbcbf8be7668acfebee5 (test123 的 NTLM Hash)
-INSERT INTO agent_user (username, password, last_login_time)
-VALUES ('test_agent', 'cc03e747a6afbbcbf8be7668acfebee5', NOW())
+-- password: ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE (SHA256 Hash of test123)
+INSERT INTO dial_users (username, password)
+VALUES ('test_agent', 'ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE')
 ON CONFLICT (username) DO UPDATE
-SET password = EXCLUDED.password,
-    last_login_time = EXCLUDED.last_login_time;
+SET password = EXCLUDED.password;
 
--- 验证插入
-SELECT id, username, password, last_login_time 
-FROM agent_user 
+-- Verify insertion
+SELECT id, username, password, last_login_time
+FROM dial_users 
 WHERE username = 'test_agent';
 
--- 提示信息
-SELECT '测试用户创建成功！' as status,
+-- Status message
+SELECT 'Success' as status,
        'test_agent' as username,
        'test123' as raw_password,
-       'cc03e747a6afbbcbf8be7668acfebee5' as ntlm_hash,
-       '请设置环境变量: export EXEC_AGENT_NTLM_HASH=cc03e747a6afbbcbf8be7668acfebee5' as instruction;
+       'ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE' as sha256_hash,
+       'Set environment variable: export EXEC_AGENT_SHA256_HASH=ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE' as instruction;
 

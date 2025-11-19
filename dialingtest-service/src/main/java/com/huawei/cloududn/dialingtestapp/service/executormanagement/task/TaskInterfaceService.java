@@ -9,10 +9,10 @@ import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocke
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.InboundFileHandler;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.InboundFileState;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.WssMessageSender;
-import com.huawei.cloududn.dialingtestapp.dao.SoftwarePackageDao;
-import com.huawei.cloududn.dialingtestapp.dao.TestCaseSetDao;
+import com.huawei.cloududn.dialingtestapp.dao.basicDataManage.SoftwarePackageDao;
+import com.huawei.cloududn.dialingtestapp.dao.basicDataManage.TestCaseSetDao;
 import com.huawei.cloududn.dialingtestapp.dao.executormanagement.ExecutorDao;
-import com.huawei.cloududn.dialingtestapp.entity.SoftwarePackage;
+import com.huawei.cloududn.dialingtestapp.entity.basicDataManage.SoftwarePackage;
 import com.huawei.cloududn.dialingtest.model.TestCaseSet;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.ExecutorSelectionService;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.ExecutorSelectionService.ExecutorUeInfo;
@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -195,10 +194,14 @@ public class TaskInterfaceService {
             resultData.put("has_file", Boolean.FALSE);
         }
 
-        taskOrchestratorService.sendResultEvent((long) dto.getTaskId(), isSuccess, resultData);
-
-        logger.info("Task start response processed successfully: taskId={}, result={}",
-                dto.getTaskId(), dto.getResult());
+        boolean sent = taskOrchestratorService.sendResultEvent((long) dto.getTaskId(), isSuccess, resultData);
+        if (sent) {
+            logger.info("Task start response processed successfully: taskId={}, result={}",
+                    dto.getTaskId(), dto.getResult());
+        } else {
+            logger.warn("Task start response received for non-existent task: taskId={}, result={}", 
+                    dto.getTaskId(), dto.getResult());
+        }
     }
 
     /**
@@ -416,9 +419,14 @@ public class TaskInterfaceService {
             resultData.put("has_file", Boolean.TRUE);
             boolean isSuccess = "SUCCESS".equalsIgnoreCase(dto.getResult()) ||
                     "success".equalsIgnoreCase(dto.getResult());
-            taskOrchestratorService.sendResultEvent((long) dto.getTaskId(), isSuccess, resultData);
-            logger.info("Task result file stored for taskId={}, path={}",
-                    dto.getTaskId(), state.getTempFilePath());
+            boolean sent = taskOrchestratorService.sendResultEvent((long) dto.getTaskId(), isSuccess, resultData);
+            if (sent) {
+                logger.info("Task result file stored for taskId={}, path={}",
+                        dto.getTaskId(), state.getTempFilePath());
+            } else {
+                logger.warn("Task result file received for non-existent task: taskId={}, file saved at: {}", 
+                        dto.getTaskId(), state.getTempFilePath());
+            }
         } else if (businessContext instanceof ScreencapResponseDto) {
             ScreencapResponseDto dto = (ScreencapResponseDto) businessContext;
             logger.info("Screencap file saved: serialNo={}, path={}",

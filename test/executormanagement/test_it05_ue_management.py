@@ -119,7 +119,7 @@ class TestUEManagementIT05(BaseTestCase):
                         "AppInstallRequest",
                         {
                             "serialNo": serial_no,
-                            "taskId": f"TASK_{serial_no}",
+                            "taskId": 200001,
                             "appName": "TestApp.apk",
                         },
                         token=int(token) if str(token).isdigit() else None,
@@ -156,7 +156,7 @@ class TestUEManagementIT05(BaseTestCase):
 
             install_env = helper.build(
                 "AppInstallRequest",
-                {"serialNo": "SN001", "taskId": "TASK_INVALID", "appName": "invalid.apk"},
+                {"serialNo": "SN001", "taskId": 999998, "appName": "invalid.apk"},
                 token=int(token) if str(token).isdigit() else None,
             )
             client.send_json(install_env)

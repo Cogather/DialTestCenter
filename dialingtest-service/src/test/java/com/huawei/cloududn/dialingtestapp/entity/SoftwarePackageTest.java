@@ -4,6 +4,7 @@
 
 package com.huawei.cloududn.dialingtestapp.entity;
 
+import com.huawei.cloududn.dialingtestapp.entity.basicDataManage.SoftwarePackage;
 import org.junit.Test;
 import org.junit.Before;
 

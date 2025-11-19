@@ -16,7 +16,7 @@ class TestTaskStopIT09(BaseTestCase):
         client, token = self._ws_register_and_keep_connection()
         helper = JsonMessageHelper()
         try:
-            task_id = "TASK_STOP_TEST_001"
+            task_id = 100001
             stop_env = helper.build(
                 "TaskStopResponse",
                 {"taskId": task_id, "result": 0},
@@ -35,7 +35,7 @@ class TestTaskStopIT09(BaseTestCase):
         try:
             stop_env = helper.build(
                 "TaskStopResponse",
-                {"taskId": "NON_EXISTENT_TASK", "result": 1},
+                {"taskId": 999999, "result": 1},
                 token=int(token) if str(token).isdigit() else None,
             )
             client.send_json(stop_env)
@@ -49,7 +49,7 @@ class TestTaskStopIT09(BaseTestCase):
         client, token = self._ws_register_and_keep_connection()
         helper = JsonMessageHelper()
         try:
-            task_id = "COMPLETED_TASK_001"
+            task_id = 100002
             stop_env = helper.build(
                 "TaskStopResponse",
                 {"taskId": task_id, "result": 1},
@@ -66,7 +66,7 @@ class TestTaskStopIT09(BaseTestCase):
         client, token = self._ws_register_and_keep_connection()
         helper = JsonMessageHelper()
         try:
-            task_id = "MULTI_STOP_TASK"
+            task_id = 100003
             for _ in range(3):
                 stop_env = helper.build(
                     "TaskStopResponse",
@@ -84,7 +84,7 @@ class TestTaskStopIT09(BaseTestCase):
         client, token = self._ws_register_and_keep_connection()
         helper = JsonMessageHelper()
         try:
-            task_id = "RUNNING_TASK_001"
+            task_id = 100004
             stop_env = helper.build(
                 "TaskStopResponse",
                 {"taskId": task_id, "result": 0},
@@ -101,7 +101,7 @@ class TestTaskStopIT09(BaseTestCase):
         client, token = self._ws_register_and_keep_connection()
         helper = JsonMessageHelper()
         try:
-            task_ids = ["TASK_A", "TASK_B", "TASK_C"]
+            task_ids = [100005, 100006, 100007]
             for task_id in task_ids:
                 stop_env = helper.build(
                     "TaskStopResponse",
@@ -135,7 +135,7 @@ class TestTaskStopIT09(BaseTestCase):
         client, token = self._ws_register_and_keep_connection()
         helper = JsonMessageHelper()
         try:
-            invalid_task_ids = ["", "   ", None]
+            invalid_task_ids = [-1, 0, None]
             for task_id in invalid_task_ids:
                 if task_id is not None:
                     try:

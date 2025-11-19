@@ -70,14 +70,16 @@ public class TaskOrchestratorService {
         logger.info("TaskOrchestratorService initialized with all actions and listeners");
     }
 
-    public void sendResultEvent(Long mainTaskId, boolean success) {
-        sendResultEvent(mainTaskId, success, null);
+    public boolean sendResultEvent(Long mainTaskId, boolean success) {
+        return sendResultEvent(mainTaskId, success, null);
     }
 
-    public void sendResultEvent(Long mainTaskId, boolean success, java.util.Map<String, Object> resultData) {
+    public boolean sendResultEvent(Long mainTaskId, boolean success, java.util.Map<String, Object> resultData) {
         TaskEntity task = taskMgmtService.findById(mainTaskId);
         if (task == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found: " + mainTaskId);
+            logger.warn("Task not found: {}, cannot process result event. Success={}, ResultData={}", 
+                    mainTaskId, success, resultData != null ? resultData.keySet() : "null");
+            return false;
         }
 
         TaskContext ctx = readContext(task);
@@ -85,13 +87,15 @@ public class TaskOrchestratorService {
         String newFingerprint = generateFingerprint(success, resultData);
 
         if (isDuplicateCallback(ctx, newFingerprint, mainTaskId, currentState)) {
-            return;
+            logger.debug("Duplicate callback detected for task: {}, ignoring", mainTaskId);
+            return true;
         }
 
         updateContextWithResult(ctx, mainTaskId, resultData, newFingerprint);
         TaskState newState = executeStateTransition(currentState, success, ctx, mainTaskId);
         createSubTaskRecord(mainTaskId, success, resultData, currentState, newState, newFingerprint);
         updateTaskStatus(mainTaskId, success, resultData, ctx, newState);
+        return true;
     }
 
     /**
@@ -310,7 +314,8 @@ public class TaskOrchestratorService {
 
         TaskEntity task = taskMgmtService.findById(mainTaskId);
         if (task == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found: " + mainTaskId);
+            logger.warn("Task not found for stop operation: {}, task may have been deleted or never existed", mainTaskId);
+            return;
         }
 
         TaskContext ctx = readContext(task);

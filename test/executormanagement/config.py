@@ -30,10 +30,12 @@ WS_ENABLE = os.getenv('EXEC_WS_ENABLE', '1') == '1'  # 改为 '1' 默认启用
 # Agent 凭据（用于 SC-01/02/07 的真实用例）
 AGENT_NAME = os.getenv('EXEC_AGENT_NAME', 'Executor_PC_001')
 AGENT_USERNAME = os.getenv('EXEC_AGENT_USERNAME', 'test_agent')
-# Agent NTLM Hash（数据库中 dial_users.password 字段的值，十六进制字符串）
-# 默认值对应数据库中的测试用户：username=test_agent, password(NTLM Hash)=cc03e747a6afbbcbf8be7668acfebee5
+# Agent SHA256 Hash（数据库中 dial_users.password 字段的值，64位十六进制字符串）
+# 默认值对应数据库中的测试用户：username=test_agent, password(SHA256 Hash)=ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE
 # 对应的明文密码是：test123
-AGENT_NTLM_HASH = os.getenv('EXEC_AGENT_NTLM_HASH', 'cc03e747a6afbbcbf8be7668acfebee5')
+AGENT_SHA256_HASH = os.getenv('EXEC_AGENT_SHA256_HASH', 'ECD71870D1963316A97E3AC3408C9835AD8CF0F3C1BC703527C30265534F75AE')
+# 保持旧变量名用于向后兼容（将逐步废弃）
+AGENT_NTLM_HASH = AGENT_SHA256_HASH
 
 # WS 超时与等待配置（秒）
 WS_TIMEOUT = int(os.getenv('EXEC_WS_TIMEOUT', '10'))
