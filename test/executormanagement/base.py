@@ -3,10 +3,10 @@ import logging
 import json
 
 from .utils import APIClient, Assertions, DatabaseHelper, compute_chap_response, wait_for_condition
-from .config import API_ENDPOINTS, WS_URL, WS_ENABLE, AGENT_NAME, AGENT_USERNAME, AGENT_NTLM_HASH, WS_TIMEOUT
+from .config import API_ENDPOINTS, WS_ENABLE, AGENT_NAME, AGENT_USERNAME, AGENT_NTLM_HASH, WS_TIMEOUT
 from .json_message import JsonMessageHelper
 from .binary_codec import BinaryCodec
-from .ws_client import ExecutorWsClient
+from .dual_ws_client import DualWebSocketClient
 
 
 class BaseTestCase(unittest.TestCase):
@@ -72,115 +72,95 @@ class BaseTestCase(unittest.TestCase):
         # 可按需清理或准备数据
         pass
 
-    # ---------- WS helpers（JSON 协议） ----------
+    def assertExecutorStatus(self, name: str, expected_status: int, msg: str = None):
+        """
+        断言executor状态
+        
+        Args:
+            name: executor名称
+            expected_status: 期望的状态 (0=OFFLINE, 1=ONLINE)
+            msg: 断言失败时的消息
+        """
+        executor = self.db.get_executor_by_name(name)
+        if executor is None:
+            self.fail(f"Executor '{name}' not found in database")
+        
+        actual_status = executor.get("status")
+        if msg is None:
+            msg = f"Expected executor '{name}' status to be {expected_status}, but got {actual_status}"
+        
+        self.assertEqual(actual_status, expected_status, msg)
+
+    def _cleanup_executor(self, name: str = None):
+        """
+        清理executor记录（设置为离线状态）
+        
+        Args:
+            name: executor名称，默认使用AGENT_NAME
+        """
+        if name is None:
+            name = AGENT_NAME
+        
+        try:
+            self.db.update_executor_status(name, 0)  # 0=OFFLINE
+            logging.getLogger(__name__).debug(f"Cleaned up executor: {name}")
+        except Exception as e:
+            logging.getLogger(__name__).warning(f"Failed to cleanup executor {name}: {e}")
+
+    # ---------- V5双连接WS helpers ----------
     def _open_ws(self):
-        client = ExecutorWsClient()
-        client.connect()
+        """
+        V5: 建立双连接并完成认证
+        返回DualWebSocketClient实例
+        """
+        client = DualWebSocketClient()
+        client.connect_all()
+        client.authenticate_and_bind(
+            username=AGENT_USERNAME,
+            password_hash=AGENT_NTLM_HASH,
+            hostname=AGENT_NAME
+        )
         return client
 
-    def _ws_register_and_get_token(self) -> str:
+    def _ws_register_and_get_token(self) -> int:
         """
-        使用 JSON 协议完成四阶段CHAP认证（SHA256算法），返回 token。
-        连接在方法结束时关闭。
+        V5: 完成双连接认证，返回token
+        连接在方法结束时关闭
         """
         if not WS_ENABLE:
             self.skipTest("WS 未启用")
         if not AGENT_NTLM_HASH:
             self.skipTest("未提供 EXEC_AGENT_SHA256_HASH，无法计算CHAP摘要")
 
-        client = self._open_ws()
-        helper = JsonMessageHelper()
+        client = DualWebSocketClient()
         try:
-            # 1. RegisterRequest
-            req_env = helper.build(
-                "RegisterRequest",
-                {"hostname": AGENT_NAME, "username": AGENT_USERNAME},
+            client.connect_all()
+            token = client.authenticate_and_bind(
+                username=AGENT_USERNAME,
+                password_hash=AGENT_NTLM_HASH,
+                hostname=AGENT_NAME
             )
-            client.send_json(req_env)
-
-            # 2. RegisterChallenge
-            res_env = client.recv_json()
-            msg_type, _, payload = helper.parse(res_env)
-            if msg_type not in ("RegisterChallenge", "register_challenge"):
-                self.fail(f"unexpected first response: {res_env}")
-            challenge_b64 = payload.get("challenge")
-            challenge_id = payload.get("challenge-id", 0)
-            self.assertIsNotNone(challenge_b64)
-            challenge_bytes = BinaryCodec.decode_base64(challenge_b64)
-
-            # 3. RegisterResponse
-            response_hex = BinaryCodec.compute_chap_response(AGENT_NTLM_HASH, challenge_bytes)
-            auth_env = helper.build(
-                "RegisterResponse",
-                {"challenge-id": challenge_id, "username": AGENT_USERNAME, "response": response_hex},
-            )
-            client.send_json(auth_env)
-
-            # 4. RegisterResult
-            res2_env = client.recv_json()
-            msg_type2, _, payload2 = helper.parse(res2_env)
-            self.assertIn(msg_type2, ("RegisterResult", "register_ack"))
-            result = payload2.get("result")
-            if result is not None:
-                self.assertEqual(result, 0)
-            status = payload2.get("status")
-            if status is not None:
-                self.assertIn(status, ("success", 0))
-            token = payload2.get("token")
-            self.assertTrue(token)
-            return str(token)
+            return token
         finally:
-            client.close()
+            client.close_all()
 
     def _ws_register_and_keep_connection(self):
         """
-        使用 JSON 协议完成CHAP认证（SHA256算法），返回 (ExecutorWsClient, token)；调用者负责关闭连接。
+        V5: 完成双连接认证，返回 (DualWebSocketClient, token)
+        调用者负责关闭连接
         """
         if not WS_ENABLE:
             self.skipTest("WS 未启用")
         if not AGENT_NTLM_HASH:
             self.skipTest("未提供 EXEC_AGENT_SHA256_HASH，无法计算CHAP摘要")
 
-        client = self._open_ws()
-        helper = JsonMessageHelper()
-
-        # 1. RegisterRequest
-        req_env = helper.build(
-            "RegisterRequest",
-            {"hostname": AGENT_NAME, "username": AGENT_USERNAME},
+        client = DualWebSocketClient()
+        client.connect_all()
+        token = client.authenticate_and_bind(
+            username=AGENT_USERNAME,
+            password_hash=AGENT_NTLM_HASH,
+            hostname=AGENT_NAME
         )
-        client.send_json(req_env)
-
-        # 2. RegisterChallenge
-        res_env = client.recv_json()
-        msg_type, _, payload = helper.parse(res_env)
-        if msg_type not in ("RegisterChallenge", "register_challenge"):
-            self.fail(f"unexpected first response: {res_env}")
-        challenge_b64 = payload.get("challenge")
-        challenge_id = payload.get("challenge-id", 0)
-        self.assertIsNotNone(challenge_b64)
-        challenge_bytes = BinaryCodec.decode_base64(challenge_b64)
-
-        # 3. RegisterResponse
-        response_hex = BinaryCodec.compute_chap_response(AGENT_NTLM_HASH, challenge_bytes)
-        auth_env = helper.build(
-            "RegisterResponse",
-            {"challenge-id": challenge_id, "username": AGENT_USERNAME, "response": response_hex},
-        )
-        client.send_json(auth_env)
-
-        # 4. RegisterResult
-        res2_env = client.recv_json()
-        msg_type2, _, payload2 = helper.parse(res2_env)
-        self.assertIn(msg_type2, ("RegisterResult", "register_ack"))
-        result = payload2.get("result")
-        if result is not None:
-            self.assertEqual(result, 0)
-        status = payload2.get("status")
-        if status is not None:
-            self.assertIn(status, ("success", 0))
-        token = payload2.get("token")
-        self.assertTrue(token)
-        return client, str(token)
+        return client, token
 
 

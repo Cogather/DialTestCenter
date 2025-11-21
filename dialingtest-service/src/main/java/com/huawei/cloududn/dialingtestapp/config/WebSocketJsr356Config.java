@@ -4,7 +4,8 @@
 
 package com.huawei.cloududn.dialingtestapp.config;
 
-import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.ExecutorWebsocketEndpoint;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.ControlLinkEndpoint;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.DataLinkEndpoint;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,36 +20,43 @@ import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpointConfig;
 
 /**
- * JSR 356 WebSocket configuration for Executor Management module.
- * V3版本：支持二进制消息和大容量缓冲区配置
- *
- * <p>Manually registers WebSocket endpoint using JSR 356 API with custom buffer sizes.</p>
+ * V5版本: 双连接WebSocket配置-物理分离版本
+ * 注册两个独立的WebSocket端点:
+ * 1. 控制链路端点: /ws/executor/control
+ * 2. 数据链路端点: /ws/executor/data
+ * 配置独立的缓冲区和超时参数
  *
  * @author g00940940
- * @since 2025-11-11
+ * @since 2025-11-20
  */
 @Configuration
 public class WebSocketJsr356Config {
-
     private static final Logger logger = LoggerFactory.getLogger(WebSocketJsr356Config.class);
 
     @Autowired
     private ServletContext servletContext;
 
     @Autowired
-    private ExecutorWebsocketEndpoint executorWebsocketEndpoint;
+    private ControlLinkEndpoint controlLinkEndpoint;
 
-    @Value("${websocket.text-buffer-size:2097152}")
-    private int textBufferSize;
+    @Autowired
+    private DataLinkEndpoint dataLinkEndpoint;
 
-    @Value("${websocket.binary-buffer-size:10485760}")
-    private int binaryBufferSize;
+    @Value("${websocket.control.text-buffer-size:2097152}")
+    private int controlTextBufferSize;
+
+    @Value("${websocket.data.binary-buffer-size:10485760}")
+    private int dataBinaryBufferSize;
 
     @Value("${websocket.max-idle-timeout:300000}")
     private long maxIdleTimeout;
 
+    /**
+     * 注册双连接WebSocket端点
+     * V5: 物理分离-注册两个独立端点
+     */
     @PostConstruct
-    public void registerWebSocketEndpoint() {
+    public void registerWebSocketEndpoints() {
         try {
             ServerContainer serverContainer = (ServerContainer) servletContext
                     .getAttribute(ServerContainer.class.getName());
@@ -58,40 +66,59 @@ public class WebSocketJsr356Config {
                 throw new IllegalStateException("ServerContainer not available");
             }
             
-            // Configure buffer sizes for V3 binary protocol
-            serverContainer.setDefaultMaxTextMessageBufferSize(textBufferSize);
-            serverContainer.setDefaultMaxBinaryMessageBufferSize(binaryBufferSize);
+            serverContainer.setDefaultMaxTextMessageBufferSize(controlTextBufferSize);
+            serverContainer.setDefaultMaxBinaryMessageBufferSize(dataBinaryBufferSize);
             serverContainer.setDefaultMaxSessionIdleTimeout(maxIdleTimeout);
             
-            logger.info("WebSocket container configured: textBuffer={}KB, binaryBuffer={}KB, idleTimeout={}s",
-                textBufferSize / 1024, binaryBufferSize / 1024, maxIdleTimeout / 1000);
+            logger.info("WebSocket dual-connection container configured: " +
+                    "controlTextBuffer={}KB, dataBinaryBuffer={}KB, idleTimeout={}s",
+                    controlTextBufferSize / 1024, dataBinaryBufferSize / 1024, maxIdleTimeout / 1000);
             
-            ServerEndpointConfig config = ServerEndpointConfig.Builder
-                    .create(ExecutorWebsocketEndpoint.class, "/ws/executor")
-                    .configurator(new SpringAwareEndpointConfigurator(executorWebsocketEndpoint))
+            ServerEndpointConfig controlConfig = ServerEndpointConfig.Builder
+                    .create(ControlLinkEndpoint.class, "/ws/executor/control")
+                    .configurator(new SpringAwareEndpointConfigurator<>(controlLinkEndpoint))
                     .build();
             
-            serverContainer.addEndpoint(config);
-            logger.info("WebSocket endpoint registered successfully: /ws/executor (V3 binary protocol enabled)");
+            ServerEndpointConfig dataConfig = ServerEndpointConfig.Builder
+                    .create(DataLinkEndpoint.class, "/ws/executor/data")
+                    .configurator(new SpringAwareEndpointConfigurator<>(dataLinkEndpoint))
+                    .build();
+            
+            serverContainer.addEndpoint(controlConfig);
+            logger.info("Control link endpoint registered successfully: /ws/executor/control");
+            
+            serverContainer.addEndpoint(dataConfig);
+            logger.info("Data link endpoint registered successfully: /ws/executor/data");
+            
+            logger.info("WebSocket dual-connection endpoints registered successfully (V5: physical separation)");
         } catch (DeploymentException e) {
-            logger.error("Failed to register WebSocket endpoint", e);
-            throw new IllegalStateException("Failed to register WebSocket endpoint", e);
+            logger.error("Failed to register dual-connection WebSocket endpoints", e);
+            throw new IllegalStateException("Failed to register dual-connection WebSocket endpoints", e);
         }
     }
 
     /**
-     * Custom configurator to use Spring-managed endpoint instance.
+     * 自定义配置器,使用Spring管理的端点实例
+     *
+     * @param <T> 端点类型
      */
-    private static class SpringAwareEndpointConfigurator extends ServerEndpointConfig.Configurator {
-        private final ExecutorWebsocketEndpoint endpoint;
+    private static class SpringAwareEndpointConfigurator<T> extends ServerEndpointConfig.Configurator {
+        private final T endpoint;
 
-        public SpringAwareEndpointConfigurator(ExecutorWebsocketEndpoint endpoint) {
+        /**
+         * 构造函数
+         *
+         * @param endpoint WebSocket端点实例
+         */
+        public SpringAwareEndpointConfigurator(T endpoint) {
             this.endpoint = endpoint;
         }
 
         @Override
-        public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
+        public <E> E getEndpointInstance(Class<E> endpointClass) throws InstantiationException {
             return endpointClass.cast(endpoint);
         }
     }
 }
+
+

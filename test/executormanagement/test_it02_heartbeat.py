@@ -60,7 +60,8 @@ class TestHeartbeatIT02(BaseTestCase):
             self.assertEqual(ex.get("status"), 1, "发送心跳后 executor 应为 ONLINE")
             self.assertIsNotNone(ex.get("last_online_time"), "last_online_time 应该已更新")
         finally:
-            ws.close()
+            ws.close_all()
+            self._cleanup_executor()
 
         # 验证 UE 列表已更新到数据库（使用 serial-no 作为 msisdn）
         time.sleep(1)  # 等待 UE 数据入库
@@ -117,7 +118,8 @@ class TestHeartbeatIT02(BaseTestCase):
             ws.recv_json()
             time.sleep(1)  # 等待数据库更新
         finally:
-            ws.close()
+            ws.close_all()
+            self._cleanup_executor()
 
         # 验证 UE 变更（使用 serial-no）
         ue1 = self.db.get_ue_by_msisdn("SN_TEST_001")
@@ -198,7 +200,8 @@ class TestHeartbeatIT02(BaseTestCase):
             # 最后一次心跳是 state=1，所以应该是ONLINE
             self.assertEqual(ex.get("status"), 1, "最后一次心跳state=1，应为ONLINE")
         finally:
-            ws.close()
+            ws.close_all()
+            self._cleanup_executor()
 
     @unittest.skipUnless(AGENT_NTLM_HASH, "未提供 EXEC_AGENT_NTLM_HASH，无法计算")
     def test_it_02_005_empty_ue_list(self):
@@ -219,4 +222,5 @@ class TestHeartbeatIT02(BaseTestCase):
             self.assertIsNotNone(ex)
             self.assertEqual(ex.get("status"), 1, "心跳后应保持ONLINE状态")
         finally:
-            ws.close()
+            ws.close_all()
+            self._cleanup_executor()

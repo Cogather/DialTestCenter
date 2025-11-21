@@ -32,13 +32,14 @@ import java.nio.ByteBuffer;
 import javax.websocket.Session;
 
 /**
- * V4 入站消息分发器
- * 职责：
- * 1. 解析 JSON 信令并分发给业务层
- * 2. 将 Binary 分片委托给 InboundFileHandler
+ * V5入站消息分发器
+ * V5核心改进:
+ * 1. dispatchControl(): 处理控制链路的JSON信令消息
+ * 2. dispatchData(): 处理数据链路的二进制分片消息
+ * 3. 支持双链路消息类型区分和路由
  *
  * @author g00940940
- * @since 2025-11-14
+ * @since 2025-11-20
  */
 @Component
 public class WssMessageDispatcher {
@@ -60,25 +61,37 @@ public class WssMessageDispatcher {
     private TaskInterfaceService taskInterfaceService;
 
     /**
-     * 分发 JSON 信令
+     * 分发控制链路JSON信令
+     * V5: 专门处理控制链路消息
      *
      * @param jsonMessage JSON消息字符串
      * @param session WebSocket会话
      */
-    public void dispatch(String jsonMessage, Session session) {
+    public void dispatchControl(String jsonMessage, Session session) {
         try {
             JsonMessageEnvelope envelope = objectMapper.readValue(jsonMessage, JsonMessageEnvelope.class);
             String messageType = envelope.getType();
-            logger.debug("Dispatching JSON message, sessionId={}, type={}", session.getId(), messageType);
+            logger.debug("Dispatching control message, sessionId={}, type={}", session.getId(), messageType);
 
             MessageType type = MessageType.fromJsonType(messageType);
             dispatchByMessageType(type, envelope, session, messageType);
 
         } catch (IllegalArgumentException e) {
-            logger.error("Invalid message type, sessionId={}", session.getId(), e);
+            logger.error("Invalid control message type, sessionId={}", session.getId(), e);
         } catch (Exception e) {
-            logger.error("Failed to dispatch JSON message, sessionId={}", session.getId(), e);
+            logger.error("Failed to dispatch control message, sessionId={}", session.getId(), e);
         }
+    }
+
+    /**
+     * 兼容旧版本的dispatch方法
+     * 委托给dispatchControl处理
+     *
+     * @param jsonMessage JSON消息字符串
+     * @param session WebSocket会话
+     */
+    public void dispatch(String jsonMessage, Session session) {
+        dispatchControl(jsonMessage, session);
     }
 
     /**
@@ -250,25 +263,38 @@ public class WssMessageDispatcher {
     }
 
     /**
-     * 分发二进制分片
+     * 分发数据链路二进制分片
+     * V5: 专门处理数据链路消息
+     *
+     * @param buffer 二进制数据
+     * @param session WebSocket会话
+     */
+    public void dispatchData(ByteBuffer buffer, Session session) {
+        try {
+            String sessionId = session.getId();
+
+            if (inboundFileHandler.isReceivingFile(sessionId)) {
+                logger.debug("Handling data chunk for sessionId={}, size={} bytes",
+                        sessionId, buffer.remaining());
+                inboundFileHandler.handleChunk(sessionId, buffer);
+            } else {
+                logger.warn("Received unexpected data chunk, sessionId={}", sessionId);
+            }
+
+        } catch (Exception e) {
+            logger.error("Failed to dispatch data chunk, sessionId={}", session.getId(), e);
+        }
+    }
+
+    /**
+     * 兼容旧版本的dispatch方法
+     * 委托给dispatchData处理
      *
      * @param buffer 二进制数据
      * @param session WebSocket会话
      */
     public void dispatch(ByteBuffer buffer, Session session) {
-        try {
-            String sessionId = session.getId();
-
-            if (inboundFileHandler.isReceivingFile(sessionId)) {
-                logger.debug("Handling binary chunk for sessionId={}, size={} bytes",
-                        sessionId, buffer.remaining());
-                inboundFileHandler.handleChunk(sessionId, buffer);
-            } else {
-                logger.warn("Received unexpected binary chunk, sessionId={}", sessionId);
-            }
-
-        } catch (Exception e) {
-            logger.error("Failed to dispatch binary chunk, sessionId={}", session.getId(), e);
-        }
+        dispatchData(buffer, session);
     }
 }
+

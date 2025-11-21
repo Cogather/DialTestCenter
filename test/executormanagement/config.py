@@ -24,7 +24,13 @@ API_ENDPOINTS = {
 }
 
 # WebSocket 配置
+# V4单连接URL（向后兼容，已废弃）
 WS_URL = os.getenv('EXEC_WS_URL', 'wss://localhost:8087/dialingtest/ws/executor')
+
+# V5双连接URL（推荐使用）
+WS_CONTROL_URL = os.getenv('EXEC_WS_CONTROL_URL', 'wss://localhost:8087/dialingtest/ws/executor/control')
+WS_DATA_URL = os.getenv('EXEC_WS_DATA_URL', 'wss://localhost:8087/dialingtest/ws/executor/data')
+
 WS_ENABLE = os.getenv('EXEC_WS_ENABLE', '1') == '1'  # 改为 '1' 默认启用
 
 # Agent 凭据（用于 SC-01/02/07 的真实用例）

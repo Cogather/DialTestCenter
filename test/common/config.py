@@ -62,7 +62,7 @@ def load_request_config(env_prefix: Optional[str] = None,
 
 
 def load_base_url(preferred_env_vars: Optional[list] = None,
-                  default_base: str = 'https://localhost:8087/dialingtest') -> str:
+                  default_base: str = 'https://localhost:8087/dialingtestapp') -> str:
     """加载统一 BASE_URL。
 
     优先读取 preferred_env_vars 中的环境变量，其次读取 API_BASE_URL；均未配置时使用默认值。

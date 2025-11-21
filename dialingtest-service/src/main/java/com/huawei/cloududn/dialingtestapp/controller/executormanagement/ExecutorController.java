@@ -7,7 +7,6 @@ package com.huawei.cloududn.dialingtestapp.controller.executormanagement;
 import com.huawei.cloududn.dialingtestapp.dao.executormanagement.ExecutorDao;
 import com.huawei.cloududn.dialingtest.model.Executor;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.SessionBindingRegistry;
-import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.ExecutorWebsocketEndpoint;
 import com.huawei.cloududn.dialingtest.api.ExecutorsApi;
 import com.huawei.cloududn.dialingtest.model.ExecutorPageResponse;
 import com.huawei.cloududn.dialingtest.model.ExecutorPageData;
@@ -44,9 +43,6 @@ public class ExecutorController implements ExecutorsApi {
 
     @Autowired
     private SessionBindingRegistry registry;
-
-    @Autowired
-    private ExecutorWebsocketEndpoint endpoint;
 
     @Override
     public ResponseEntity<ExecutorPageResponse> listExecutors(

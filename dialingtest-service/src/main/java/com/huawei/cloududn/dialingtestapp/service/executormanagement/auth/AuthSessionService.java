@@ -14,6 +14,7 @@ import com.huawei.cloududn.dialingtest.model.DialUser;
 import com.huawei.cloududn.dialingtestapp.service.basicDataManage.DialUserService;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.SessionBindingRegistry;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.WssMessageSender;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.DualLinkRouter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,9 @@ public class AuthSessionService {
 
     @Autowired
     private SessionBindingRegistry registry;
+
+    @Autowired
+    private DualLinkRouter dualLinkRouter;
     
     private final AtomicInteger challengeIdCounter = new AtomicInteger(1);
     
@@ -157,11 +161,17 @@ public class AuthSessionService {
             return;
         }
         
+        // Send Register-Result - Success (BEFORE binding token, so it sends directly)
+        sendRegisterResultV4(session.getId(), 0, "Authentication successful", token);
+        logger.debug("Register-Result sent to sessionId={}, token={}", session.getId(), token);
+        
         // Bind session to executor
         registry.bind(session.getId(), ctx.executorName, token);
         
-        // Send Register-Result - Success
-        sendRegisterResultV4(session.getId(), 0, "Authentication successful", token);
+        // V5: Bind control link to DualLinkRouter with token (AFTER sending Register-Result)
+        String tokenStr = String.valueOf(token);
+        dualLinkRouter.bindControlLinkWithToken(tokenStr, session.getId(), session);
+        logger.info("Control link bound with token in DualLinkRouter: sessionId={}, token={}", session.getId(), tokenStr);
         
         // Cleanup
         pendingMap.remove(session.getId());

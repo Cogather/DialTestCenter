@@ -38,14 +38,14 @@
     
     <Loggers>
         <!-- Application Loggers -->
-        <Logger name="com.huawei.cloududn.dialingtest" level="DEBUG" additivity="false">
+        <Logger name="com.huawei.cloududn.dialingtestapp" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="FileAppender"/>
             <AppenderRef ref="ErrorFileAppender"/>
         </Logger>
         
         <!-- Exception Handler Logger -->
-        <Logger name="com.huawei.cloududn.dialingtest.exception" level="ERROR" additivity="false">
+        <Logger name="com.huawei.cloududn.dialingtestapp.exception" level="ERROR" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="FileAppender"/>
             <AppenderRef ref="ErrorFileAppender"/>

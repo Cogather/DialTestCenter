@@ -7,7 +7,6 @@ package com.huawei.cloududn.dialingtestapp.controller.executormanagement;
 import com.huawei.cloududn.dialingtest.model.ExecutorPageResponse;
 import com.huawei.cloududn.dialingtest.model.OperationResponse;
 import com.huawei.cloududn.dialingtest.model.RefreshExecutorRequest;
-import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.ExecutorWebsocketEndpoint;
 import com.huawei.cloududn.dialingtestapp.dao.executormanagement.ExecutorDao;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.SessionBindingRegistry;
 
@@ -40,9 +39,6 @@ public class ExecutorControllerTest {
 
     @Mock
     private SessionBindingRegistry registry;
-
-    @Mock
-    private ExecutorWebsocketEndpoint endpoint;
 
     @InjectMocks
     private ExecutorController controller;

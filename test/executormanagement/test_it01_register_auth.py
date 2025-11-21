@@ -14,10 +14,11 @@ class TestRegisterAuthIT01(BaseTestCase):
 
     @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算CHAP摘要")
     def test_it_01_001_register_success(self):
-        """IT-01-001: 成功注册并获取token"""
+        """IT-01-001: V5双连接成功注册并获取token"""
         ws, token = self._ws_register_and_keep_connection()
         try:
             self.assertTrue(token, "Token 应该非空")
+            self.assertIsInstance(token, int, "Token应该是整数类型")
 
             # 验证数据库状态：executor.status=1（ONLINE），token已更新
             def _check_online():
@@ -33,24 +34,20 @@ class TestRegisterAuthIT01(BaseTestCase):
             ok = wait_for_condition(_check_online, timeout=5, interval=0.5)
             self.assertTrue(ok, "executor 应该更新为 ONLINE 状态，并设置 token 和 last_online_time")
 
-            # 验证token格式：允许整数或十六进制字符串
-            try:
-                int_token = int(token)
-                self.assertIsInstance(int_token, int)
-            except ValueError:
-                self.assertEqual(len(token), 16, "Token 应该是16字符的十六进制字符串（8字节）")
-                try:
-                    binascii.unhexlify(token)
-                except Exception:
-                    self.fail("Token 应该是有效的十六进制字符串")
+            # V5: 验证双连接都已建立
+            self.assertTrue(ws.is_fully_connected, "双连接应该都已建立")
         finally:
-            ws.close()
+            ws.close_all()
+            self._cleanup_executor()
 
     def test_it_01_002_register_user_not_found(self):
-        """IT-01-002: 用户名不存在"""
-        client = self._open_ws()
+        """IT-01-002: V5用户名不存在测试"""
+        from .dual_ws_client import DualWebSocketClient
+        client = DualWebSocketClient()
         helper = JsonMessageHelper()
         try:
+            # V5: 只建立连接，不认证
+            client.connect_all()
             # 发送 RegisterRequest（不存在的用户名）
             env = helper.build(
                 "RegisterRequest",
@@ -94,14 +91,18 @@ class TestRegisterAuthIT01(BaseTestCase):
             if ex:
                 self.assertNotEqual(ex.get("status"), 1, "认证失败时不应更新为 ONLINE 状态")
         finally:
-            client.close()
+            client.close_all()
+            self._cleanup_executor()
 
     @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算")
     def test_it_01_003_register_auth_response_mismatch(self):
-        """IT-01-003: 响应摘要不匹配（SHA256算法）"""
-        client = self._open_ws()
+        """IT-01-003: V5响应摘要不匹配（SHA256算法）"""
+        from .dual_ws_client import DualWebSocketClient
+        client = DualWebSocketClient()
         helper = JsonMessageHelper()
         try:
+            # V5: 只建立控制链路连接，不认证
+            client.connect_control()
             # 发送 RegisterRequest
             env = helper.build(
                 "RegisterRequest",
@@ -111,7 +112,6 @@ class TestRegisterAuthIT01(BaseTestCase):
 
             # 收到 RegisterChallenge
             res_env = client.recv_json()
-            msg_type, _, payload = helper.parse(res_env)
             self.assertIn(msg_type, ("RegisterChallenge", "register_challenge"))
             challenge_b64 = payload.get("challenge")
             challenge_id = payload.get("challenge-id", 0)
@@ -119,14 +119,10 @@ class TestRegisterAuthIT01(BaseTestCase):
 
             # 发送错误的 response（不使用正确 CHAP 计算，SHA256为64位十六进制）
             wrong_response = "0" * 64
-            resp_env = helper.build(
-                "RegisterResponse",
-                {"challenge-id": challenge_id, "username": AGENT_USERNAME, "response": wrong_response},
-            )
-            client.send_json(resp_env)
+            resp_payload = {"challenge-id": challenge_id, "username": AGENT_USERNAME, "response": wrong_response}
+            client.send_control_json("RegisterResponse", resp_payload, token=None)
 
-            res2_env = client.recv_json()
-            msg_type2, _, payload2 = helper.parse(res2_env)
+            msg_type2, _, payload2 = client.recv_control_json()
             self.assertIn(msg_type2, ("RegisterResult", "register_result", "register_ack"))
             result = payload2.get("result")
             status = payload2.get("status")
@@ -141,22 +137,21 @@ class TestRegisterAuthIT01(BaseTestCase):
             if ex:
                 self.assertNotEqual(ex.get("status"), 1, "认证失败时不应更新为 ONLINE 状态")
         finally:
-            client.close()
+            client.close_all()
+            self._cleanup_executor()
 
     @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算")
     def test_it_01_004_register_challenge_format(self):
-        """IT-01-004: 验证Challenge格式（16字节随机数）"""
-        client = self._open_ws()
-        helper = JsonMessageHelper()
+        """IT-01-004: V5验证Challenge格式（16字节随机数）"""
+        from .dual_ws_client import DualWebSocketClient
+        client = DualWebSocketClient()
         try:
-            env = helper.build(
-                "RegisterRequest",
-                {"hostname": AGENT_NAME, "username": AGENT_USERNAME},
-            )
-            client.send_json(env)
+            # V5: 只建立控制链路连接
+            client.connect_control()
+            payload = {"hostname": AGENT_NAME, "username": AGENT_USERNAME}
+            client.send_control_json("RegisterRequest", payload, token=None)
 
-            res_env = client.recv_json()
-            msg_type, _, payload = helper.parse(res_env)
+            msg_type, _, payload = client.recv_control_json()
             self.assertIn(msg_type, ("RegisterChallenge", "register_challenge"))
 
             challenge_b64 = payload.get("challenge")
@@ -167,24 +162,23 @@ class TestRegisterAuthIT01(BaseTestCase):
             challenge_hex = BinaryCodec.encode_hex(challenge_bytes)
             self.assertEqual(len(challenge_hex), 32, "Challenge 转为十六进制应为32字符")
         finally:
-            client.close()
+            client.close_all()
+            self._cleanup_executor()
 
     @unittest.skipUnless(AGENT_SHA256_HASH, "未提供 EXEC_AGENT_SHA256_HASH，无法计算")
     def test_it_01_005_register_sha256_calculation(self):
-        """IT-01-005: 验证SHA256摘要算法正确性"""
-        client = self._open_ws()
-        helper = JsonMessageHelper()
+        """IT-01-005: V5验证SHA256摘要算法正确性"""
+        from .dual_ws_client import DualWebSocketClient
+        client = DualWebSocketClient()
         try:
+            # V5: 只建立控制链路连接
+            client.connect_control()
             # 发送 RegisterRequest
-            env = helper.build(
-                "RegisterRequest",
-                {"hostname": AGENT_NAME, "username": AGENT_USERNAME},
-            )
-            client.send_json(env)
+            payload = {"hostname": AGENT_NAME, "username": AGENT_USERNAME}
+            client.send_control_json("RegisterRequest", payload, token=None)
 
             # 收到 RegisterChallenge
-            res_env = client.recv_json()
-            msg_type, _, payload = helper.parse(res_env)
+            msg_type, _, payload = client.recv_control_json()
             self.assertIn(msg_type, ("RegisterChallenge", "register_challenge"))
             challenge_b64 = payload.get("challenge")
             challenge_id = payload.get("challenge-id", 0)
@@ -197,14 +191,10 @@ class TestRegisterAuthIT01(BaseTestCase):
             # 验证response为64位十六进制字符串
             self.assertEqual(len(correct_response), 64, "SHA256摘要应该是64位十六进制字符串")
 
-            resp_env = helper.build(
-                "RegisterResponse",
-                {"challenge-id": challenge_id, "username": AGENT_USERNAME, "response": correct_response},
-            )
-            client.send_json(resp_env)
+            resp_payload = {"challenge-id": challenge_id, "username": AGENT_USERNAME, "response": correct_response}
+            client.send_control_json("RegisterResponse", resp_payload, token=None)
 
-            res2_env = client.recv_json()
-            msg_type2, _, payload2 = helper.parse(res2_env)
+            msg_type2, _, payload2 = client.recv_control_json()
             self.assertIn(msg_type2, ("RegisterResult", "register_result", "register_ack"))
             result = payload2.get("result")
             status = payload2.get("status")
@@ -215,4 +205,5 @@ class TestRegisterAuthIT01(BaseTestCase):
             token = payload2.get("token")
             self.assertTrue(token, "认证成功时应该返回token")
         finally:
-            client.close()
+            client.close_all()
+            self._cleanup_executor()
