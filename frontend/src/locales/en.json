@@ -71,6 +71,9 @@
   },
   "navigation": {
     "userManagement": "User Management",
+    "taskManagement": "Task Management",
+    "dialTask": "Dial Test Tasks",
+    "executorStatus": "Executor Status",
     "userList": "Execution Machine Account Management",
     "roleManagement": "Role Management",
     "configManagement": "Dial Management",
@@ -664,6 +667,76 @@
         "appName": "App Name",
         "ruleName": "Rule Name",
         "all": "All"
+      }
+    }
+  },
+  "dialTask": {
+    "title": "Dial Task Management",
+    "description": "Manage dial test tasks, support creating, viewing task status and results",
+    "newTask": "New Task",
+    "createTask": "Create Dial Task",
+    "createSuccess": "Task created successfully",
+    "createFailed": "Failed to create task",
+    "scheduledTask": "Scheduled Task",
+    "stopTask": "Stop Task",
+    "table": {
+      "id": "Task ID",
+      "creator": "Creator",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "type": "Task Type",
+      "status": "Status",
+      "actions": "Actions",
+      "viewDetails": "View Details",
+      "pagination": "{{start}}-{{end}} of {{total}} items"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "RUNNING": "Running",
+      "COMPLETED": "Completed",
+      "FAILED": "Failed"
+    },
+    "form": {
+      "taskName": "Task Name",
+      "taskNamePlaceholder": "Please enter task name",
+      "type": "Task Type",
+      "typePlaceholder": "Please select task type",
+      "target": "Test Target",
+      "targetPlaceholder": "Please enter test target (e.g. URL or IP)",
+      "config": "Task Config",
+      "configPlaceholder": "Enter configuration",
+      "preprocessRule": "Preprocess Rule",
+      "preprocessRulePlaceholder": "Select preprocess rule",
+      "isScheduled": "Scheduled Execution",
+      "scheduleConfig": "Schedule Config",
+      "startTime": "First Start Time",
+      "startTimePlaceholder": "Select start time",
+      "interval": "Interval",
+      "intervalPlaceholder": "Enter interval value",
+      "intervalUnit": "Unit",
+      "intervalUnitPlaceholder": "Select unit",
+      "units": {
+        "HOUR": "Hour",
+        "DAY": "Day"
+      }
+    },
+    "types": {
+      "VPN_BLOCK": "VPN Block"
+    },
+    "detail": {
+      "title": "Task Details",
+      "basicInfo": "Basic Information",
+      "subtasks": "Subtasks Execution",
+      "config": "Configuration (Input)",
+      "output": "Result (Output)",
+      "noOutput": "No output available",
+      "table": {
+        "id": "Subtask ID",
+        "stepName": "Task Step",
+        "executor": "Executor",
+        "status": "Status",
+        "latency": "Latency",
+        "result": "Result"
       }
     }
   }

@@ -12,6 +12,9 @@ import {
     HistoryOutlined,
     HomeOutlined,
     CaretDownFilled,
+    ScheduleOutlined,
+    ExperimentOutlined,
+    MonitorOutlined,
 } from '@ant-design/icons'
 import { Layout as AntLayout, Button, Menu, Typography, Dropdown } from 'antd'
 import React, { useState, useEffect } from 'react'
@@ -82,6 +85,23 @@ const Layout = ({ children }) => {
   const currentYear = new Date().getFullYear()
 
   const menuItems = [
+    {
+      key: 'task',
+      icon: <ScheduleOutlined />,
+      label: translateNavigation('taskManagement'),
+      children: [
+        {
+          key: '/dial-tasks',
+          icon: <ExperimentOutlined />,
+          label: translateNavigation('dialTask'),
+        },
+        {
+          key: '/executor-status',
+          icon: <MonitorOutlined />,
+          label: translateNavigation('executorStatus'),
+        },
+      ],
+    },
     {
       key: 'user',
       icon: <TeamOutlined />,
