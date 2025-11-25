@@ -83,6 +83,48 @@
     "operationManagement": "Operation Management",
     "operationLogManagement": "Operation Log"
   },
+  "executorStatus": {
+    "title": "Executor Status Monitor",
+    "description": "Real-time monitoring of executors and their managed devices",
+    "refresh": "Refresh Status",
+    "searchPlaceholder": "Search Executor Name or IP",
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "invalid": "Invalid",
+      "all": "All Status"
+    },
+    "table": {
+      "name": "Executor Name",
+      "ip": "IP Address",
+      "status": "Status",
+      "ueSummary": "UE Online Rate (Online/Total)",
+      "lastHeartbeat": "Last Heartbeat",
+      "description": "Description",
+      "proxy": "Proxy",
+      "actions": "Actions",
+      "viewDetail": "View Details",
+      "ueCountFormat": "{{online}} / {{total}}",
+      "pagination": "Showing {{start}} to {{end}} of {{total}} entries"
+    },
+    "detail": {
+      "title": "Executor Details",
+      "basicInfo": "Basic Information",
+      "ueList": "Managed Device List",
+      "token": "Token",
+      "ueTable": {
+        "msisdn": "Device ID",
+        "brandModel": "Brand/Model",
+        "os": "OS Version",
+        "status": "Connection Status",
+        "battery": "Battery",
+        "network": "Network Info",
+        "online": "Online",
+        "offline": "Offline",
+        "unknown": "Unknown"
+      }
+    }
+  },
   "user": {
     "title": "Executor Account Management",
     "description": "Manage executor accounts, support CRUD operations for executor accounts",

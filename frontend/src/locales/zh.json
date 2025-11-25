@@ -83,6 +83,48 @@
     "operationManagement": "运维管理",
     "operationLogManagement": "操作记录"
   },
+  "executorStatus": {
+    "title": "执行机状态监控",
+    "description": "实时监控执行机及其挂载设备的运行状态",
+    "refresh": "刷新状态",
+    "searchPlaceholder": "搜索执行机名称或IP",
+    "status": {
+      "online": "在线",
+      "offline": "离线",
+      "invalid": "无效",
+      "all": "全部状态"
+    },
+    "table": {
+      "name": "执行机名称",
+      "ip": "IP地址",
+      "status": "状态",
+      "ueSummary": "UE在线率 (在线/总数)",
+      "lastHeartbeat": "最后心跳时间",
+      "description": "描述",
+      "proxy": "代理",
+      "actions": "操作",
+      "viewDetail": "查看详情",
+      "ueCountFormat": "{{online}} / {{total}}",
+      "pagination": "显示第 {{start}} 到 {{end}} 条记录，共 {{total}} 条"
+    },
+    "detail": {
+      "title": "执行机详情",
+      "basicInfo": "基础信息",
+      "ueList": "挂载设备列表",
+      "token": "Token",
+      "ueTable": {
+        "msisdn": "设备标识",
+        "brandModel": "品牌/型号",
+        "os": "系统版本",
+        "status": "连接状态",
+        "battery": "电量",
+        "network": "网络信息",
+        "online": "在线",
+        "offline": "离线",
+        "unknown": "未知"
+      }
+    }
+  },
   "user": {
     "title": "执行机账号管理",
     "description": "管理执行机账号，支持执行机账号的增删改查操作",
