@@ -18,6 +18,7 @@ import {
   Spin,
   Table,
   Tag,
+  Badge,
   Typography,
 } from 'antd'
 import React, { useEffect, useState } from 'react'
@@ -126,17 +127,17 @@ const TestCaseDetails = ({
   const getStatusTag = (status) => {
     const statusKey = status || 'UNKNOWN'
     const statusText = translateTestCaseSet(`validation.status.${statusKey}`)
+    let statusType = 'default';
     if (status === 'COMPLETED') {
-      return <Tag color="success">{statusText}</Tag>
+      statusType = 'success';
     } else if (status === 'RUNNING') {
-      return <Tag color="processing">{statusText}</Tag>
+      statusType = 'processing';
     } else if (status === 'PENDING') {
-      return <Tag color="warning">{statusText}</Tag>
+      statusType = 'warning';
     } else if (status === 'FAILED') {
-      return <Tag color="error">{statusText}</Tag>
-    } else {
-      return <Tag>{statusText}</Tag>
+      statusType = 'error';
     }
+    return <Badge status={statusType} text={statusText} />;
   }
 
   // 用例详情表格列定义（使用共享工具函数）

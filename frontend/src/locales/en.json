@@ -62,7 +62,9 @@
     "admin": "Admin",
     "operator": "Operator",
     "browser": "Browser",
-    "executor": "Executor"
+    "executor": "Executor",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
   },
   "app": {
     "title": "Dial Test Center",
@@ -85,6 +87,40 @@
     "operationManagement": "Operation Management",
     "operationLogManagement": "Operation Log"
   },
+  "ueStatus": {
+    "title": "UE Status Monitor",
+    "description": "Real-time monitoring of all UE devices",
+    "refresh": "Refresh Status",
+    "searchPlaceholder": "Search MSISDN or Executor",
+    "table": {
+      "msisdn": "MSISDN",
+      "executor": "Belonging Executor",
+      "status": "Connection Status",
+      "runningStatus": "Running Status",
+      "taskId": "Task ID",
+      "brandModel": "Brand/Model",
+      "os": "OS Version",
+      "battery": "Battery",
+      "pagination": "Showing {{start}} to {{end}} of {{total}} entries"
+    }
+  },
+  "ueStatus": {
+    "title": "UE Status Monitor",
+    "description": "Real-time monitoring of all UE devices",
+    "refresh": "Refresh Status",
+    "searchPlaceholder": "Search MSISDN or Executor",
+    "table": {
+      "msisdn": "MSISDN",
+      "executor": "Belonging Executor",
+      "status": "Connection Status",
+      "runningStatus": "Running Status",
+      "taskId": "Task ID",
+      "brandModel": "Brand/Model",
+      "os": "OS Version",
+      "battery": "Battery",
+      "pagination": "Showing {{start}} to {{end}} of {{total}} entries"
+    }
+  },
   "executorStatus": {
     "title": "Executor Status Monitor",
     "description": "Real-time monitoring of executors and their managed devices",
@@ -100,7 +136,7 @@
       "name": "Executor Name",
       "ip": "IP Address",
       "status": "Status",
-      "ueSummary": "UE Online Rate (Online/Total)",
+      "ueSummary": "UE Online Count",
       "lastHeartbeat": "Last Heartbeat",
       "description": "Description",
       "proxy": "Proxy",
@@ -115,15 +151,19 @@
       "ueList": "Managed Device List",
       "token": "Token",
       "ueTable": {
-        "msisdn": "Device ID",
+        "msisdn": "MSISDN",
         "brandModel": "Brand/Model",
         "os": "OS Version",
         "status": "Connection Status",
+        "runningStatus": "Running Status",
+        "taskId": "Task ID",
         "battery": "Battery",
         "network": "Network Info",
         "online": "Online",
         "offline": "Offline",
-        "unknown": "Unknown"
+        "unknown": "Unknown",
+        "running": "Running",
+        "idle": "Idle"
       }
     }
   },
@@ -717,20 +757,38 @@
   "dialTask": {
     "title": "Dial Task Management",
     "description": "Manage dial test tasks, support creating, viewing task status and results",
+    "configDescription": "Manage scheduled task templates and configurations",
+    "newTemplate": "New Template",
+    "createTemplate": "Create Task Template",
+    "editTemplate": "Edit Task Template",
+    "confirmDelete": "Are you sure you want to delete this task template?",
+    "runNow": "Run Now",
+    "confirmRunNow": "Are you sure you want to run this task immediately?",
+    "runSuccess": "Task started successfully",
     "newTask": "New Task",
     "createTask": "Create Dial Task",
     "createSuccess": "Task created successfully",
     "createFailed": "Failed to create task",
     "scheduledTask": "Scheduled Task",
     "stopTask": "Stop Task",
+    "downloadReport": "Download Report",
     "table": {
-      "id": "Task ID",
+      "id": "Template ID",
+      "taskId": "Task ID",
+      "templateId": "Template ID",
+      "templateName": "Template Name",
+      "report": "Task Report",
+      "name": "Template Name",
+      "taskName": "Task Name",
+      "type": "Task Type",
+      "schedule": "Schedule Rule",
+      "status": "Status",
       "creator": "Creator",
+      "actions": "Actions",
+      "executionMode": "Execution Mode",
       "startTime": "Start Time",
       "endTime": "End Time",
-      "type": "Task Type",
-      "status": "Status",
-      "actions": "Actions",
+      "isEnabled": "Is Scheduled",
       "viewDetails": "View Details",
       "pagination": "{{start}}-{{end}} of {{total}} items"
     },
@@ -767,10 +825,31 @@
     "types": {
       "VPN_BLOCK": "VPN Block"
     },
+    "mode": {
+      "scheduled": "Scheduled",
+      "once": "Once"
+    },
+    "steps": {
+      "preparation": "Preparation",
+      "execution": "Execution",
+      "preprocessing": "Data Preprocessing",
+      "training": "Training",
+      "grayValidation": "Gray Validation",
+      "release": "Release"
+    },
     "detail": {
       "title": "Task Details",
       "basicInfo": "Basic Information",
       "subtasks": "Subtasks Execution",
+      "dialing": {
+        "title": "Dialing Execution Details",
+        "id": "Task ID",
+        "ueInfo": "UE Info",
+        "target": "Target",
+        "status": "Status",
+        "latency": "Latency",
+        "result": "Result"
+      },
       "config": "Configuration (Input)",
       "output": "Result (Output)",
       "noOutput": "No output available",
@@ -780,7 +859,8 @@
         "executor": "Executor",
         "status": "Status",
         "latency": "Latency",
-        "result": "Result"
+        "result": "Result",
+        "errorReason": "Error Reason"
       }
     }
   }

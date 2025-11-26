@@ -31,19 +31,27 @@ const { Title } = Typography;
 // 模拟数据生成器
 const generateMockData = () => {
   const executors = [];
+  const prefixes = ['138', '139', '135', '136', '137', '150', '151', '152', '157', '158', '159', '182', '183', '187', '188', '130', '131', '132', '155', '156', '185', '186', '133', '153', '180', '181', '189'];
+  
   for (let i = 1; i <= 12; i++) {
     const totalUe = Math.floor(Math.random() * 15) + 5; // 5-20个UE
     const onlineUe = Math.floor(Math.random() * (totalUe + 1)); // 0-total个在线
     const isOnline = Math.random() > 0.2; // 80%在线概率
     
+    // 为每个执行机分配一个固定的号段，模拟真实的批量卡
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const regionCode = Math.floor(Math.random() * 9000 + 1000); // 4位地区码
+    
     const ueList = [];
     for (let j = 1; j <= totalUe; j++) {
       ueList.push({
-        msisdn: `861380000${i.toString().padStart(2, '0')}${j.toString().padStart(2, '0')}`,
+        msisdn: `86${prefix}${regionCode}${j.toString().padStart(4, '0')}`,
         brand: ['Huawei', 'Xiaomi', 'Oppo', 'Vivo', 'Samsung'][Math.floor(Math.random() * 5)],
         model: `Model-${Math.floor(Math.random() * 100)}`,
         os: `Android ${10 + Math.floor(Math.random() * 4)}`,
         status: j <= onlineUe ? 1 : 0, // 前 onlineUe 个为在线
+        isRunning: j <= onlineUe && Math.random() > 0.7, // 只有在线的设备才有概率在运行任务
+        get taskId() { return this.isRunning ? `TASK-${Date.now()}-${j}` : '-'; },
         battery: Math.floor(Math.random() * 100),
         ip: `192.168.1.${100 + j}`
       });
@@ -103,16 +111,6 @@ const ExecutorStatus = () => {
     item.ip.includes(searchText)
   );
 
-  // 统计数据
-  const stats = {
-    total: data.length,
-    online: data.filter(d => d.status === 1).length,
-    ueOnlineRate: (() => {
-        const total = data.reduce((acc, cur) => acc + cur.totalUeCount, 0);
-        const online = data.reduce((acc, cur) => acc + cur.onlineUeCount, 0);
-        return total === 0 ? 0 : Math.round((online / total) * 100);
-    })()
-  };
 
   const columns = [
     {
@@ -125,11 +123,6 @@ const ExecutorStatus = () => {
           <a onClick={() => handleViewDetail(record)} style={{ fontWeight: 'bold' }}>{text}</a>
         </Space>
       ),
-    },
-    {
-      title: t('executorStatus.table.ip'),
-      dataIndex: 'ip',
-      key: 'ip',
     },
     {
       title: t('executorStatus.table.status'),
@@ -145,29 +138,9 @@ const ExecutorStatus = () => {
     {
       title: t('executorStatus.table.ueSummary'),
       key: 'ueSummary',
-      render: (_, record) => {
-        const rate = record.totalUeCount > 0 
-          ? Math.round((record.onlineUeCount / record.totalUeCount) * 100) 
-          : 0;
-        let status = 'normal';
-        if (rate < 50) status = 'exception';
-        else if (rate < 80) status = 'active'; // Antd Progress status naming is a bit specific, 'active' is just blue
-        
-        // 自定义颜色逻辑
-        const strokeColor = rate === 100 ? '#52c41a' : (rate < 50 ? '#ff4d4f' : '#1890ff');
-
-        return (
-          <Space direction="vertical" size={0} style={{ width: 120 }}>
-             <span style={{ fontSize: '12px' }}>
-               {t('executorStatus.table.ueCountFormat', { 
-                 online: record.onlineUeCount, 
-                 total: record.totalUeCount 
-               })}
-             </span>
-             <Progress percent={rate} size="small" strokeColor={strokeColor} showInfo={false} />
-          </Space>
-        );
-      }
+      render: (_, record) => (
+        <span>{record.onlineUeCount}</span>
+      )
     },
     {
       title: t('executorStatus.table.lastHeartbeat'),
@@ -200,10 +173,28 @@ const ExecutorStatus = () => {
       key: 'status',
       width: 100,
       render: (status) => (
-        <Tag color={status === 1 ? 'success' : 'default'}>
-          {status === 1 ? t('executorStatus.detail.ueTable.online') : t('executorStatus.detail.ueTable.offline')}
-        </Tag>
+        <Badge 
+          status={status === 1 ? 'success' : 'default'} 
+          text={status === 1 ? t('executorStatus.detail.ueTable.online') : t('executorStatus.detail.ueTable.offline')} 
+        />
       ),
+    },
+    {
+      title: t('executorStatus.detail.ueTable.runningStatus'),
+      key: 'runningStatus',
+      width: 100,
+      render: (_, record) => (
+        <Badge 
+          status={record.isRunning ? 'processing' : 'default'} 
+          text={record.isRunning ? t('executorStatus.detail.ueTable.running') : t('executorStatus.detail.ueTable.idle')} 
+        />
+      ),
+    },
+    {
+      title: t('executorStatus.detail.ueTable.taskId'),
+      dataIndex: 'taskId',
+      key: 'taskId',
+      width: 200,
     },
     {
       title: t('executorStatus.detail.ueTable.brandModel'),
@@ -225,11 +216,6 @@ const ExecutorStatus = () => {
         </span>
       )
     },
-    {
-      title: t('executorStatus.detail.ueTable.network'),
-      dataIndex: 'ip',
-      key: 'ip',
-    },
   ];
 
   return (
@@ -245,39 +231,6 @@ const ExecutorStatus = () => {
         </p>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <Row gutter={16}>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title={t('executorStatus.status.all')}
-                value={stats.total}
-                prefix={<DesktopOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title={t('executorStatus.status.online')}
-                value={stats.online}
-                valueStyle={{ color: '#3f8600' }}
-                prefix={<DesktopOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col span={8}>
-            <Card>
-              <Statistic
-                title="总UE在线率"
-                value={stats.ueOnlineRate}
-                suffix="%"
-                prefix={<MobileOutlined />}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </div>
 
       <Card 
         title={t('executorStatus.title')} 
@@ -320,7 +273,6 @@ const ExecutorStatus = () => {
           <>
             <Descriptions title={t('executorStatus.detail.basicInfo')} bordered column={2}>
               <Descriptions.Item label={t('executorStatus.table.name')}>{selectedExecutor.name}</Descriptions.Item>
-              <Descriptions.Item label={t('executorStatus.table.ip')}>{selectedExecutor.ip}</Descriptions.Item>
               <Descriptions.Item label={t('executorStatus.table.status')}>
                  <Badge 
                   status={selectedExecutor.status === 1 ? 'success' : 'error'} 
@@ -333,17 +285,11 @@ const ExecutorStatus = () => {
               <Descriptions.Item label={t('executorStatus.table.description')} span={2}>
                 {selectedExecutor.description}
               </Descriptions.Item>
-               <Descriptions.Item label={t('executorStatus.table.proxy')} span={2}>
-                {selectedExecutor.proxy || '-'}
-              </Descriptions.Item>
             </Descriptions>
 
             <div style={{ marginTop: 24 }}>
               <h3>
                   {t('executorStatus.detail.ueList')} 
-                  <Tag style={{ marginLeft: 8 }}>
-                      {selectedExecutor.onlineUeCount} / {selectedExecutor.totalUeCount} Online
-                  </Tag>
               </h3>
               <Table
                 columns={ueColumns}

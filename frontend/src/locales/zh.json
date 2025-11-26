@@ -62,7 +62,9 @@
     "admin": "管理员",
     "operator": "操作员",
     "browser": "浏览者",
-    "executor": "执行机"
+    "executor": "执行机",
+    "enabled": "已启用",
+    "disabled": "已禁用"
   },
   "app": {
     "title": "Dial Test Center",
@@ -85,6 +87,40 @@
     "operationManagement": "运维管理",
     "operationLogManagement": "操作记录"
   },
+  "ueStatus": {
+    "title": "UE状态监控",
+    "description": "实时监控所有UE设备的运行状态",
+    "refresh": "刷新状态",
+    "searchPlaceholder": "搜索MSISDN或执行机",
+    "table": {
+      "msisdn": "MSISDN",
+      "executor": "所属执行机",
+      "status": "连接状态",
+      "runningStatus": "运行状态",
+      "taskId": "任务ID",
+      "brandModel": "品牌/型号",
+      "os": "系统版本",
+      "battery": "电量",
+      "pagination": "显示第 {{start}} 到 {{end}} 条记录，共 {{total}} 条"
+    }
+  },
+  "ueStatus": {
+    "title": "UE状态监控",
+    "description": "实时监控所有UE设备的运行状态",
+    "refresh": "刷新状态",
+    "searchPlaceholder": "搜索MSISDN或执行机",
+    "table": {
+      "msisdn": "MSISDN",
+      "executor": "所属执行机",
+      "status": "连接状态",
+      "runningStatus": "运行状态",
+      "taskId": "任务ID",
+      "brandModel": "品牌/型号",
+      "os": "系统版本",
+      "battery": "电量",
+      "pagination": "显示第 {{start}} 到 {{end}} 条记录，共 {{total}} 条"
+    }
+  },
   "executorStatus": {
     "title": "执行机状态监控",
     "description": "实时监控执行机及其挂载设备的运行状态",
@@ -100,7 +136,7 @@
       "name": "执行机名称",
       "ip": "IP地址",
       "status": "状态",
-      "ueSummary": "UE在线率 (在线/总数)",
+      "ueSummary": "UE在线数",
       "lastHeartbeat": "最后心跳时间",
       "description": "描述",
       "proxy": "代理",
@@ -115,15 +151,19 @@
       "ueList": "挂载设备列表",
       "token": "Token",
       "ueTable": {
-        "msisdn": "设备标识",
+        "msisdn": "MSISDN",
         "brandModel": "品牌/型号",
         "os": "系统版本",
         "status": "连接状态",
+        "runningStatus": "运行状态",
+        "taskId": "任务ID",
         "battery": "电量",
         "network": "网络信息",
         "online": "在线",
         "offline": "离线",
-        "unknown": "未知"
+        "unknown": "未知",
+        "running": "运行中",
+        "idle": "空闲"
       }
     }
   },
@@ -769,20 +809,38 @@
   "dialTask": {
     "title": "拨测任务管理",
     "description": "管理拨测任务，支持创建、查看任务状态和结果",
+    "configDescription": "管理定时任务模板及配置",
+    "newTemplate": "新建模板",
+    "createTemplate": "创建任务模板",
+    "editTemplate": "编辑任务模板",
+    "confirmDelete": "确定要删除这个任务模板吗？",
+    "runNow": "立即运行",
+    "confirmRunNow": "确定要立即运行此任务吗？",
+    "runSuccess": "任务已成功启动",
     "newTask": "新建任务",
     "createTask": "创建拨测任务",
     "createSuccess": "任务创建成功",
     "createFailed": "任务创建失败",
     "scheduledTask": "定时任务",
     "stopTask": "停止任务",
+    "downloadReport": "下载报告",
     "table": {
-      "id": "任务ID",
+      "id": "模板ID",
+      "taskId": "任务ID",
+      "templateId": "模板ID",
+      "templateName": "模板名称",
+      "report": "任务报告",
+      "name": "模板名称",
+      "taskName": "任务名称",
+      "type": "任务类型",
+      "schedule": "调度规则",
+      "status": "状态",
       "creator": "创建人",
+      "actions": "操作",
+      "executionMode": "执行模式",
       "startTime": "开始时间",
       "endTime": "结束时间",
-      "type": "任务类型",
-      "status": "状态",
-      "actions": "操作",
+      "isEnabled": "是否定时执行",
       "viewDetails": "查看详情",
       "pagination": "第 {{start}}-{{end}} 条/共 {{total}} 条"
     },
@@ -819,10 +877,31 @@
     "types": {
       "VPN_BLOCK": "VPN阻断"
     },
+    "mode": {
+      "scheduled": "定时",
+      "once": "单次"
+    },
+    "steps": {
+      "preparation": "拨测准备",
+      "execution": "拨测执行",
+      "preprocessing": "数据预处理",
+      "training": "训练",
+      "grayValidation": "灰度验证",
+      "release": "发布"
+    },
     "detail": {
       "title": "任务详情",
       "basicInfo": "基本信息",
       "subtasks": "子任务执行情况",
+      "dialing": {
+        "title": "拨测执行详情",
+        "id": "任务ID",
+        "ueInfo": "UE信息",
+        "target": "测试目标",
+        "status": "状态",
+        "latency": "延迟",
+        "result": "结果"
+      },
       "config": "任务配置 (Input)",
       "output": "执行结果 (Output)",
       "noOutput": "暂无输出结果",
@@ -832,7 +911,8 @@
         "executor": "执行机",
         "status": "状态",
         "latency": "耗时",
-        "result": "结果"
+        "result": "结果",
+        "errorReason": "错误原因"
       }
     }
   }
