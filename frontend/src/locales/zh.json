@@ -72,7 +72,9 @@
   "navigation": {
     "userManagement": "用户管理",
     "taskManagement": "任务管理",
-    "dialTask": "拨测任务",
+    "dialTask": "任务配置",
+    "taskRecords": "执行记录",
+    "ueStatus": "UE状态",
     "executorStatus": "执行机状态",
     "userList": "执行机账号管理",
     "roleManagement": "角色管理",

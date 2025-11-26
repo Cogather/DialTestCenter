@@ -11,6 +11,8 @@ import SoftwarePackageManagementPage from './pages/SoftwarePackageManagement'
 import OperationLogManagementPage from './pages/OperationLogManagement'
 import PreprocessRuleManagementPage from './pages/PreprocessRuleManagement'
 import DialTaskManagementPage from './pages/DialTaskManagementPage'
+import TaskRecordsPage from './pages/TaskRecordsPage'
+import UeStatusPage from './pages/UeStatusPage'
 import ExecutorStatusPage from './pages/ExecutorStatusPage'
 
 function App() {
@@ -26,6 +28,8 @@ function App() {
             <Route path="/operation-logs" component={OperationLogManagementPage} />
             <Route path="/preprocess-rules" component={PreprocessRuleManagementPage} />
             <Route path="/dial-tasks" component={DialTaskManagementPage} />
+            <Route path="/task-records" component={TaskRecordsPage} />
+            <Route path="/ue-status" component={UeStatusPage} />
             <Route path="/executor-status" component={ExecutorStatusPage} />
             <Route path="/" exact>
               <Redirect to="/users" />

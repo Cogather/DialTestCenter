@@ -72,7 +72,9 @@
   "navigation": {
     "userManagement": "User Management",
     "taskManagement": "Task Management",
-    "dialTask": "Dial Test Tasks",
+    "dialTask": "Task Configuration",
+    "taskRecords": "Execution Records",
+    "ueStatus": "UE Status",
     "executorStatus": "Executor Status",
     "userList": "Execution Machine Account Management",
     "roleManagement": "Role Management",

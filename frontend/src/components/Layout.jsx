@@ -15,6 +15,7 @@ import {
     ScheduleOutlined,
     ExperimentOutlined,
     MonitorOutlined,
+    MobileOutlined,
 } from '@ant-design/icons'
 import { Layout as AntLayout, Button, Menu, Typography, Dropdown } from 'antd'
 import React, { useState, useEffect } from 'react'
@@ -91,9 +92,19 @@ const Layout = ({ children }) => {
       label: translateNavigation('taskManagement'),
       children: [
         {
+          key: '/task-records',
+          icon: <FileTextOutlined />,
+          label: translateNavigation('taskRecords'),
+        },
+        {
           key: '/dial-tasks',
           icon: <ExperimentOutlined />,
           label: translateNavigation('dialTask'),
+        },
+        {
+          key: '/ue-status',
+          icon: <MobileOutlined />,
+          label: translateNavigation('ueStatus'),
         },
         {
           key: '/executor-status',
