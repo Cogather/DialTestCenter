@@ -1,6 +1,6 @@
 # 服务器配置
 server:
-  port: 8087
+  port: 8086
   servlet:
     context-path: /dialingtestapp
   # HTTPS配置

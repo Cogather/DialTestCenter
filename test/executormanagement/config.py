@@ -14,22 +14,28 @@ from common.config import (
     load_database_config,
     load_request_config,
     load_base_url,
+    get_ws_base_url,
 )
 
 # API 配置（统一从 common 读取，兼容 EXEC_API_BASE_URL 与 API_BASE_URL）
-BASE_URL = load_base_url(preferred_env_vars=['EXEC_API_BASE_URL'], default_base='https://localhost:8087/dialingtestapp')
+# 默认值在 common.config.load_base_url 中已统一为 8086
+BASE_URL = load_base_url(preferred_env_vars=['EXEC_API_BASE_URL'])
+
 API_ENDPOINTS = {
     'LIST_EXECUTORS': '/api/executors',
     'REFRESH_EXECUTOR': '/api/executors/refresh',
 }
 
 # WebSocket 配置
+# 自动基于 BASE_URL 推导 WS_BASE_URL，避免硬编码端口
+WS_BASE_URL = get_ws_base_url(BASE_URL)
+
 # V4单连接URL（向后兼容，已废弃）
-WS_URL = os.getenv('EXEC_WS_URL', 'wss://localhost:8087/dialingtestapp/ws/executor')
+WS_URL = os.getenv('EXEC_WS_URL', f'{WS_BASE_URL}/ws/executor')
 
 # V5双连接URL（推荐使用）
-WS_CONTROL_URL = os.getenv('EXEC_WS_CONTROL_URL', 'wss://localhost:8087/dialingtestapp/ws/executor/control')
-WS_DATA_URL = os.getenv('EXEC_WS_DATA_URL', 'wss://localhost:8087/dialingtestapp/ws/executor/data')
+WS_CONTROL_URL = os.getenv('EXEC_WS_CONTROL_URL', f'{WS_BASE_URL}/ws/executor/control')
+WS_DATA_URL = os.getenv('EXEC_WS_DATA_URL', f'{WS_BASE_URL}/ws/executor/data')
 
 WS_ENABLE = os.getenv('EXEC_WS_ENABLE', '1') == '1'  # 改为 '1' 默认启用
 
@@ -63,5 +69,3 @@ PERFORMANCE_BASELINE = {
     'register_auth_handshake': 300,
     'heartbeat': 100,
 }
-
-

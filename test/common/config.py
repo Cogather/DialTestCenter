@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 
 def get_log_dir() -> str:
@@ -62,7 +63,7 @@ def load_request_config(env_prefix: Optional[str] = None,
 
 
 def load_base_url(preferred_env_vars: Optional[list] = None,
-                  default_base: str = 'https://localhost:8087/dialingtestapp') -> str:
+                  default_base: str = 'https://localhost:8086/dialingtestapp') -> str:
     """加载统一 BASE_URL。
 
     优先读取 preferred_env_vars 中的环境变量，其次读取 API_BASE_URL；均未配置时使用默认值。
@@ -78,3 +79,18 @@ def load_base_url(preferred_env_vars: Optional[list] = None,
     return default_base.rstrip('/')
 
 
+def get_ws_base_url(http_base_url: str) -> str:
+    """
+    根据 HTTP Base URL 自动推导 WebSocket Base URL
+    例如: 
+    - https://localhost:8086/dialingtestapp -> wss://localhost:8086/dialingtestapp
+    - http://example.com/api -> ws://example.com/api
+    """
+    parsed = urlparse(http_base_url)
+    
+    # 确定 scheme
+    ws_scheme = 'wss' if parsed.scheme == 'https' else 'ws'
+    
+    # 重新构建 URL
+    # netloc 包含 host:port
+    return f"{ws_scheme}://{parsed.netloc}{parsed.path}"
