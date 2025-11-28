@@ -155,6 +155,7 @@ public class WssMessageSenderImpl implements WssMessageSender {
      *
      * @param token 认证token
      */
+    @Override
     public void removeQueueByToken(String token) {
         SessionSendQueue queue = tokenQueues.remove(token);
         if (queue != null) {

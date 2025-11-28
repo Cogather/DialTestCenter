@@ -122,20 +122,18 @@ class TestRestAPIIT07(BaseTestCase):
         ws, token = self._ws_register_and_keep_connection()
         try:
             # 发送心跳包含UE信息
-            helper = JsonMessageHelper()
             ue_list = [
                 {
-                    'msisdn': '8613800010001',
-                    'serial': 'SN_DETAIL_001',
-                    'vendor': 'Huawei',
+                    'serial-no': '8613800010001',
+                    'brand': 'Huawei',
                     'model': 'P60'
                 }
             ]
-            hb_env = helper.build(
+            # 使用send_control_json自动封装信封和序列化
+            ws.send_control_json(
                 "ReportMsg",
-                {"token": token, "state": "Normal", "ue-list": ue_list},
+                {"token": token, "state": "Normal", "ue-list": ue_list}
             )
-            ws.send_json(hb_env)
 
             import time
             time.sleep(1)

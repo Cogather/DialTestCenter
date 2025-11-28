@@ -62,7 +62,7 @@ CREATE SEQUENCE public.app_type_id_seq
     CACHE 1;
 
 -- 用户序列
-CREATE SEQUENCE public.dial_user_id_seq
+CREATE SEQUENCE public.dial_users_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -167,15 +167,15 @@ CREATE TABLE public.app_type (
 );
 
 -- 4.2 用户表
-CREATE TABLE public.dial_user (
-    id bigint NOT NULL DEFAULT nextval('public.dial_user_id_seq'::regclass),
+CREATE TABLE public.dial_users (
+    id bigint NOT NULL DEFAULT nextval('public.dial_users_id_seq'::regclass),
     username character varying(50) NOT NULL,
     password character varying(255) NOT NULL,
     last_login_time timestamp without time zone,
     created_time timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_time timestamp without time zone,
-    CONSTRAINT dial_user_pkey PRIMARY KEY (id),
-    CONSTRAINT dial_user_username_key UNIQUE (username)
+    CONSTRAINT dial_users_pkey PRIMARY KEY (id),
+    CONSTRAINT dial_users_username_key UNIQUE (username)
 );
 
 -- 4.3 操作记录表（旧版本）
@@ -314,6 +314,30 @@ CREATE TABLE public.user_roles (
     CONSTRAINT user_roles_username_role_key UNIQUE (username, role)
 );
 
+-- 4.13 执行机表
+CREATE TABLE public.executor (
+    name character varying(40) NOT NULL,
+    ip character varying(40),
+    token character varying(256),
+    proxy character varying(256),
+    description text,
+    status smallint,
+    last_online_time timestamp without time zone,
+    CONSTRAINT executor_pkey PRIMARY KEY (name)
+);
+
+-- 4.14 UE设备表
+CREATE TABLE public.ue (
+    msisdn character varying(15) NOT NULL,
+    executor_name character varying(40),
+    vendor character varying(128),
+    os character varying(128),
+    info text,
+    task_info text,
+    CONSTRAINT ue_pkey PRIMARY KEY (msisdn),
+    CONSTRAINT fk_ue_executor_name FOREIGN KEY (executor_name) REFERENCES public.executor(name) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
 -- =====================================================
 -- 5. 创建外键约束
 -- =====================================================
@@ -331,9 +355,9 @@ CREATE INDEX idx_app_type_app ON public.app_type USING btree (app_name);
 CREATE INDEX idx_app_type_category ON public.app_type USING btree (business_category);
 
 -- 用户表索引
-CREATE INDEX idx_dial_user_created_time ON public.dial_user USING btree (created_time);
-CREATE INDEX idx_dial_user_last_login_time ON public.dial_user USING btree (last_login_time);
-CREATE INDEX idx_dial_user_username ON public.dial_user USING btree (username);
+CREATE INDEX idx_dial_users_created_time ON public.dial_users USING btree (created_time);
+CREATE INDEX idx_dial_users_last_login_time ON public.dial_users USING btree (last_login_time);
+CREATE INDEX idx_dial_users_username ON public.dial_users USING btree (username);
 
 -- 操作记录表索引
 CREATE INDEX idx_operation_log_operation_time ON public.operation_log USING btree (operation_time);
@@ -371,6 +395,13 @@ CREATE INDEX idx_username ON public.user_role USING btree (username);
 CREATE INDEX idx_user_roles_role ON public.user_roles USING btree (role);
 CREATE INDEX idx_user_roles_username ON public.user_roles USING btree (username);
 
+-- 执行机表索引
+CREATE INDEX idx_executor_status_last_online_time ON public.executor USING btree (status, last_online_time DESC);
+
+-- UE表索引
+CREATE INDEX idx_ue_executor_name ON public.ue USING btree (executor_name);
+CREATE INDEX idx_ue_vendor ON public.ue USING btree (vendor);
+
 -- =====================================================
 -- 7. 创建触发器
 -- =====================================================
@@ -390,7 +421,7 @@ CREATE TRIGGER update_user_role_updated_time
 -- =====================================================
 
 COMMENT ON TABLE public.app_type IS 'Application type table';
-COMMENT ON TABLE public.dial_user IS '用户表，存储用户基本信息';
+COMMENT ON TABLE public.dial_users IS '用户表，存储用户基本信息';
 COMMENT ON TABLE public.operation_log IS '操作记录表，存储用户所有操作记录';
 COMMENT ON TABLE public.operation_logs IS '操作记录表（新版本），支持中英文描述';
 COMMENT ON TABLE public.operation_targets IS '操作目标表，定义可操作的对象类型';
@@ -401,6 +432,8 @@ COMMENT ON TABLE public.test_case IS 'Test case table';
 COMMENT ON TABLE public.test_case_set IS 'Test case set table';
 COMMENT ON TABLE public.user_role IS '用户角色关系表';
 COMMENT ON TABLE public.user_roles IS 'User role relationship table';
+COMMENT ON TABLE public.executor IS '执行机表，存储注册的执行机信息';
+COMMENT ON TABLE public.ue IS 'UE设备表，存储与执行机关联的手机信息';
 
 -- =====================================================
 -- 9. 添加列注释
@@ -413,12 +446,12 @@ COMMENT ON COLUMN public.app_type.app_name IS 'Application name';
 COMMENT ON COLUMN public.app_type.description IS 'Description';
 
 -- 用户表列注释
-COMMENT ON COLUMN public.dial_user.id IS '用户ID，主键';
-COMMENT ON COLUMN public.dial_user.username IS '用户名，唯一标识';
-COMMENT ON COLUMN public.dial_user.password IS '用户密码，加密存储';
-COMMENT ON COLUMN public.dial_user.last_login_time IS '最后登录时间';
-COMMENT ON COLUMN public.dial_user.created_time IS '创建时间';
-COMMENT ON COLUMN public.dial_user.updated_time IS '更新时间';
+COMMENT ON COLUMN public.dial_users.id IS '用户ID，主键';
+COMMENT ON COLUMN public.dial_users.username IS '用户名，唯一标识';
+COMMENT ON COLUMN public.dial_users.password IS '用户密码，加密存储';
+COMMENT ON COLUMN public.dial_users.last_login_time IS '最后登录时间';
+COMMENT ON COLUMN public.dial_users.created_time IS '创建时间';
+COMMENT ON COLUMN public.dial_users.updated_time IS '更新时间';
 
 -- 操作记录表列注释
 COMMENT ON COLUMN public.operation_log.id IS '操作记录ID，主键';
@@ -465,6 +498,23 @@ COMMENT ON COLUMN public.software_package.file_size IS '文件大小（字节）
 COMMENT ON COLUMN public.software_package.description IS '描述信息';
 COMMENT ON COLUMN public.software_package.created_time IS '创建时间';
 COMMENT ON COLUMN public.software_package.updated_time IS '更新时间';
+
+-- 执行机表列注释
+COMMENT ON COLUMN public.executor.name IS '执行机名称，主键';
+COMMENT ON COLUMN public.executor.ip IS '执行机IP地址';
+COMMENT ON COLUMN public.executor.token IS '认证Token';
+COMMENT ON COLUMN public.executor.proxy IS '代理地址';
+COMMENT ON COLUMN public.executor.description IS '描述信息';
+COMMENT ON COLUMN public.executor.status IS '状态：0-OFFLINE, 1-ONLINE, 2-INVALID';
+COMMENT ON COLUMN public.executor.last_online_time IS '最后在线时间';
+
+-- UE表列注释
+COMMENT ON COLUMN public.ue.msisdn IS '手机号/序列号，主键';
+COMMENT ON COLUMN public.ue.executor_name IS '关联的执行机名称';
+COMMENT ON COLUMN public.ue.vendor IS '厂商';
+COMMENT ON COLUMN public.ue.os IS '操作系统及版本';
+COMMENT ON COLUMN public.ue.info IS '详细信息（JSON格式）';
+COMMENT ON COLUMN public.ue.task_info IS '任务信息';
 
 -- =====================================================
 -- 10. 插入初始数据

@@ -16,16 +16,14 @@ class TestScriptUpdateIT06(BaseTestCase):
     def test_it_06_001_script_update_success(self):
         """IT-06-001: 脚本更新确认（Agent发送ScriptUpdate-Ack）"""
         client, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             script_name = "dial_test.py"
             version = "1.2.0"
-            ack_env = helper.build(
+            client.send_control_json(
                 "ScriptUpdateAck",
                 {"scriptName": script_name, "version": version, "result": 0},
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(ack_env)
             time.sleep(0.2)
         finally:
             client.close()
@@ -34,13 +32,12 @@ class TestScriptUpdateIT06(BaseTestCase):
     def test_it_06_002_script_update_crc_mismatch(self):
         """IT-06-002: 脚本更新CRC校验失败"""
         client, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             script_name = "test_script.py"
             version = "1.0.1"
             script_bytes = b"print('test script')"
             wrong_crc = "invalid_crc_" + "0" * 26
-            notify_env = helper.build(
+            client.send_control_json(
                 "ScriptUpdateNotify",
                 {
                     "scriptName": script_name,
@@ -50,9 +47,8 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(notify_env)
 
-            ack_env = helper.build(
+            client.send_control_json(
                 "ScriptUpdateAck",
                 {
                     "scriptName": script_name,
@@ -62,7 +58,6 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(ack_env)
         finally:
             client.close()
 
@@ -70,14 +65,13 @@ class TestScriptUpdateIT06(BaseTestCase):
     def test_it_06_003_script_update_version_conflict(self):
         """IT-06-003: 脚本版本冲突"""
         client, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             script_name = "existing_script.py"
             version = "0.9.0"
             script_bytes = b"# older version script"
             crc = BinaryCodec.crc32_hex(script_bytes)
 
-            notify_env = helper.build(
+            client.send_control_json(
                 "ScriptUpdateNotify",
                 {
                     "scriptName": script_name,
@@ -87,9 +81,8 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(notify_env)
 
-            ack_env = helper.build(
+            client.send_control_json(
                 "ScriptUpdateAck",
                 {
                     "scriptName": script_name,
@@ -99,7 +92,6 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(ack_env)
         finally:
             client.close()
 
@@ -107,7 +99,6 @@ class TestScriptUpdateIT06(BaseTestCase):
     def test_it_06_004_script_update_large_file(self):
         """IT-06-004: 大文件脚本更新"""
         client, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             script_name = "large_script.py"
             version = "2.0.0"
@@ -119,7 +110,7 @@ class TestScriptUpdateIT06(BaseTestCase):
             script_bytes = script_content.encode("utf-8")
             crc = BinaryCodec.crc32_hex(script_bytes)
 
-            notify_env = helper.build(
+            client.send_control_json(
                 "ScriptUpdateNotify",
                 {
                     "scriptName": script_name,
@@ -129,14 +120,12 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(notify_env)
 
-            ack_env = helper.build(
+            client.send_control_json(
                 "ScriptUpdateAck",
                 {"scriptName": script_name, "version": version, "result": 0},
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(ack_env)
         finally:
             client.close()
 
@@ -144,7 +133,6 @@ class TestScriptUpdateIT06(BaseTestCase):
     def test_it_06_005_script_update_multiple_scripts(self):
         """IT-06-005: 批量脚本更新"""
         client, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             scripts = [
                 ("script1.py", "1.1.0", b"def script1(): pass"),
@@ -154,7 +142,7 @@ class TestScriptUpdateIT06(BaseTestCase):
 
             for script_name, version, script_bytes in scripts:
                 crc = BinaryCodec.crc32_hex(script_bytes)
-                notify_env = helper.build(
+                client.send_control_json(
                     "ScriptUpdateNotify",
                     {
                         "scriptName": script_name,
@@ -164,14 +152,12 @@ class TestScriptUpdateIT06(BaseTestCase):
                     },
                     token=int(token) if str(token).isdigit() else None,
                 )
-                client.send_json(notify_env)
 
-                ack_env = helper.build(
+                client.send_control_json(
                     "ScriptUpdateAck",
                     {"scriptName": script_name, "version": version, "result": 0},
                     token=int(token) if str(token).isdigit() else None,
                 )
-                client.send_json(ack_env)
         finally:
             client.close()
 
@@ -179,14 +165,13 @@ class TestScriptUpdateIT06(BaseTestCase):
     def test_it_06_006_script_update_rollback(self):
         """IT-06-006: 脚本更新回滚"""
         client, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             script_name = "rollback_test.py"
             version_bad = "1.0.0"
             bad_script = b"import nonexistent_module"
             crc_bad = BinaryCodec.crc32_hex(bad_script)
 
-            bad_notify = helper.build(
+            client.send_control_json(
                 "ScriptUpdateNotify",
                 {
                     "scriptName": script_name,
@@ -196,9 +181,8 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(bad_notify)
 
-            bad_ack = helper.build(
+            client.send_control_json(
                 "ScriptUpdateAck",
                 {
                     "scriptName": script_name,
@@ -208,13 +192,12 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(bad_ack)
 
             version_good = "0.9.0"
             good_script = b"print('Working script')"
             crc_good = BinaryCodec.crc32_hex(good_script)
 
-            good_notify = helper.build(
+            client.send_control_json(
                 "ScriptUpdateNotify",
                 {
                     "scriptName": script_name,
@@ -224,13 +207,11 @@ class TestScriptUpdateIT06(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(good_notify)
 
-            good_ack = helper.build(
+            client.send_control_json(
                 "ScriptUpdateAck",
                 {"scriptName": script_name, "version": version_good, "result": 0},
                 token=int(token) if str(token).isdigit() else None,
             )
-            client.send_json(good_ack)
         finally:
             client.close()

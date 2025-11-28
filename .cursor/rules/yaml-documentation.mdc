@@ -1,69 +1,62 @@
 ---
-globs: *.yaml,*.yml
-description: YAML API documentation generation requirements
+globs: dialingtest-interface/src/main/resources/*.yaml
+description: API documentation guidelines for manually maintained OpenAPI 2.0 YAML files
 ---
 
-# YAML API Documentation Requirements
+# YAML API Documentation Guidelines
 
-## MANDATORY Documentation Rules
-- **Generate YAML documentation for ALL new API endpoints**
-- **Create YAML files simultaneously with controller implementation**
-- **File Location**: [backend/src/main/resources/yaml/](mdc:backend/src/main/resources/yaml/)
-- **Documentation Format**: OpenAPI/Swagger 3.0 specification
+## General Standards
+- **Specification**: OpenAPI 2.0 (Swagger 2.0)
+- **File Location**: `dialingtest-interface/src/main/resources/`
+- **Naming Convention**: `kebab-case-api.yaml` (e.g., `user-role-api.yaml`)
+- **Base Path**: `/dialingtest/api`
 
-## File Structure
-```
-backend/src/main/resources/yaml/
-├── user-role-api.yaml
-├── test-case-set-api.yaml
-└── README.md
-```
-
-## YAML File Requirements
-- **File Naming**: Use descriptive names (e.g., `{module}-api.yaml`)
-- **File Size**: Each YAML file must not exceed 200 lines
-- **Content Structure**: Follow OpenAPI 3.0 specification
-- **Language**: Use English for documentation
-- **Examples**: Include request/response examples
-
-## Required YAML Content
+## Mandatory Response Structure
+All API responses MUST follow this generic envelope structure:
 ```yaml
-openapi: 3.0.0
-info:
-  title: API Title
-  version: 1.0.0
-  description: API Description
-paths:
-  /api/endpoint:
-    get:
-      summary: Endpoint description
-      responses:
-        '200':
-          description: Success response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseModel'
-components:
-  schemas:
-    ResponseModel:
-      type: object
-      properties:
-        field: {type: string}
+definitions:
+  ApiResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        description: Operation success status
+      message:
+        type: string
+        description: Response message
+      data:
+        type: object # or array/specific type
+        description: Payload data
+    required:
+      - success
+      - message
 ```
 
-## Documentation Standards
-- Include all HTTP methods (GET, POST, PUT, DELETE)
-- Document request parameters and body schemas
-- Document response schemas and status codes
-- Include error response documentation
-- Provide example requests and responses
-- Use consistent naming conventions
-- Document file upload endpoints with multipart/form-data
+## Header Requirements
+Sensitive operations (POST/PUT/DELETE) MUST include security headers:
+- `X-Csrf-Token`: CSRF protection token
+- `X-Username`: Current operating user
 
-## File Upload Documentation
-- Document supported file formats (.zip, .tar.gz)
-- Specify file size limits (100MB)
-- Document filename format requirements
-- Include Content-Type headers for downloads
-- Document file format validation rules
+## Example Structure
+```yaml
+swagger: '2.0'
+info:
+  title: Example API
+  version: 1.0.0
+paths:
+  /resource:
+    get:
+      tags:
+        - ResourceTag
+      operationId: getResource
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: '#/definitions/ResourceResponse'
+```
+
+## Best Practices
+- **Operation ID**: Use camelCase (e.g., `createUserRole`).
+- **Descriptions**: Provide Chinese descriptions for summary and parameters.
+- **Tags**: Use PascalCase tags for grouping (e.g., `UserRole`).

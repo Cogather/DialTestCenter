@@ -83,7 +83,7 @@ class TestTaskDispatchIT03(BaseTestCase):
             crc = BinaryCodec.crc32_hex(log_bytes)
 
             # 先发送 JSON TaskStartResponse（仅元数据）
-            env = helper.build(
+            ws.send_control_json(
                 "TaskStartResponse",
                 {
                     "taskId": task_id,
@@ -94,7 +94,6 @@ class TestTaskDispatchIT03(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            ws.send_json(env)
             # 再发送 Binary 日志（单包或分片，这里使用单包）
             ws.send_binary(log_bytes)
 
@@ -144,7 +143,7 @@ class TestTaskDispatchIT03(BaseTestCase):
             error_bytes = error_log.encode("utf-8")
             crc = BinaryCodec.crc32_hex(error_bytes)
 
-            env = helper.build(
+            ws.send_control_json(
                 "TaskStartResponse",
                 {
                     "taskId": task_id,
@@ -156,7 +155,6 @@ class TestTaskDispatchIT03(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            ws.send_json(env)
             ws.send_binary(error_bytes)
 
             time.sleep(0.5)
@@ -200,7 +198,7 @@ class TestTaskDispatchIT03(BaseTestCase):
             log_bytes = "\n".join(lines).encode("utf-8")
             crc = BinaryCodec.crc32_hex(log_bytes)
 
-            env = helper.build(
+            ws.send_control_json(
                 "TaskStartResponse",
                 {
                     "taskId": task_id,
@@ -211,7 +209,6 @@ class TestTaskDispatchIT03(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            ws.send_json(env)
 
             # 简化：手动分片
             size = max(1, len(log_bytes) // 4)
@@ -262,7 +259,7 @@ class TestTaskDispatchIT03(BaseTestCase):
             log_bytes = combined_log.encode("utf-8")
             crc = BinaryCodec.crc32_hex(log_bytes)
 
-            env = helper.build(
+            ws.send_control_json(
                 "TaskStartResponse",
                 {
                     "taskId": task_id,
@@ -273,7 +270,6 @@ class TestTaskDispatchIT03(BaseTestCase):
                 },
                 token=int(token) if str(token).isdigit() else None,
             )
-            ws.send_json(env)
             ws.send_binary(log_bytes)
 
             time.sleep(0.5)
@@ -324,7 +320,7 @@ class TestTaskDispatchIT03(BaseTestCase):
                 log_bytes = b"Task completed\n"
                 crc = BinaryCodec.crc32_hex(log_bytes)
 
-                env = helper.build(
+                ws.send_control_json(
                     "TaskStartResponse",
                     {
                         "taskId": task_id,
@@ -335,7 +331,6 @@ class TestTaskDispatchIT03(BaseTestCase):
                     },
                     token=int(token) if str(token).isdigit() else None,
                 )
-                ws.send_json(env)
                 ws.send_binary(log_bytes)
 
                 time.sleep(0.3)

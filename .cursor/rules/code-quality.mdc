@@ -1,0 +1,45 @@
+---
+globs: **/*.java,**/*.js,**/*.jsx,**/*.ts,**/*.tsx
+description: Unified code quality, style, and defensive programming standards
+---
+
+# Code Quality & Style Guidelines
+
+## 1. Control Structures (Defensive Coding)
+- **Mandatory Braces**: All `if`, `else`, `for`, `do`, `while` statements MUST use braces `{}`, even for single-line blocks.
+  - *Rationale*: Prevents "goto fail" bugs and improves readability.
+- **Else Branch Completeness**: When using `else if`, ALWAYS end with an `else` block to handle unexpected states or explicitly log them.
+  - *Exception*: Simple guard clauses that return early do not need an else.
+
+## 2. Type Safety (Java)
+- **Instanceof Check**: ALWAYS check `obj instanceof ClassName` before downcasting.
+  - *Bad*: `TestCase tc = (TestCase) obj;`
+  - *Good*: `if (obj instanceof TestCase) { TestCase tc = (TestCase) obj; ... }`
+
+## 3. Exception Handling
+- **Specific Catching**: Do NOT catch generic `Exception`, `RuntimeException`, or `Throwable` unless absolutely necessary (e.g., top-level error handler).
+- **Log & Throw**: If you catch an exception to log it, either rethrow it or wrap it in a custom exception. Do not swallow it silently.
+- **Context**: Include parameters/IDs in exception messages.
+
+## 4. Logging Standards
+- **Framework**: Use SLF4J (`Logger`, `LoggerFactory`) or `@Slf4j` (Lombok).
+- **Levels**:
+  - `ERROR`: System failures, exceptions (Must include stack trace: `log.error("Msg", e)`).
+  - `WARN`: Business anomalies, validation failures.
+  - `INFO`: Key business events (Start/End of process).
+  - `DEBUG`: Developer details.
+- **Format**: Use placeholders `{}`. Avoid string concatenation.
+  - *Good*: `log.info("User {} logged in", userId);`
+
+## 5. Documentation (Javadoc)
+- **Public API**: All public classes and methods MUST have Javadoc.
+- **Content**: Describe *what* it does and *why*, not just repeating the method name.
+- **Tags**: Use `@param`, `@return`, `@throws` where helpful.
+- **Language**: Chinese (Simplified) is preferred for business logic descriptions.
+
+## 6. General Formatting
+- **Line Length**: Soft limit 120 chars.
+- **Naming**:
+  - Java: `CamelCase` for classes, `camelCase` for methods/vars.
+  - Constants: `UPPER_CASE`.
+  - SQL: `snake_case` for columns.

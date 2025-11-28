@@ -321,6 +321,19 @@ public class ExecutorMgmtService {
     }
 
     /**
+     * Remove send queue by token.
+     * V6: Clean up resources for dual link connection.
+     *
+     * @param token auth token
+     */
+    public void removeSendQueue(String token) {
+        if (token != null) {
+            wssMessageSender.removeQueueByToken(token);
+            logger.info("Removed send queue for token={}", token);
+        }
+    }
+
+    /**
      * Handle heartbeat timeout for executor.
      * V4版本：当在阈值时间内未收到心跳时，将执行机标记为离线
      *

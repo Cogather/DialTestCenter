@@ -1,65 +1,57 @@
 ---
-alwaysApply: true
-description: LLT (Unit Testing) generation requirements and guidelines
+globs: dialingtest-service/src/main/java/**/*.java,dialingtest-service/src/test/java/**/*.java
+description: Unit Testing (LLT) generation rules focusing on high coverage with optimized case count
 ---
 
-# LLT Generation Requirements
+# LLT Generation Guidelines
 
-## MANDATORY Testing Rules
-- **Generate unit tests for ALL new backend code**
-- **Create test files simultaneously with implementation**
-- **Test coverage: Entities, Services, Controllers**
-- **EXCLUDE: Repository layer (no tests needed)**
+## Core Principles
+- **Framework**: JUnit 4 + Mockito
+- **Target**: >80% Code Coverage with <30 test cases per 1k lines of code.
+- **Strategy**: Focus on **Scenario-Based Testing** rather than Method-Based Testing.
 
-## MANDATORY Documentation Rules
-- **Note**: See yaml-documentation.mdc for YAML API documentation requirements
+## Path Configuration
+- **Source**: `dialingtest-service/src/main/java/com/huawei/cloududn/dialingtestapp/`
+- **Test**: `dialingtest-service/src/test/java/com/huawei/cloududn/dialingtestapp/`
 
-## Test File Structure
+## Optimization Rules (Crucial)
+
+### 1. Exclusions (Do NOT Test)
+- **Simple Getters/Setters**: Skip tests for pure POJOs/DTOs unless they contain validation logic.
+- **Generated Code**: Skip equals/hashCode/toString unless manually implemented with logic.
+- **Interfaces**: Do not test interfaces directly.
+
+### 2. Aggregated Testing
+- **Parameterized Tests**: Use parameterized tests to cover multiple boundary values in a single test method.
+- **Scenario Chaining**: Test a logical flow (e.g., "Create -> Verify -> Delete") in one scenario if atomic testing is too verbose, but prefer atomic if possible.
+
+### 3. Coverage Priority
+1.  **Service Layer (Highest)**: Business logic, branching, error handling.
+2.  **Controller Layer**: Request validation, HTTP status codes, exception mapping.
+3.  **Utils**: Complex algorithmic logic.
+
+## Test Structure
+
+### Naming Convention
+`test[MethodName]_[Scenario]_[ExpectedResult]`
+Example: `testCreateUser_WithDuplicateName_ThrowsException`
+
+### Standard Template (AAA Pattern)
+```java
+@Test
+public void testMethod_Scenario_Expectation() {
+    // Arrange (Prepare data & mocks)
+    when(mockRepo.findById(any())).thenReturn(Optional.of(data));
+
+    // Act (Execute method)
+    Result result = service.execute();
+
+    // Assert (Verify outcome)
+    assertNotNull(result);
+    verify(mockRepo, times(1)).save(any());
+}
 ```
-src/main/java/com/dialtest/center/
-├── entity/EntityName.java
-├── service/ServiceName.java
-└── controller/ControllerName.java
 
-src/test/java/com/dialtest/center/
-├── entity/EntityNameTest.java
-├── service/ServiceNameTest.java
-└── controller/ControllerNameTest.java
-```
-
-## Test Generation Guidelines
-- **Test Framework**: JUnit 4 + Mockito
-- **Test Method Limit**: ≤ 50 lines per test method
-- **Test File Limit**: ≤ 200 lines per test file
-- **Test Naming**: `testMethodName_Scenario_ExpectedResult`
-- **Test Structure**: Follow AAA pattern (Arrange, Act, Assert)
-- **Javadoc**: See javadoc.mdc for Javadoc requirements
-
-## Entity Tests
-- Test constructors (default and parameterized)
-- Test getters and setters
-- Test equals() and hashCode()
-- Test toString() method
-- Test validation logic
-
-## Service Tests
-- Mock repository dependencies
-- Test business logic methods
-- Test success and failure scenarios
-- Test exception handling
-- Use @Mock and @InjectMocks annotations
-
-## Controller Tests
-- Mock service dependencies
-- Test HTTP endpoints (GET, POST, PUT, DELETE)
-- Test request/response handling
-- Test error responses
-- Test file upload/download scenarios
-
-## Test Quality Standards
-- Each test should test one specific functionality
-- Use descriptive test method names
-- Include both positive and negative test cases
-- Mock external dependencies properly
-- Assert expected outcomes clearly
-- Follow consistent test structure
+## Constraints
+- **Mocking**: Strictly use `@Mock` and `@InjectMocks`.
+- **No External Dependencies**: Do NOT connect to real DB or Network.

@@ -44,20 +44,18 @@ class TestRegisterAuthIT01(BaseTestCase):
         """IT-01-002: V5用户名不存在测试"""
         from .dual_ws_client import DualWebSocketClient
         client = DualWebSocketClient()
-        helper = JsonMessageHelper()
         try:
             # V5: 只建立连接，不认证
             client.connect_all()
             # 发送 RegisterRequest（不存在的用户名）
-            env = helper.build(
+            client.send_control_json(
                 "RegisterRequest",
                 {"hostname": AGENT_NAME, "username": "__not_exists__"},
+                token=None
             )
-            client.send_json(env)
 
             # 收到 RegisterChallenge
-            res_env = client.recv_json()
-            msg_type, _, payload = helper.parse(res_env)
+            msg_type, _, payload = client.recv_control_json()
             self.assertIn(
                 msg_type, ("RegisterChallenge", "register_challenge"),
                 "即使用户名不存在，也应返回 RegisterChallenge 消息",
@@ -68,15 +66,14 @@ class TestRegisterAuthIT01(BaseTestCase):
 
             # 发送错误 response（SHA256为64位十六进制）
             fake_response = "0" * 64
-            resp_env = helper.build(
+            client.send_control_json(
                 "RegisterResponse",
                 {"challenge-id": challenge_id, "username": "__not_exists__", "response": fake_response},
+                token=None
             )
-            client.send_json(resp_env)
 
             # 收到 RegisterResult，结果为失败
-            res2_env = client.recv_json()
-            msg_type2, _, payload2 = helper.parse(res2_env)
+            msg_type2, _, payload2 = client.recv_control_json()
             self.assertIn(msg_type2, ("RegisterResult", "register_result", "register_ack"))
             result = payload2.get("result")
             status = payload2.get("status")
@@ -99,19 +96,18 @@ class TestRegisterAuthIT01(BaseTestCase):
         """IT-01-003: V5响应摘要不匹配（SHA256算法）"""
         from .dual_ws_client import DualWebSocketClient
         client = DualWebSocketClient()
-        helper = JsonMessageHelper()
         try:
             # V5: 只建立控制链路连接，不认证
             client.connect_control()
             # 发送 RegisterRequest
-            env = helper.build(
+            client.send_control_json(
                 "RegisterRequest",
                 {"hostname": AGENT_NAME, "username": AGENT_USERNAME},
+                token=None
             )
-            client.send_json(env)
 
             # 收到 RegisterChallenge
-            res_env = client.recv_json()
+            msg_type, _, payload = client.recv_control_json()
             self.assertIn(msg_type, ("RegisterChallenge", "register_challenge"))
             challenge_b64 = payload.get("challenge")
             challenge_id = payload.get("challenge-id", 0)

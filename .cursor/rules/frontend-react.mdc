@@ -1,40 +1,51 @@
 ---
-globs: *.tsx,*.ts
-description: Frontend React TypeScript development guidelines
+globs: frontend/src/**/*.jsx,frontend/src/**/*.js
+description: Frontend React JavaScript development guidelines
 ---
 
 # Frontend React Development Guidelines
 
-## Code Structure
-- **Components**: Located in [frontend/src/components/](mdc:frontend/src/components/)
-- **Pages**: Located in [frontend/src/pages/](mdc:frontend/src/pages/)
-- **Services**: Located in [frontend/src/services/](mdc:frontend/src/services/)
-- **Types**: Located in [frontend/src/types/](mdc:frontend/src/types/)
-- **Hooks**: Located in [frontend/src/hooks/](mdc:frontend/src/hooks/)
+## Core Technology Stack
+- **Library**: React 17.x (Functional Components + Hooks)
+- **Language**: JavaScript (ES6+)
+- **UI Framework**: Ant Design 4.x
+- **Build Tool**: Webpack
+- **HTTP Client**: Axios
+- **Internationalization**: i18next
 
-## Key Files
-- [App.tsx](mdc:frontend/src/App.tsx) - Main application component
-- [Layout.tsx](mdc:frontend/src/components/Layout.tsx) - Application layout with navigation
-- [I18nContext.tsx](mdc:frontend/src/contexts/I18nContext.tsx) - Internationalization context
-- [useTranslation.ts](mdc:frontend/src/hooks/useTranslation.ts) - Translation hook
+## Code Structure
+- **Components**: `frontend/src/components/` (Reusable UI components)
+- **Pages**: `frontend/src/pages/` (Route components)
+- **Services**: `frontend/src/services/` (API calls)
+- **Hooks**: `frontend/src/hooks/` (Custom hooks)
+- **Locales**: `frontend/src/locales/` (Translation files)
 
 ## Development Rules
-- Functions must not exceed 50 lines
-- Files must not exceed 200 lines
-- Use TypeScript for type safety
-- Use React hooks (useState, useEffect, useContext)
-- Implement proper error handling with try-catch
-- Use Ant Design components for UI consistency
-- Follow React best practices (functional components, hooks)
-- Use proper TypeScript interfaces for props and state
-- Implement proper loading states and error handling
 
-## Internationalization
-- **Note**: See internationalization.mdc for detailed i18n guidelines
+### 1. Component Style
+- Use **Functional Components** with Hooks (`useState`, `useEffect`).
+- File extension: use `.jsx` for components containing JSX.
+- Props validation: Use `prop-types` if validation is needed (since no TypeScript).
 
-## File Upload
-- Support .zip and .tar.gz file formats
-- Validate file size and format before upload
-- Use Ant Design Upload component with drag-and-drop
-- Display file format tags in management interface
-- Handle download with proper file extensions
+### 2. UI & Styling
+- Use **Ant Design (v4)** components for all standard UI elements.
+- Check Ant Design v4 documentation for API compatibility (avoid v5 features like `theme` config object).
+- Use CSS modules or standard CSS imports as configured in Webpack.
+
+### 3. State Management & Effects
+- Avoid complex logic in `useEffect`; extract to helper functions.
+- Use `useTranslation` hook for all text content. **Never hardcode strings**.
+
+### 4. Network Requests
+- Use the defined services in `frontend/src/services/`.
+- Handle errors centrally or via UI notifications (`message.error` from antd).
+- Use `async/await` for asynchronous operations.
+
+## Key Features
+- **Internationalization (i18n)**:
+  - Support **Chinese (zh)** and **English (en)**.
+  - Keys should be descriptive.
+- **File Upload**:
+  - Use `Upload` component from Ant Design.
+  - Support `.zip` and `.tar.gz`.
+  - Validate file size (max 100MB) on client side before upload.

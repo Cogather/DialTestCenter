@@ -17,7 +17,6 @@ class TestHeartbeatIT02(BaseTestCase):
         """IT-02-001: 心跳更新状态"""
         # 注册并保持连接（心跳需要在同一会话中发送）
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             # 构造UE设备列表（字段名严格遵循协议文档）
             ue_list = [
@@ -40,13 +39,11 @@ class TestHeartbeatIT02(BaseTestCase):
             ]
 
             # 发送 ReportMsg 心跳
-            env = helper.build(
+            ws.send_control_json(
                 "ReportMsg",
-                {"token": token, "state": "Normal", "ue-list": ue_list},
+                {"token": token, "state": "Normal", "ue-list": ue_list}
             )
-            ws.send_json(env)
-            ack_env = ws.recv_json()
-            msg_type, _, payload = helper.parse(ack_env)
+            msg_type, _, payload = ws.recv_control_json()
             self.assertIn(msg_type, ("ReportAck", "report_ack"))
             state = payload.get("state", 0)
             self.assertIn(state, (0, "OK"), "心跳应该成功")
@@ -94,7 +91,6 @@ class TestHeartbeatIT02(BaseTestCase):
     def test_it_02_002_ue_list_changes(self):
         """IT-02-002: UE 清单变更"""
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             # 第一次心跳：发送 3 个 UE（字段名遵循协议文档）
             ue_list1 = [
@@ -102,9 +98,8 @@ class TestHeartbeatIT02(BaseTestCase):
                 {"serial-no": "SN_TEST_002", "brand": "TestVendor2", "model": "Model2"},
                 {"serial-no": "SN_TEST_003", "brand": "TestVendor3", "model": "Model3"},
             ]
-            env1 = helper.build("ReportMsg", {"token": token, "state": "Normal", "ue-list": ue_list1})
-            ws.send_json(env1)
-            ws.recv_json()
+            ws.send_control_json("ReportMsg", {"token": token, "state": "Normal", "ue-list": ue_list1})
+            ws.recv_control_json()
             time.sleep(1)  # 等待数据库更新
 
             # 第二次心跳：修改 SN_TEST_002 状态，新增 SN_TEST_004，删除 SN_TEST_003
@@ -113,9 +108,8 @@ class TestHeartbeatIT02(BaseTestCase):
                 {"serial-no": "SN_TEST_002", "brand": "TestVendor2_UPDATED", "model": "Model2"},
                 {"serial-no": "SN_TEST_004", "brand": "TestVendor4", "model": "Model4"},
             ]
-            env2 = helper.build("ReportMsg", {"token": token, "state": "Normal", "ue-list": ue_list2})
-            ws.send_json(env2)
-            ws.recv_json()
+            ws.send_control_json("ReportMsg", {"token": token, "state": "Normal", "ue-list": ue_list2})
+            ws.recv_control_json()
             time.sleep(1)  # 等待数据库更新
         finally:
             ws.close_all()
@@ -143,13 +137,12 @@ class TestHeartbeatIT02(BaseTestCase):
     def test_it_02_003_offline_on_disconnect(self):
         """IT-02-003: 离线处理"""
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
 
         # 发送心跳确保状态为ONLINE
-        ue_list = [{"msisdn": "8613800000201", "serial": "SN_OFFLINE_TEST"}]
-        env = helper.build("ReportMsg", {"token": token, "state": "Normal", "ue-list": ue_list})
-        ws.send_json(env)
-        ws.recv_json()
+        # Use serial-no as per protocol
+        ue_list = [{"serial-no": "SN_OFFLINE_TEST"}]
+        ws.send_control_json("ReportMsg", {"token": token, "state": "Normal", "ue-list": ue_list})
+        ws.recv_control_json()
         time.sleep(1.5)  # 等待状态更新到数据库
 
         # 验证 executor 为 ONLINE（在关闭之前检查）
@@ -174,19 +167,15 @@ class TestHeartbeatIT02(BaseTestCase):
     def test_it_02_004_heartbeat_state_validation(self):
         """IT-02-004: 心跳状态字段验证"""
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             for state in [0, 1]:  # 0=OFFLINE, 1=ONLINE
                 ue_list = [
                     {
-                        "msisdn": f"861380000030{state}",
-                        "serial": f"SN_STATE_TEST_{state}",
+                        "serial-no": f"SN_STATE_TEST_{state}",
                     }
                 ]
-                env = helper.build("ReportMsg", {"token": token, "state": state, "ue-list": ue_list})
-                ws.send_json(env)
-                ack_env = ws.recv_json()
-                msg_type, _, payload = helper.parse(ack_env)
+                ws.send_control_json("ReportMsg", {"token": token, "state": state, "ue-list": ue_list})
+                msg_type, _, payload = ws.recv_control_json()
                 self.assertIn(msg_type, ("ReportAck", "report_ack"))
                 ack_state = payload.get("state", 0)
                 self.assertIn(ack_state, (0, "OK"), f"心跳状态{state}应该成功")
@@ -207,12 +196,9 @@ class TestHeartbeatIT02(BaseTestCase):
     def test_it_02_005_empty_ue_list(self):
         """IT-02-005: 空UE列表心跳"""
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
-            env = helper.build("ReportMsg", {"token": token, "state": "Normal", "ue-list": []})
-            ws.send_json(env)
-            ack_env = ws.recv_json()
-            msg_type, _, payload = helper.parse(ack_env)
+            ws.send_control_json("ReportMsg", {"token": token, "state": "Normal", "ue-list": []})
+            msg_type, _, payload = ws.recv_control_json()
             self.assertIn(msg_type, ("ReportAck", "report_ack"))
             state = payload.get("state", 0)
             self.assertIn(state, (0, "OK"), "空UE列表心跳应该成功")

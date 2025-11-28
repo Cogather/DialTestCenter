@@ -109,14 +109,35 @@ public class ControlLinkEndpoint {
     public void onClose(Session session, CloseReason reason) {
         String sessionId = session.getId();
         
+        // Get token before unregistering to ensure we can clean up resources
+        String token = dualLinkRouter.getTokenBySessionId(sessionId);
+        
+        // Capture data session before unregistering
+        Session dataSession = null;
+        if (token != null) {
+            dataSession = dualLinkRouter.getDataSessionByToken(token);
+        }
+        
         dualLinkRouter.unregisterControlLink(sessionId);
         sessionRegistry.removeControlSession(sessionId);
         
-        String token = dualLinkRouter.getTokenBySessionId(sessionId);
+        // Handle business logic disconnect (database update)
+        executorMgmtService.handleExecutorDisconnect(sessionId);
+        
+        // Clean up send queue resources using the token
         if (token != null) {
-            executorMgmtService.handleExecutorDisconnect(token);
-        } else {
-            executorMgmtService.handleExecutorDisconnect(sessionId);
+            executorMgmtService.removeSendQueue(token);
+        }
+        
+        // Force close data session if open
+        if (dataSession != null && dataSession.isOpen()) {
+            try {
+                logger.info("Control link disconnected, closing associated data link, sessionId={}", dataSession.getId());
+                dataSession.close(new CloseReason(CloseReason.CloseCodes.VIOLATED_POLICY, 
+                        "Control link disconnected"));
+            } catch (Exception e) {
+                logger.error("Failed to close data session", e);
+            }
         }
         
         logger.info("Control link disconnected, sessionId={}, reason={}", 

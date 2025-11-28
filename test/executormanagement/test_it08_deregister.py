@@ -15,18 +15,16 @@ class TestDeregisterIT08(BaseTestCase):
     def test_it_08_001_deregister_success(self):
         """IT-08-001: 成功注销"""
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             ex = self.db.get_executor_by_name(AGENT_NAME)
             self.assertIsNotNone(ex)
             self.assertEqual(ex.get("status"), 1)
 
-            env = helper.build(
+            ws.send_control_json(
                 "DeRegisterRequest",
                 {"hostname": AGENT_NAME},
                 token=int(token) if str(token).isdigit() else None,
             )
-            ws.send_json(env)
 
             time.sleep(0.5)
         finally:
@@ -48,10 +46,8 @@ class TestDeregisterIT08(BaseTestCase):
     def test_it_08_002_deregister_not_registered(self):
         """IT-08-002: 注销未注册的执行机"""
         ws = self._open_ws()
-        helper = JsonMessageHelper()
         try:
-            env = helper.build("DeRegisterRequest", {"hostname": "NonExistentExecutor"})
-            ws.send_json(env)
+            ws.send_control_json("DeRegisterRequest", {"hostname": "NonExistentExecutor"}, token=None)
         finally:
             ws.close()
 
@@ -61,14 +57,12 @@ class TestDeregisterIT08(BaseTestCase):
         token = self._ws_register_and_get_token()
 
         ws = self._open_ws()
-        helper = JsonMessageHelper()
         try:
-            env = helper.build(
+            ws.send_control_json(
                 "DeRegisterRequest",
                 {"hostname": AGENT_NAME},
                 token=int(token) if str(token).isdigit() else None,
             )
-            ws.send_json(env)
         finally:
             ws.close()
 
@@ -80,16 +74,14 @@ class TestDeregisterIT08(BaseTestCase):
         """IT-08-004: 重复注销"""
         token = self._ws_register_and_get_token()
 
-        helper = JsonMessageHelper()
         for _ in range(3):
             ws = self._open_ws()
             try:
-                env = helper.build(
+                ws.send_control_json(
                     "DeRegisterRequest",
                     {"hostname": AGENT_NAME},
                     token=int(token) if str(token).isdigit() else None,
                 )
-                ws.send_json(env)
             finally:
                 ws.close()
 
@@ -101,14 +93,12 @@ class TestDeregisterIT08(BaseTestCase):
     def test_it_08_005_deregister_during_task(self):
         """IT-08-005: 任务执行期间注销"""
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
-            env = helper.build(
+            ws.send_control_json(
                 "DeRegisterRequest",
                 {"hostname": AGENT_NAME},
                 token=int(token) if str(token).isdigit() else None,
             )
-            ws.send_json(env)
         finally:
             ws.close()
 
@@ -122,19 +112,14 @@ class TestDeregisterIT08(BaseTestCase):
     def test_it_08_006_deregister_cleanup_verification(self):
         """IT-08-006: 注销清理验证"""
         ws, token = self._ws_register_and_keep_connection()
-        helper = JsonMessageHelper()
         try:
             # 发送心跳添加UE（字段名遵循协议文档，serial-no最多15字符）
-            from .json_message import JsonMessageHelper as _Helper
-
-            hb_helper = _Helper()
             ue_list = [{"serial-no": "SN_DEREG_TEST", "brand": "TestBrand", "model": "TestModel"}]
-            hb_env = hb_helper.build(
+            ws.send_control_json(
                 "ReportMsg",
                 {"token": token, "state": "Normal", "ue-list": ue_list},
             )
-            ws.send_json(hb_env)
-            ws.recv_json()
+            ws.recv_control_json()
             time.sleep(1)
         finally:
             ws.close()
@@ -144,12 +129,11 @@ class TestDeregisterIT08(BaseTestCase):
 
         ws2, token2 = self._ws_register_and_keep_connection()
         try:
-            env = helper.build(
+            ws2.send_control_json(
                 "DeRegisterRequest",
                 {"hostname": AGENT_NAME},
                 token=int(token2) if str(token2).isdigit() else None,
             )
-            ws2.send_json(env)
             time.sleep(0.5)
         finally:
             try:

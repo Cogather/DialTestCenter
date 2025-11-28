@@ -6,12 +6,14 @@ package com.huawei.cloududn.dialingtestapp.controller.executormanagement.websock
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.JsonMessageEnvelope;
+import com.huawei.cloududn.dialingtestapp.service.executormanagement.ExecutorMgmtService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import javax.websocket.CloseReason;
@@ -43,6 +45,8 @@ public class DataLinkEndpoint {
 
     private static ObjectMapper objectMapper;
 
+    private static ExecutorMgmtService executorMgmtService;
+
     @Autowired
     public void setSessionRegistry(WebSocketSessionRegistry registry) {
         DataLinkEndpoint.sessionRegistry = registry;
@@ -61,6 +65,11 @@ public class DataLinkEndpoint {
     @Autowired
     public void setObjectMapper(ObjectMapper mapper) {
         DataLinkEndpoint.objectMapper = mapper;
+    }
+
+    @Autowired
+    public void setExecutorMgmtService(ExecutorMgmtService service) {
+        DataLinkEndpoint.executorMgmtService = service;
     }
 
     /**
@@ -162,11 +171,44 @@ public class DataLinkEndpoint {
     public void onClose(Session session, CloseReason reason) {
         String sessionId = session.getId();
         
+        // Get token and control session BEFORE unregistering
+        String token = dualLinkRouter.getTokenByDataSessionId(sessionId);
+        Session controlSession = null;
+        if (token != null) {
+            controlSession = dualLinkRouter.getControlSessionByToken(token);
+        }
+        
         dualLinkRouter.unregisterDataLink(sessionId);
         sessionRegistry.removeDataSession(sessionId);
         
         logger.info("Data link disconnected, sessionId={}, reason={}", 
                 sessionId, reason.getReasonPhrase());
+
+        // Trigger full offline if control session exists
+        if (controlSession != null) {
+            String controlSessionId = controlSession.getId();
+            
+            // Check if control link is still registered in router (avoid loop/double cleanup)
+            if (dualLinkRouter.getTokenByControlSessionId(controlSessionId) == null) {
+                logger.debug("Control link already unregistered, skipping cascade disconnect for sessionId={}", controlSessionId);
+                return;
+            }
+            
+            logger.info("Data link closed, triggering full disconnect for controlSessionId={}", controlSessionId);
+            
+            // Update status to OFFLINE
+            executorMgmtService.handleExecutorDisconnect(controlSessionId);
+            
+            // Force close control session if open
+            if (controlSession.isOpen()) {
+                try {
+                    controlSession.close(new CloseReason(CloseReason.CloseCodes.VIOLATED_POLICY, 
+                            "Data link disconnected"));
+                } catch (IOException e) {
+                    logger.error("Failed to close control session", e);
+                }
+            }
+        }
     }
 
     /**

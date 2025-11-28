@@ -32,5 +32,13 @@ public interface WssMessageSender {
      * @param fileStream 文件输入流
      */
     void sendFile(String sessionId, Object dto, InputStream fileStream);
+
+    /**
+     * 根据token移除发送队列
+     * V6: 物理分离版本清理资源
+     *
+     * @param token 认证token
+     */
+    void removeQueueByToken(String token);
 }
 

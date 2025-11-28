@@ -52,9 +52,7 @@ class TestConnectionSync(BaseTestCase):
             
             # 主动断开控制链路
             logger.info("Step 2: Closing control link...")
-            if client.control_ws:
-                client.control_ws.close()
-                client.control_ws = None
+            client.close_control()
             
             # 等待服务端检测并处理
             time.sleep(1)
@@ -67,7 +65,7 @@ class TestConnectionSync(BaseTestCase):
             # 验证数据链路也不可用
             logger.info("Step 4: Verifying data link is also unusable...")
             try:
-                if client.data_ws and client.data_ws.connected:
+                if client.is_data_connected:
                     client.send_binary(b"test")
                     # 如果能发送，说明服务端还没关闭（可能存在延迟）
                     logger.warning("Data link still accepting data (server cleanup delay)")
@@ -109,10 +107,7 @@ class TestConnectionSync(BaseTestCase):
             
             # 主动断开数据链路
             logger.info("Step 2: Closing data link...")
-            if client.data_ws:
-                client.data_ws.close()
-                client.data_ws = None
-                client.is_bound = False
+            client.close_data()
             
             # 等待服务端检测并处理
             time.sleep(1)
@@ -125,8 +120,8 @@ class TestConnectionSync(BaseTestCase):
             # 验证控制链路也不可用
             logger.info("Step 4: Verifying control link is also unusable...")
             try:
-                if client.control_ws and client.control_ws.connected:
-                    client.send_json({"type": "ReportMsg", "token": token, "payload": {}})
+                if client.is_control_connected:
+                    client.send_control_json("ReportMsg", {}, token=token)
                     # 如果能发送，说明服务端还没关闭
                     logger.warning("Control link still accepting data (server cleanup delay)")
             except Exception as e:
@@ -164,8 +159,7 @@ class TestConnectionSync(BaseTestCase):
             
             # 测试：断开控制链路
             logger.info("Step 2: Testing control link disconnect...")
-            if client.control_ws:
-                client.control_ws.close()
+            client.close_control()
             time.sleep(1)
             
             # 验证整体离线，无孤儿连接
@@ -187,8 +181,7 @@ class TestConnectionSync(BaseTestCase):
             
             # 测试：断开数据链路
             logger.info("Step 4: Testing data link disconnect...")
-            if client.data_ws:
-                client.data_ws.close()
+            client.close_data()
             time.sleep(1)
             
             # 验证整体离线，无孤儿连接

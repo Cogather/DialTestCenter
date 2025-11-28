@@ -1,13 +1,14 @@
 -- Executor Management V2 schema
 
--- agent_user table: stores NTLM hash for CHAP auth
-CREATE TABLE IF NOT EXISTS agent_user (
+-- dial_users table: unified user management for frontend and executor CHAP auth
+-- password field stores NTLM hash for executors, bcrypt for frontend users
+CREATE TABLE IF NOT EXISTS dial_users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(40) UNIQUE NOT NULL,
-    password VARCHAR(128) NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(256) NOT NULL,
     last_login_time TIMESTAMP NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_user_username ON agent_user (username);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dial_users_username ON dial_users (username);
 
 -- executor table: stores registered executors
 CREATE TABLE IF NOT EXISTS executor (

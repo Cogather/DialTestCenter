@@ -119,14 +119,9 @@ class DatabaseHelper(BaseDatabaseHelper):
         results = self.execute_query("SELECT * FROM executor WHERE name = %s", (name,))
         return results[0] if results else None
 
-    def get_executor_by_id(self, executor_id: int) -> Optional[Dict[str, Any]]:
-        """根据ID查询执行机信息"""
-        results = self.execute_query("SELECT * FROM executor WHERE id = %s", (executor_id,))
-        return results[0] if results else None
-
     def get_all_executors(self, limit: int = 100) -> list:
         """查询所有执行机"""
-        return self.execute_query("SELECT * FROM executor ORDER BY id LIMIT %s", (limit,))
+        return self.execute_query("SELECT * FROM executor ORDER BY name LIMIT %s", (limit,))
 
     def update_executor_status(self, name: str, status: int) -> None:
         """更新执行机状态"""
@@ -141,16 +136,15 @@ class DatabaseHelper(BaseDatabaseHelper):
         return results[0] if results else None
 
     def get_ue_by_serial(self, serial: str) -> Optional[Dict[str, Any]]:
-        """根据序列号查询UE信息"""
-        results = self.execute_query("SELECT * FROM ue WHERE serial = %s", (serial,))
-        return results[0] if results else None
+        """根据序列号查询UE信息 (Mapped to msisdn in V3 schema)"""
+        return self.get_ue_by_msisdn(serial)
 
     def get_ues_by_executor(self, executor_name: str) -> list:
         """查询指定执行机的所有UE"""
         if not self.table_has_column('ue', 'executor_name'):
             return []
         return self.execute_query(
-            "SELECT * FROM ue WHERE executor_name = %s ORDER BY id",
+            "SELECT * FROM ue WHERE executor_name = %s ORDER BY msisdn",
             (executor_name,)
         )
 
@@ -183,38 +177,42 @@ class DatabaseHelper(BaseDatabaseHelper):
         return results[0] if results else None
 
     def ensure_schema(self) -> None:
-        """确保执行机相关表存在（仅用于测试环境初始化）。"""
+        """确保执行机相关表存在（仅用于测试环境初始化）。
+        注意：为了解决Schema不一致问题，这里会重建表结构以匹配后端V3版本代码。
+        """
+        # Drop tables to ensure clean state with correct schema
+        self.execute_update("DROP TABLE IF EXISTS ue CASCADE")
+        self.execute_update("DROP TABLE IF EXISTS executor CASCADE")
+
+        # Create executor table (V3 schema)
         self.execute_update(
             """
-            CREATE TABLE IF NOT EXISTS executor (
-              id BIGSERIAL PRIMARY KEY,
-              name VARCHAR(128) NOT NULL UNIQUE,
-              ip VARCHAR(64),
-              token VARCHAR(256),
-              proxy VARCHAR(256),
-              description TEXT,
-              status INTEGER,
-              last_online_time TIMESTAMP NULL
+            CREATE TABLE executor (
+                name VARCHAR(40) PRIMARY KEY,
+                ip VARCHAR(40),
+                token VARCHAR(256),
+                proxy VARCHAR(256),
+                description TEXT,
+                status SMALLINT,
+                last_online_time TIMESTAMP
             )
             """
         )
+
+        # Create ue table (V3 schema)
         self.execute_update(
             """
-            CREATE TABLE IF NOT EXISTS ue (
-              id BIGSERIAL PRIMARY KEY,
-              msisdn VARCHAR(32) UNIQUE,
-              serial VARCHAR(64),
-              imsi VARCHAR(32),
-              imei VARCHAR(32),
-              status INTEGER,
-              executor_name VARCHAR(128),
-              vendor VARCHAR(64),
-              model VARCHAR(64),
-              os_version VARCHAR(64),
-              info JSONB
+            CREATE TABLE ue (
+                msisdn VARCHAR(15) PRIMARY KEY,
+                executor_name VARCHAR(40) REFERENCES executor(name) ON UPDATE CASCADE ON DELETE SET NULL,
+                vendor VARCHAR(128),
+                os VARCHAR(128),
+                info TEXT,
+                task_info TEXT
             )
             """
         )
+        
         # Create dial_users table (unified user management for frontend and executor CHAP auth)
         # password field stores NTLM Hash format (32-char hex string)
         self.execute_update(
@@ -254,8 +252,8 @@ class DatabaseHelper(BaseDatabaseHelper):
         """清理测试数据（名称以指定前缀开头的记录）"""
         # 清理测试UE
         self.execute_update(
-            "DELETE FROM ue WHERE msisdn LIKE %s OR serial LIKE %s",
-            (f"{prefix}%", f"{prefix}%")
+            "DELETE FROM ue WHERE msisdn LIKE %s",
+            (f"{prefix}%",)
         )
         # 清理测试执行机
         self.execute_update(
