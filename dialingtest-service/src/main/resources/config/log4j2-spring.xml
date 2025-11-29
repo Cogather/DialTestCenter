@@ -45,7 +45,7 @@
         </Logger>
         
         <!-- Exception Handler Logger -->
-        <Logger name="com.huawei.cloududn.dialingtestapp.exception" level="ERROR" additivity="false">
+        <Logger name="com.huawei.cloududn.dialingtestapp.exceptions" level="ERROR" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="FileAppender"/>
             <AppenderRef ref="ErrorFileAppender"/>

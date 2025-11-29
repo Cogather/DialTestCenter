@@ -7,6 +7,7 @@ package com.huawei.cloududn.dialingtestapp.service.executormanagement.auth;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.RegisterRequestDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.RegisterResponseDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.WssMessageSender;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.DualLinkRouter;
 import com.huawei.cloududn.dialingtestapp.dao.executormanagement.ExecutorDao;
 import com.huawei.cloududn.dialingtest.model.DialUser;
 import com.huawei.cloududn.dialingtestapp.service.basicDataManage.DialUserService;
@@ -47,6 +48,8 @@ public class AuthSessionServiceTest {
     private ExecutorDao executorDao;
     @Mock
     private SessionBindingRegistry registry;
+    @Mock
+    private DualLinkRouter dualLinkRouter;
     @InjectMocks
     private AuthSessionService service;
     private AutoCloseable mocks;
