@@ -133,7 +133,7 @@ public class DataLinkEndpointTest {
     public void testOnDataMessage_Bound_ShouldDispatch() {
         ByteBuffer buffer = ByteBuffer.allocate(10);
         buffer.put((byte)1);
-        buffer.flip();
+        ((java.nio.Buffer) buffer).flip();
 
         when(dualLinkRouter.isDataLinkBound("data-001")).thenReturn(true);
 
