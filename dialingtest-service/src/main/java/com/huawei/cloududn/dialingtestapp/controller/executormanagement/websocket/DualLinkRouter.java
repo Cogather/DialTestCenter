@@ -197,6 +197,9 @@ public class DualLinkRouter {
      * @return 是否已绑定
      */
     public boolean isDataLinkBound(String dataSessionId) {
+        if (dataSessionId == null) {
+            return false;
+        }
         String token = dataSessionToToken.get(dataSessionId);
         if (token == null) {
             return false;
@@ -212,6 +215,9 @@ public class DualLinkRouter {
      * @return 是否都活跃
      */
     public boolean isBothLinksActive(String token) {
+        if (token == null) {
+            return false;
+        }
         LinkPair linkPair = tokenLinks.get(token);
         if (linkPair == null) {
             return false;
@@ -226,6 +232,9 @@ public class DualLinkRouter {
      * @return Session或null
      */
     public Session getControlSessionByToken(String token) {
+        if (token == null) {
+            return null;
+        }
         LinkPair linkPair = tokenLinks.get(token);
         if (linkPair == null) {
             return null;
@@ -240,6 +249,9 @@ public class DualLinkRouter {
      * @return Session或null
      */
     public Session getDataSessionByToken(String token) {
+        if (token == null) {
+            return null;
+        }
         LinkPair linkPair = tokenLinks.get(token);
         if (linkPair == null) {
             return null;
@@ -254,6 +266,9 @@ public class DualLinkRouter {
      * @return token或null
      */
     public String getTokenByControlSessionId(String controlSessionId) {
+        if (controlSessionId == null) {
+            return null;
+        }
         return controlSessionToToken.get(controlSessionId);
     }
 
@@ -264,6 +279,9 @@ public class DualLinkRouter {
      * @return token或null
      */
     public String getTokenByDataSessionId(String dataSessionId) {
+        if (dataSessionId == null) {
+            return null;
+        }
         return dataSessionToToken.get(dataSessionId);
     }
 
@@ -274,6 +292,9 @@ public class DualLinkRouter {
      * @return token或null
      */
     public String getTokenBySessionId(String sessionId) {
+        if (sessionId == null) {
+            return null;
+        }
         String token = controlSessionToToken.get(sessionId);
         if (token == null) {
             token = dataSessionToToken.get(sessionId);
