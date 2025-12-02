@@ -5,9 +5,16 @@
 package com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.AppInstallResponseDto;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.AppListResponseDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.DeRegisterRequestDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.RegisterRequestDto;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.RegisterResponseDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.ReportMsgDto;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.ScreencapResponseDto;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.ScriptUpdateAckDto;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.TaskStartResponseDto;
+import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.dto.TaskStopResponseDto;
 import com.huawei.cloududn.dialingtestapp.controller.executormanagement.websocket.flow.InboundFileHandler;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.ExecutorMgmtService;
 import com.huawei.cloududn.dialingtestapp.service.executormanagement.auth.AuthSessionService;
@@ -112,11 +119,86 @@ public class WssMessageDispatcherTest {
 
         String appListResponse = "{\"type\":\"AppListResponse\",\"payload\":{\"serialNo\":\"123456\"}}";
         dispatcher.dispatch(appListResponse, session);
-        verify(taskInterfaceService).handleAppListResponse(any(), eq(session));
+        verify(taskInterfaceService).handleAppListResponse(any(AppListResponseDto.class), eq(session));
 
         String scriptUpdateAck = "{\"type\":\"ScriptUpdateAck\",\"payload\":{\"scriptName\":\"test.py\"}}";
         dispatcher.dispatch(scriptUpdateAck, session);
-        verify(taskInterfaceService).handleScriptUpdateAck(any(), eq(session));
+        verify(taskInterfaceService).handleScriptUpdateAck(any(ScriptUpdateAckDto.class), eq(session));
+    }
+
+    /**
+     * 测试分发RegisterResponse消息
+     */
+    @Test
+    public void testDispatch_JsonMessage_RegisterResponse() throws Exception {
+        Session session = mock(Session.class);
+        when(session.getId()).thenReturn("session-001");
+
+        String jsonMessage = "{\"type\":\"RegisterResponse\",\"payload\":{\"response\":\"response\"}}";
+
+        dispatcher.dispatch(jsonMessage, session);
+
+        verify(authSessionService).handleRegisterResponse(any(RegisterResponseDto.class), eq(session));
+    }
+
+    /**
+     * 测试分发AppInstallResponse消息
+     */
+    @Test
+    public void testDispatch_JsonMessage_AppInstallResponse() throws Exception {
+        Session session = mock(Session.class);
+        when(session.getId()).thenReturn("session-001");
+
+        String jsonMessage = "{\"type\":\"AppInstallResponse\",\"payload\":{\"taskId\":1001}}";
+
+        dispatcher.dispatch(jsonMessage, session);
+
+        verify(taskInterfaceService).handleAppInstallResponse(any(AppInstallResponseDto.class), eq(session));
+    }
+
+    /**
+     * 测试分发ScreencapResponse消息
+     */
+    @Test
+    public void testDispatch_JsonMessage_ScreencapResponse() throws Exception {
+        Session session = mock(Session.class);
+        when(session.getId()).thenReturn("session-001");
+
+        String jsonMessage = "{\"type\":\"ScreencapResponse\",\"payload\":{\"serial-no\":\"123456\"}}";
+
+        dispatcher.dispatch(jsonMessage, session);
+
+        verify(taskInterfaceService).handleScreencapResponse(any(ScreencapResponseDto.class), eq(session));
+    }
+
+    /**
+     * 测试分发TaskStartResponse消息
+     */
+    @Test
+    public void testDispatch_JsonMessage_TaskStartResponse() throws Exception {
+        Session session = mock(Session.class);
+        when(session.getId()).thenReturn("session-001");
+
+        String jsonMessage = "{\"type\":\"TaskStartResponse\",\"payload\":{\"taskid\":1001}}";
+
+        dispatcher.dispatch(jsonMessage, session);
+
+        verify(taskInterfaceService).handleTaskStartResponse(any(TaskStartResponseDto.class), eq(session));
+    }
+
+    /**
+     * 测试分发TaskStopResponse消息
+     */
+    @Test
+    public void testDispatch_JsonMessage_TaskStopResponse() throws Exception {
+        Session session = mock(Session.class);
+        when(session.getId()).thenReturn("session-001");
+
+        String jsonMessage = "{\"type\":\"TaskStopResponse\",\"payload\":{\"taskId\":1001}}";
+
+        dispatcher.dispatch(jsonMessage, session);
+
+        verify(taskInterfaceService).handleTaskStopResponse(any(TaskStopResponseDto.class), eq(session));
     }
 
     /**
