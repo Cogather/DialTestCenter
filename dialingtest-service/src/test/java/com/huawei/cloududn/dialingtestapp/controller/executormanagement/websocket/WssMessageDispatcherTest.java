@@ -164,7 +164,7 @@ public class WssMessageDispatcherTest {
 
         ByteBuffer buffer = ByteBuffer.allocate(100);
         buffer.put(new byte[100]);
-        buffer.flip();
+        ((java.nio.Buffer) buffer).flip();
 
         dispatcher.dispatch(buffer, session);
 
@@ -182,7 +182,7 @@ public class WssMessageDispatcherTest {
 
         ByteBuffer buffer = ByteBuffer.allocate(100);
         buffer.put(new byte[100]);
-        buffer.flip();
+        ((java.nio.Buffer) buffer).flip();
 
         dispatcher.dispatch(buffer, session);
 
