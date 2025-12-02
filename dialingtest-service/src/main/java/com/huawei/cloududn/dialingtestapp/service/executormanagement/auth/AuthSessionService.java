@@ -147,17 +147,28 @@ public class AuthSessionService {
             logger.warn("Auth failed: incorrect response, username={}", username);
             return;
         }
-        
+
+        processRegistrationSuccess(session, username, ctx.executorName);
+    }
+
+    /**
+     * Process successful registration actions (token generation, DB update, binding).
+     *
+     * @param session      WebSocket session
+     * @param username     Username
+     * @param executorName Executor hostname
+     */
+    private void processRegistrationSuccess(Session session, String username, String executorName) {
         // Generate token
         long token = generateTokenV3();
         
         // Update executor database
         try {
-            executorDao.saveOrUpdateExecutor(ctx.executorName, token, "ONLINE");
-            logger.info("Executor registered successfully: hostname={}, token={}", ctx.executorName, token);
+            executorDao.saveOrUpdateExecutor(executorName, token, "ONLINE");
+            logger.info("Executor registered successfully: hostname={}, token={}", executorName, token);
         } catch (IllegalArgumentException e) {
             sendRegisterResultV4(session.getId(), 5, "Database error: " + e.getMessage(), null);
-            logger.error("Failed to update executor in database, hostname={}", ctx.executorName, e);
+            logger.error("Failed to update executor in database, hostname={}", executorName, e);
             return;
         }
         
@@ -166,7 +177,7 @@ public class AuthSessionService {
         logger.debug("Register-Result sent to sessionId={}, token={}", session.getId(), token);
         
         // Bind session to executor
-        registry.bind(session.getId(), ctx.executorName, token);
+        registry.bind(session.getId(), executorName, token);
         
         // V5: Bind control link to DualLinkRouter with token (AFTER sending Register-Result)
         String tokenStr = String.valueOf(token);
@@ -178,7 +189,7 @@ public class AuthSessionService {
         pendingMap.remove(session.getId());
         
         logger.info("Authentication successful: sessionId={}, hostname={}, username={}, token={}", 
-                session.getId(), ctx.executorName, username, token);
+                session.getId(), executorName, username, token);
     }
 
     private static String getText(JsonNode node, String field) {
