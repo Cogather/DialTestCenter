@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.websocket.Session;
@@ -314,7 +315,8 @@ public class DualLinkRouter {
         int controlLinks = controlSessionToToken.size();
         int dataLinks = dataSessionToToken.size();
 
-        return String.format("LinkStats[tokens=%d, bothActive=%d, anyActive=%d, control=%d, data=%d]",
+        return String.format(Locale.ROOT, 
+                "LinkStats[tokens=%d, bothActive=%d, anyActive=%d, control=%d, data=%d]",
                 totalTokens, activeBoth, activeAny, controlLinks, dataLinks);
     }
 }

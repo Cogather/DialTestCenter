@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.Locale;
 
 import javax.annotation.PreDestroy;
 
@@ -102,7 +103,7 @@ public class ThreadPoolConfig {
         }
 
         ThreadPoolExecutor executor = (ThreadPoolExecutor) globalExecutorService;
-        return String.format(
+        return String.format(Locale.ROOT,
                 "ThreadPool[active=%d, poolSize=%d, coreSize=%d, maxSize=%d, queueSize=%d, completedTasks=%d]",
                 executor.getActiveCount(),
                 executor.getPoolSize(),
@@ -134,7 +135,6 @@ public class ThreadPoolConfig {
             } catch (InterruptedException e) {
                 logger.warn("Shutdown interrupted, forcing shutdown", e);
                 globalExecutorService.shutdownNow();
-                Thread.currentThread().interrupt();
             }
         }
     }

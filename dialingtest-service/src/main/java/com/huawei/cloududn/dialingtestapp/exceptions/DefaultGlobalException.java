@@ -36,7 +36,7 @@ public class DefaultGlobalException {
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNoHandlerFoundException(
             NoHandlerFoundException e, HttpServletRequest request) {
-        logger.error("404异常 - URI: {}, Method: {}", request.getRequestURI(), request.getMethod(), e);
+        logger.error("404 Error - URI: {}, Method: {}", request.getRequestURI(), request.getMethod(), e);
 
         String message = "请求的资源不存在: " + e.getRequestURL();
         Map<String, Object> response = createErrorResponse("NOT_FOUND", message, 404);
@@ -75,7 +75,7 @@ public class DefaultGlobalException {
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<Map<String, Object>> handleNullPointerException(
             NullPointerException e, HttpServletRequest request) {
-        logger.error("空指针异常 - URI: {}, Method: {}", request.getRequestURI(), request.getMethod(), e);
+        logger.error("NullPointer Exception - URI: {}, Method: {}", request.getRequestURI(), request.getMethod(), e);
 
         Map<String, Object> response = createErrorResponse("NULL_POINTER", "系统内部错误", 500);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -90,7 +90,7 @@ public class DefaultGlobalException {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
-        logger.error("运行时异常 - URI: {}, Method: {}, Message: {}",
+        logger.error("Runtime Exception - URI: {}, Method: {}, Message: {}",
                 request.getRequestURI(), request.getMethod(), e.getMessage(), e);
 
         Map<String, Object> response = createErrorResponse("RUNTIME_ERROR", "系统运行时错误", 500);
@@ -106,7 +106,7 @@ public class DefaultGlobalException {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception e, HttpServletRequest request) {
-        logger.error("未知异常 - URI: {}, Method: {}, Message: {}",
+        logger.error("Unknown Exception - URI: {}, Method: {}, Message: {}",
                 request.getRequestURI(), request.getMethod(), e.getMessage(), e);
 
         Map<String, Object> response = createErrorResponse("INTERNAL_ERROR", "系统内部错误", 500);

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -203,7 +204,7 @@ public class SessionSendQueue {
      * @return 统计信息字符串
      */
     public String getQueueStats() {
-        return String.format("QueueStats[control=%d, data=%d]", 
+        return String.format(Locale.ROOT, "QueueStats[control=%d, data=%d]", 
                 controlQueue.size(), dataQueue.size());
     }
 }

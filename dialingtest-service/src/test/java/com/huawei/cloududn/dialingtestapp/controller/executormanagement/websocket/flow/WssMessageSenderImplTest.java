@@ -126,7 +126,8 @@ public class WssMessageSenderImplTest {
         
         sender.removeQueueByToken(token);
         
-        // Verify queue is gone (implicitly by checking if creating new one triggers tasks again or checking map size if accessible)
+        // Verify queue is gone 
+        // (implicitly by checking if creating new one triggers tasks again or checking map size if accessible)
         // Better: check logs or coverage. Here we trust method logic.
     }
 

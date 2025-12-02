@@ -7,7 +7,7 @@ package com.huawei.cloududn.dialingtestapp.controller.executormanagement.websock
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
 
 import javax.websocket.Session;
 
@@ -53,8 +53,10 @@ public class DualLinkRouterTest {
         
         // 2. 绑定控制链路到 Token
         dualLinkRouter.bindControlLinkWithToken(token, "control-001", controlSession);
-        assertEquals("Token mapping should be consistent", token, dualLinkRouter.getTokenByControlSessionId("control-001"));
-        assertEquals("Token mapping should be consistent", token, dualLinkRouter.getTokenBySessionId("control-001"));
+        assertEquals("Token mapping should be consistent", token, 
+                dualLinkRouter.getTokenByControlSessionId("control-001"));
+        assertEquals("Token mapping should be consistent", token, 
+                dualLinkRouter.getTokenBySessionId("control-001"));
 
         // 3. 注册数据链路 (绑定成功)
         boolean bound = dualLinkRouter.registerDataLink(token, "data-001", dataSession);
@@ -94,7 +96,8 @@ public class DualLinkRouterTest {
         dualLinkRouter.unregisterControlLink("control-001");
 
         // 验证清理
-        assertNull("Token mapping for control session should be removed", dualLinkRouter.getTokenByControlSessionId("control-001"));
+        assertNull("Token mapping for control session should be removed", 
+                dualLinkRouter.getTokenByControlSessionId("control-001"));
         // 由于是控制链路主动断开，根据逻辑 linkPair 的 controlActive 变为 false
         assertFalse("Both links should not be active", dualLinkRouter.isBothLinksActive(token));
         
@@ -118,7 +121,8 @@ public class DualLinkRouterTest {
         dualLinkRouter.unregisterDataLink("data-001");
 
         // 验证清理
-        assertNull("Token mapping for data session should be removed", dualLinkRouter.getTokenByDataSessionId("data-001"));
+        assertNull("Token mapping for data session should be removed", 
+                dualLinkRouter.getTokenByDataSessionId("data-001"));
         assertFalse("Data link should not be bound", dualLinkRouter.isDataLinkBound("data-001"));
         assertFalse("Both links should not be active", dualLinkRouter.isBothLinksActive(token));
     }

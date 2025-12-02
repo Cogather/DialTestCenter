@@ -14,7 +14,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 import java.nio.ByteBuffer;
-import java.util.Map;
+
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;

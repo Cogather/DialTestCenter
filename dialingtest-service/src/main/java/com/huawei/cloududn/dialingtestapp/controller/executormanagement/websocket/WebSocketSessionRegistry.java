@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -222,7 +223,7 @@ public class WebSocketSessionRegistry {
         int totalControlSessions = controlSessions.size();
         int totalDataSessions = dataSessions.size();
         String linkStats = dualLinkRouter.getLinkStats();
-        return String.format("SessionStats[control=%d, data=%d, %s]", 
+        return String.format(Locale.ROOT, "SessionStats[control=%d, data=%d, %s]", 
                 totalControlSessions, totalDataSessions, linkStats);
     }
 }

@@ -32,14 +32,14 @@ public class SessionSendQueueTest {
     private WebSocketSessionRegistry sessionRegistry;
 
     private ExecutorService testExecutor;
-    private final String token = "test-token";
+    private static final String TOKEN = "test-token";
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         // 使用真实线程池进行测试，确保至少有2个线程供消费者使用
         testExecutor = Executors.newFixedThreadPool(4);
-        queue = new SessionSendQueue(token, sessionRegistry, testExecutor);
+        queue = new SessionSendQueue(TOKEN, sessionRegistry, testExecutor);
     }
 
     @After
@@ -63,7 +63,7 @@ public class SessionSendQueueTest {
         int attempts = 0;
         while (attempts < 10) {
             try {
-                verify(sessionRegistry, atLeastOnce()).sendTextByToken(eq(token), eq(message));
+                verify(sessionRegistry, atLeastOnce()).sendTextByToken(eq(TOKEN), eq(message));
                 return;
             } catch (AssertionError e) {
                 Thread.sleep(100);
@@ -83,7 +83,7 @@ public class SessionSendQueueTest {
         int attempts = 0;
         while (attempts < 10) {
             try {
-                verify(sessionRegistry, atLeastOnce()).sendBinaryByToken(eq(token), any(ByteBuffer.class));
+                verify(sessionRegistry, atLeastOnce()).sendBinaryByToken(eq(TOKEN), any(ByteBuffer.class));
                 return;
             } catch (AssertionError e) {
                 Thread.sleep(100);

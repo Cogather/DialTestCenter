@@ -37,7 +37,8 @@ public class DefaultGlobalExceptionTest {
     @Test
     public void testHandleNoHandlerFoundException_Standard_ReturnsNotFound() {
         // Arrange
-        NoHandlerFoundException ex = new NoHandlerFoundException("GET", "/test/url", new org.springframework.http.HttpHeaders());
+        NoHandlerFoundException ex = new NoHandlerFoundException("GET", "/test/url", 
+                new org.springframework.http.HttpHeaders());
         
         // Act
         ResponseEntity<Map<String, Object>> response = exceptionHandler.handleNoHandlerFoundException(ex, request);

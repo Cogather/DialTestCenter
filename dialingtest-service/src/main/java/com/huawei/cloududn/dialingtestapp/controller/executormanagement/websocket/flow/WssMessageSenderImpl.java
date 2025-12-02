@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -235,7 +236,7 @@ public class WssMessageSenderImpl implements WssMessageSender {
                 .mapToInt(SessionSendQueue::getDataQueueSize)
                 .sum();
 
-        return String.format("AllQueues[tokens=%d, controlTotal=%d, dataTotal=%d, %s]",
+        return String.format(Locale.ROOT, "AllQueues[tokens=%d, controlTotal=%d, dataTotal=%d, %s]",
                 totalTokens, totalControlMessages, totalDataMessages, getThreadPoolStats());
     }
 }

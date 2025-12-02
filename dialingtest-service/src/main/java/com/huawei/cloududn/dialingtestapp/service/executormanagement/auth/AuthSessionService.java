@@ -171,7 +171,8 @@ public class AuthSessionService {
         // V5: Bind control link to DualLinkRouter with token (AFTER sending Register-Result)
         String tokenStr = String.valueOf(token);
         dualLinkRouter.bindControlLinkWithToken(tokenStr, session.getId(), session);
-        logger.info("Control link bound with token in DualLinkRouter: sessionId={}, token={}", session.getId(), tokenStr);
+        logger.info("Control link bound with token in DualLinkRouter: sessionId={}, token={}", 
+                session.getId(), tokenStr);
         
         // Cleanup
         pendingMap.remove(session.getId());

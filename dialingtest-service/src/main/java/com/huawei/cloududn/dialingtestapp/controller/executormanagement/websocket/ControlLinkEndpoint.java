@@ -132,7 +132,8 @@ public class ControlLinkEndpoint {
         // Force close data session if open
         if (dataSession != null && dataSession.isOpen()) {
             try {
-                logger.info("Control link disconnected, closing associated data link, sessionId={}", dataSession.getId());
+                logger.info("Control link disconnected, closing associated data link, sessionId={}",
+                        dataSession.getId());
                 dataSession.close(new CloseReason(CloseReason.CloseCodes.VIOLATED_POLICY, 
                         "Control link disconnected"));
             } catch (Exception e) {

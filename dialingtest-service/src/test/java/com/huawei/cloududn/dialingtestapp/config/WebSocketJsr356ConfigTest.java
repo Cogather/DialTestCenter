@@ -84,7 +84,8 @@ public class WebSocketJsr356ConfigTest {
                 .orElseThrow(() -> new AssertionError("Control endpoint not registered"));
         assertEquals(ControlLinkEndpoint.class, controlConfig.getEndpointClass());
         assertNotNull(controlConfig.getConfigurator());
-        assertEquals(controlLinkEndpoint, controlConfig.getConfigurator().getEndpointInstance(ControlLinkEndpoint.class));
+        assertEquals(controlLinkEndpoint, 
+                controlConfig.getConfigurator().getEndpointInstance(ControlLinkEndpoint.class));
 
         // Verify Data Config
         ServerEndpointConfig dataConfig = configs.stream()
@@ -109,7 +110,8 @@ public class WebSocketJsr356ConfigTest {
     public void testRegisterWebSocketEndpoints_DeploymentException_ThrowsException() throws DeploymentException {
         // Arrange
         when(servletContext.getAttribute(ServerContainer.class.getName())).thenReturn(serverContainer);
-        doThrow(new DeploymentException("Test Exception")).when(serverContainer).addEndpoint(any(ServerEndpointConfig.class));
+        doThrow(new DeploymentException("Test Exception")).when(serverContainer)
+                .addEndpoint(any(ServerEndpointConfig.class));
 
         // Act
         webSocketJsr356Config.registerWebSocketEndpoints();

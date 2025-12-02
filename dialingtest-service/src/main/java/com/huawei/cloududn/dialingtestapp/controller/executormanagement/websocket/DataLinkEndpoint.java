@@ -190,7 +190,8 @@ public class DataLinkEndpoint {
             
             // Check if control link is still registered in router (avoid loop/double cleanup)
             if (dualLinkRouter.getTokenByControlSessionId(controlSessionId) == null) {
-                logger.debug("Control link already unregistered, skipping cascade disconnect for sessionId={}", controlSessionId);
+                logger.debug("Control link already unregistered, skipping cascade disconnect for sessionId={}", 
+                        controlSessionId);
                 return;
             }
             
