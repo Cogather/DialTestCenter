@@ -1,0 +1,565 @@
+swagger: "2.0"
+info:
+  title: "Fine-tuning Application Service API"
+  description: "微调中心应用服务 API - 业务执行引擎"
+  version: "1.0.0"
+  contact:
+    name: "FinetuningApp Team"
+
+basePath: "/api/finetuning/v1"
+
+tags:
+  - name: "任务管理"
+    description: "任务触发和管理接口"
+  - name: "资产管理"
+    description: "模型版本和样本统计查询接口"
+  - name: "规则配置"
+    description: "清洗规则配置接口"
+  - name: "内部回调"
+    description: "内部系统回调接口"
+
+paths:
+  /tasks/preprocess:
+    post:
+      tags:
+        - "任务管理"
+      summary: "提交预处理任务"
+      description: "拨测结束后调用，将任务写入队列，等待调度器回放数据并清洗"
+      operationId: "submitPreprocessTask"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "预处理任务请求"
+          required: true
+          schema:
+            $ref: "#/definitions/PreprocessTaskRequest"
+      responses:
+        200:
+          description: "成功"
+          schema:
+            $ref: "#/definitions/TaskResponse"
+        400:
+          description: "参数错误"
+        500:
+          description: "服务器内部错误"
+
+  /tasks/train:
+    post:
+      tags:
+        - "任务管理"
+      summary: "提交模型训练任务"
+      description: "由拨测控制中心基于阈值判断后调用，或由管理员手动调用"
+      operationId: "submitTrainTask"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "训练任务请求"
+          required: true
+          schema:
+            $ref: "#/definitions/TrainTaskRequest"
+      responses:
+        200:
+          description: "成功"
+          schema:
+            $ref: "#/definitions/TaskResponse"
+
+  /tasks/replay:
+    post:
+      tags:
+        - "任务管理"
+      summary: "提交离线回放任务"
+      description: "使用指定模型版本对历史样本进行回放验证"
+      operationId: "submitReplayTask"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "回放任务请求"
+          required: true
+          schema:
+            $ref: "#/definitions/ReplayTaskRequest"
+      responses:
+        200:
+          description: "成功"
+          schema:
+            $ref: "#/definitions/TaskResponse"
+
+  /tasks/{taskId}:
+    get:
+      tags:
+        - "任务管理"
+      summary: "查询任务详情"
+      description: "根据任务ID查询任务执行详情"
+      operationId: "getTaskDetail"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "taskId"
+          in: "path"
+          description: "任务ID"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        200:
+          description: "成功"
+          schema:
+            $ref: "#/definitions/TaskDetail"
+        404:
+          description: "任务不存在"
+
+  /tasks/{taskId}/stop:
+    post:
+      tags:
+        - "任务管理"
+      summary: "终止任务"
+      description: "标记任务状态为CANCELED，调度器识别后停止执行"
+      operationId: "stopTask"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "taskId"
+          in: "path"
+          description: "任务ID"
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        200:
+          description: "成功"
+        404:
+          description: "任务不存在"
+
+  /assets/models:
+    get:
+      tags:
+        - "资产管理"
+      summary: "查询模型版本列表"
+      description: "分页查询模型版本、下载地址、评估指标"
+      operationId: "listModelVersions"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "modelType"
+          in: "query"
+          description: "模型类型: SMALL_MODEL, RAG_LIB"
+          required: false
+          type: "string"
+        - name: "isActive"
+          in: "query"
+          description: "是否激活"
+          required: false
+          type: "boolean"
+        - name: "page"
+          in: "query"
+          description: "页码，从0开始"
+          required: false
+          type: "integer"
+          default: 0
+        - name: "size"
+          in: "query"
+          description: "每页大小"
+          required: false
+          type: "integer"
+          default: 20
+      responses:
+        200:
+          description: "成功"
+          schema:
+            $ref: "#/definitions/ModelVersionListResponse"
+
+  /assets/samples/stats:
+    get:
+      tags:
+        - "资产管理"
+      summary: "查询样本统计"
+      description: "查询各类APP的样本数量，支持按时间范围或拨测任务ID过滤"
+      operationId: "getSampleStatistics"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "appType"
+          in: "query"
+          description: "应用类型，如DouYin_Live"
+          required: false
+          type: "string"
+        - name: "dialingTaskId"
+          in: "query"
+          description: "拨测任务ID"
+          required: false
+          type: "integer"
+          format: "int64"
+        - name: "startTime"
+          in: "query"
+          description: "开始时间戳（毫秒）"
+          required: false
+          type: "integer"
+          format: "int64"
+        - name: "endTime"
+          in: "query"
+          description: "结束时间戳（毫秒）"
+          required: false
+          type: "integer"
+          format: "int64"
+      responses:
+        200:
+          description: "成功"
+          schema:
+            $ref: "#/definitions/SampleStatisticsResponse"
+
+  /configs/rules/default:
+    get:
+      tags:
+        - "规则配置"
+      summary: "查询默认清洗规则"
+      description: "查询系统默认的全局清洗规则配置"
+      operationId: "getDefaultRule"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "appType"
+          in: "query"
+          description: "应用类型"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "成功"
+          schema:
+            $ref: "#/definitions/CleaningRule"
+        404:
+          description: "规则不存在"
+
+    put:
+      tags:
+        - "规则配置"
+      summary: "更新清洗规则"
+      description: "修改系统默认的全局清洗规则配置"
+      operationId: "updateDefaultRule"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "清洗规则"
+          required: true
+          schema:
+            $ref: "#/definitions/CleaningRuleUpdateRequest"
+      responses:
+        200:
+          description: "成功"
+        400:
+          description: "参数错误"
+
+  /internal/callbacks/algo:
+    post:
+      tags:
+        - "内部回调"
+      summary: "算力服务回调"
+      description: "专用于接收南向算力节点（C++服务）的任务完成通知"
+      operationId: "handleAlgoCallback"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "算力回调请求"
+          required: true
+          schema:
+            $ref: "#/definitions/AlgoCallbackRequest"
+      responses:
+        200:
+          description: "成功"
+
+definitions:
+  # 时间范围
+  TimeRange:
+    type: "object"
+    required:
+      - "start"
+      - "end"
+    properties:
+      start:
+        type: "integer"
+        format: "int64"
+        description: "开始时间戳（毫秒）"
+      end:
+        type: "integer"
+        format: "int64"
+        description: "结束时间戳（毫秒）"
+
+  # 预处理任务请求
+  PreprocessTaskRequest:
+    type: "object"
+    required:
+      - "dialingTaskId"
+      - "ueId"
+      - "timeRange"
+    properties:
+      dialingTaskId:
+        type: "integer"
+        format: "int64"
+        description: "关联的拨测任务ID"
+      ueId:
+        type: "string"
+        description: "数据来源设备（作为Kafka Partition Key）"
+      timeRange:
+        $ref: "#/definitions/TimeRange"
+      config:
+        type: "object"
+        description: "临时覆盖的清洗规则（可选，JSON格式）"
+        additionalProperties:
+          type: "object"
+
+  # 训练任务请求
+  TrainTaskRequest:
+    type: "object"
+    required:
+      - "triggerSource"
+      - "modelType"
+    properties:
+      triggerSource:
+        type: "string"
+        enum: ["MANUAL", "THRESHOLD"]
+        description: "触发源: MANUAL(人工), THRESHOLD(自动阈值)"
+      modelType:
+        type: "string"
+        enum: ["SMALL_MODEL", "RAG_LIB"]
+        description: "模型类型"
+      dataScope:
+        type: "object"
+        description: "数据范围"
+        properties:
+          sampleIds:
+            type: "array"
+            items:
+              type: "integer"
+              format: "int64"
+            description: "指定样本ID列表"
+          startTime:
+            type: "integer"
+            format: "int64"
+            description: "开始时间戳（毫秒）"
+          endTime:
+            type: "integer"
+            format: "int64"
+            description: "结束时间戳（毫秒）"
+
+  # 回放任务请求
+  ReplayTaskRequest:
+    type: "object"
+    required:
+      - "modelVersion"
+      - "datasetScope"
+    properties:
+      modelVersion:
+        type: "string"
+        description: "指定待验证的模型版本"
+      datasetScope:
+        type: "string"
+        enum: ["INCREMENTAL", "FULL"]
+        description: "数据集范围: INCREMENTAL(增量), FULL(全量)"
+      targetMetrics:
+        type: "array"
+        items:
+          type: "string"
+        description: "目标指标，如accuracy, recall"
+
+  # 任务响应
+  TaskResponse:
+    type: "object"
+    properties:
+      jobId:
+        type: "integer"
+        format: "int64"
+        description: "任务ID"
+      status:
+        type: "string"
+        description: "任务状态"
+
+  # 任务详情
+  TaskDetail:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      dialingTaskId:
+        type: "integer"
+        format: "int64"
+      jobType:
+        type: "string"
+        description: "任务类型"
+      status:
+        type: "string"
+        description: "任务状态"
+      requestParams:
+        type: "object"
+        description: "请求参数"
+      resultData:
+        type: "object"
+        description: "结果数据"
+      workerInstance:
+        type: "string"
+        description: "执行实例"
+      errorMsg:
+        type: "string"
+        description: "错误信息"
+      createTime:
+        type: "string"
+        format: "date-time"
+      startTime:
+        type: "string"
+        format: "date-time"
+      endTime:
+        type: "string"
+        format: "date-time"
+
+  # 模型版本
+  ModelVersion:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      versionNo:
+        type: "string"
+        description: "版本号"
+      modelType:
+        type: "string"
+        description: "模型类型"
+      storagePath:
+        type: "string"
+        description: "存储路径"
+      metrics:
+        type: "object"
+        description: "质量指标"
+      sourceTaskId:
+        type: "integer"
+        format: "int64"
+        description: "来源任务ID"
+      isActive:
+        type: "boolean"
+        description: "是否激活"
+      createTime:
+        type: "string"
+        format: "date-time"
+
+  # 模型版本列表响应
+  ModelVersionListResponse:
+    type: "object"
+    properties:
+      content:
+        type: "array"
+        items:
+          $ref: "#/definitions/ModelVersion"
+      totalElements:
+        type: "integer"
+        format: "int64"
+      totalPages:
+        type: "integer"
+      size:
+        type: "integer"
+      number:
+        type: "integer"
+
+  # 样本统计
+  SampleStatistics:
+    type: "object"
+    properties:
+      appType:
+        type: "string"
+      totalCount:
+        type: "integer"
+        format: "int64"
+      lastUpdateTime:
+        type: "string"
+        format: "date-time"
+
+  # 样本统计响应
+  SampleStatisticsResponse:
+    type: "object"
+    properties:
+      statistics:
+        type: "array"
+        items:
+          $ref: "#/definitions/SampleStatistics"
+
+  # 清洗规则
+  CleaningRule:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      name:
+        type: "string"
+      appType:
+        type: "string"
+      isDefault:
+        type: "boolean"
+      ruleConfig:
+        type: "object"
+        description: "规则配置（JSON格式）"
+      description:
+        type: "string"
+
+  # 清洗规则更新请求
+  CleaningRuleUpdateRequest:
+    type: "object"
+    required:
+      - "appType"
+      - "ruleConfig"
+    properties:
+      appType:
+        type: "string"
+      name:
+        type: "string"
+      ruleConfig:
+        type: "object"
+      description:
+        type: "string"
+
+  # 算力回调请求
+  AlgoCallbackRequest:
+    type: "object"
+    required:
+      - "jobId"
+      - "status"
+    properties:
+      jobId:
+        type: "integer"
+        format: "int64"
+        description: "对应提交时的任务ID"
+      status:
+        type: "string"
+        enum: ["SUCCESS", "FAILED"]
+        description: "执行状态"
+      errorMsg:
+        type: "string"
+        description: "错误信息"
+      result:
+        type: "object"
+        description: "成功时的产出物"
+        properties:
+          modelVersion:
+            type: "string"
+          artifactPath:
+            type: "string"
+          metrics:
+            type: "object"

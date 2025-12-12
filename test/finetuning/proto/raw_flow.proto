@@ -1,0 +1,22 @@
+syntax = "proto3";
+package com.huawei.cloududn.finetuningapp.model.proto;
+
+message RawFlowMsg {
+  string ue_id = 1;          // 设备ID
+  int64 timestamp = 2;       // 采集毫秒时间戳
+  
+  // 五元组
+  string src_ip = 3;
+  string dst_ip = 4;
+  int32 src_port = 5;
+  int32 dst_port = 6;
+  string l4_proto = 7;       // TCP/UDP
+
+  // 统计特征
+  int64 up_bytes = 8;
+  int64 down_bytes = 9;
+  int32 packet_count = 10;
+  
+  // 摘要 (用于后续Payload特征分析)
+  bytes payload_snippet = 11; 
+}

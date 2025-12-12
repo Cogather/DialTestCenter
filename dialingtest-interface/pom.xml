@@ -230,6 +230,19 @@
                         <ignoreFileOverride>${basedir}/.swagger-codegen-ignore</ignoreFileOverride>
                     </configuration>
                 </execution>
+                <execution>
+                    <id>finetuning-api</id>
+                    <goals>
+                        <goal>generate</goal>
+                    </goals>
+                    <configuration>
+                        <inputSpec>${basedir}/src/main/resources/finetuning-api.yaml</inputSpec>
+                        <language>spring</language>
+                        <apiPackage>com.huawei.cloududn.finetuningapp.api</apiPackage>
+                        <modelPackage>com.huawei.cloududn.finetuningapp.model</modelPackage>
+                        <ignoreFileOverride>${basedir}/.swagger-codegen-ignore</ignoreFileOverride>
+                    </configuration>
+                </execution>
                 </executions>
             </plugin>
             <!-- Maven Antrun Plugin - 删除不需要的生成文件 -->

@@ -13,7 +13,8 @@
 
 ### 1.2 技术选型
 * **语言框架**: Java 21, Spring Boot 2.7, MyBatis
-* **数据存储**: PostgreSQL (任务队列/业务数据), Redis (规则缓存/热点数据)
+* **数据存储**: PostgreSQL (任务队列/业务数据)
+* **缓存方案**: 应用内存缓存 (规则配置/热点数据)
 * **接口规范**: OpenAPI 2.0 (YAML), 详见 `dialingtest-interface` 项目
 * **通信协议**:
     * **RESTful API**: 指令交互 (vs 拨测中心 / C++服务 / EPSN)
@@ -58,7 +59,8 @@
 
   * **Kafka 回放模块**:
       * **Batch Replay Consumer**: 不使用 Group ID 消费，而是使用 `assign` + `seek` 模式，精确读取指定 Partition 的历史数据。
-  * **数据持久化**: PostgreSQL (任务队列与元数据), Redis (可选，仅作辅助缓存)。
+  * **数据持久化**: PostgreSQL (任务队列与元数据)。
+  * **内存缓存**: 应用启动时加载清洗规则配置到内存，避免频繁读取数据库。支持配置热更新。
 
 -----
 

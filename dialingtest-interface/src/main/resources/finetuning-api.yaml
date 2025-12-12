@@ -1,0 +1,639 @@
+swagger: '2.0'
+info:
+  title: Finetuning Center API
+  version: 1.0.0
+  description: API for finetuning task management, model version management and sample statistics
+host: localhost:8087
+basePath: /api/finetuning/v1
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /tasks/preprocess:
+    post:
+      tags:
+        - Tasks
+      summary: Submit a preprocess task
+      description: Submit task for replaying Kafka history data and cleaning
+      operationId: submitPreprocessTask
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/PreprocessTaskRequest'
+        - name: "X-Csrf-Token"
+          in: "header"
+          required: true
+          type: "string"
+          description: "CSRF防护令牌"
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
+      responses:
+        '200':
+          description: Task submitted successfully
+          schema:
+            $ref: '#/definitions/TaskSubmitResponse'
+        '400':
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /tasks/train:
+    post:
+      tags:
+        - Tasks
+      summary: Submit a training task
+      description: Trigger model training or retrieval library generation
+      operationId: submitTrainingTask
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/TrainingTaskRequest'
+        - name: "X-Csrf-Token"
+          in: "header"
+          required: true
+          type: "string"
+          description: "CSRF防护令牌"
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
+      responses:
+        '200':
+          description: Task submitted successfully
+          schema:
+            $ref: '#/definitions/TaskSubmitResponse'
+        '400':
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /tasks/replay:
+    post:
+      tags:
+        - Tasks
+      summary: Submit a replay task
+      description: Replay historical samples using specified model version
+      operationId: submitReplayTask
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ReplayTaskRequest'
+        - name: "X-Csrf-Token"
+          in: "header"
+          required: true
+          type: "string"
+          description: "CSRF防护令牌"
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
+      responses:
+        '200':
+          description: Task submitted successfully
+          schema:
+            $ref: '#/definitions/TaskSubmitResponse'
+        '400':
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /tasks/{taskId}/stop:
+    post:
+      tags:
+        - Tasks
+      summary: Stop a running task
+      description: Mark task status as CANCELED
+      operationId: stopTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: "X-Csrf-Token"
+          in: "header"
+          required: true
+          type: "string"
+          description: "CSRF防护令牌"
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
+      responses:
+        '200':
+          description: Task stopped successfully
+          schema:
+            $ref: '#/definitions/OperationResponse'
+        '404':
+          description: Task not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task status
+      description: Query task status and result
+      operationId: getTaskStatus
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Task status retrieved successfully
+          schema:
+            $ref: '#/definitions/TaskStatusResponse'
+        '404':
+          description: Task not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /assets/models:
+    get:
+      tags:
+        - Assets
+      summary: List model versions
+      description: Query model versions with pagination
+      operationId: listModelVersions
+      parameters:
+        - name: page
+          in: query
+          type: integer
+          minimum: 0
+          required: false
+          default: 0
+          description: Page index, 0-based
+        - name: size
+          in: query
+          type: integer
+          minimum: 1
+          maximum: 100
+          required: false
+          default: 20
+          description: Page size
+        - name: model_type
+          in: query
+          type: string
+          required: false
+          description: Filter by model type (SMALL_MODEL, RAG_LIB)
+      responses:
+        '200':
+          description: Model versions retrieved successfully
+          schema:
+            $ref: '#/definitions/ModelVersionPageResponse'
+        '400':
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /assets/samples/stats:
+    get:
+      tags:
+        - Assets
+      summary: Get sample statistics
+      description: Query sample counts by app type
+      operationId: getSampleStatistics
+      parameters:
+        - name: dialing_task_id
+          in: query
+          type: integer
+          format: int64
+          required: false
+          description: Filter by dialing task ID
+        - name: start_time
+          in: query
+          type: integer
+          format: int64
+          required: false
+          description: Start timestamp in milliseconds
+        - name: end_time
+          in: query
+          type: integer
+          format: int64
+          required: false
+          description: End timestamp in milliseconds
+      responses:
+        '200':
+          description: Sample statistics retrieved successfully
+          schema:
+            $ref: '#/definitions/SampleStatsResponse'
+        '400':
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /configs/rules/default:
+    put:
+      tags:
+        - Configs
+      summary: Update default cleaning rule
+      description: Update system default cleaning rule configuration
+      operationId: updateDefaultRule
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/CleaningRuleRequest'
+        - name: "X-Csrf-Token"
+          in: "header"
+          required: true
+          type: "string"
+          description: "CSRF防护令牌"
+        - name: "X-Username"
+          in: "header"
+          required: true
+          type: "string"
+          description: "操作用户名"
+      responses:
+        '200':
+          description: Rule updated successfully
+          schema:
+            $ref: '#/definitions/OperationResponse'
+        '400':
+          description: Invalid rule configuration
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '500':
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+  /internal/callbacks/algo:
+    post:
+      tags:
+        - Internal
+      summary: Callback from algorithm service
+      description: Internal callback endpoint for C++ algorithm service
+      operationId: algoCallback
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/AlgoCallbackRequest'
+      responses:
+        '200':
+          description: Callback received
+          schema:
+            $ref: '#/definitions/OperationResponse'
+        '400':
+          description: Invalid callback data
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+definitions:
+  TimeRange:
+    type: object
+    required:
+      - start
+      - end
+    properties:
+      start:
+        type: integer
+        format: int64
+        description: Start timestamp in milliseconds
+      end:
+        type: integer
+        format: int64
+        description: End timestamp in milliseconds
+
+  CleaningConfig:
+    type: object
+    properties:
+      app_type:
+        type: string
+        description: Target application type
+      min_packet_count:
+        type: integer
+        description: Minimum packet count threshold
+      min_traffic_bytes:
+        type: integer
+        format: int64
+        description: Minimum traffic bytes threshold
+      min_duration:
+        type: integer
+        description: Minimum duration in seconds
+      pure_ratio:
+        type: number
+        format: double
+        description: Pure ratio threshold
+
+  PreprocessTaskRequest:
+    type: object
+    required:
+      - dialing_task_id
+      - ue_id
+      - time_range
+    properties:
+      dialing_task_id:
+        type: string
+        description: Associated dialing task ID
+      ue_id:
+        type: string
+        description: Device ID (used as Kafka partition key)
+      time_range:
+        $ref: '#/definitions/TimeRange'
+      config:
+        $ref: '#/definitions/CleaningConfig'
+        description: Optional cleaning rule override
+
+  DataScope:
+    type: object
+    properties:
+      sample_ids:
+        type: array
+        items:
+          type: integer
+          format: int64
+        description: Specific sample IDs
+      start_time:
+        type: integer
+        format: int64
+        description: Start timestamp in milliseconds
+      end_time:
+        type: integer
+        format: int64
+        description: End timestamp in milliseconds
+
+  TrainingTaskRequest:
+    type: object
+    required:
+      - model_type
+    properties:
+      trigger_source:
+        type: string
+        enum: [MANUAL, THRESHOLD]
+        description: Trigger source
+      model_type:
+        type: string
+        enum: [LARGE_MODEL_RAG, SMALL_MODEL]
+        description: Model type
+      data_scope:
+        $ref: '#/definitions/DataScope'
+        description: Training data scope
+
+  ReplayTaskRequest:
+    type: object
+    required:
+      - model_version
+      - dataset_scope
+    properties:
+      model_version:
+        type: string
+        description: Model version to validate
+      dataset_scope:
+        type: string
+        enum: [INCREMENTAL, FULL]
+        description: Dataset scope
+      target_metrics:
+        type: array
+        items:
+          type: string
+        description: Target metrics to evaluate
+
+  TaskSubmitResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+        default: 200
+      message:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/TaskSubmitData'
+
+  TaskSubmitData:
+    type: object
+    properties:
+      job_id:
+        type: string
+        description: Submitted task ID
+      status:
+        type: string
+        enum: [PENDING, RUNNING, SUCCESS, FAILED, CANCELED]
+        description: Task status
+
+  TaskStatusResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+        default: 200
+      message:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/TaskStatusData'
+
+  TaskStatusData:
+    type: object
+    properties:
+      job_id:
+        type: string
+        description: Task ID
+      status:
+        type: string
+        enum: [PENDING, RUNNING, SUCCESS, FAILED, CANCELED]
+        description: Task status
+      create_time:
+        type: string
+        description: Task creation time (ISO-8601 datetime string)
+      start_time:
+        type: string
+        description: Task start time (ISO-8601 datetime string)
+      end_time:
+        type: string
+        description: Task end time (ISO-8601 datetime string)
+      result_data:
+        type: object
+        description: Task result data (JSON)
+      error_msg:
+        type: string
+        description: Error message if failed
+
+  ModelVersion:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      version_no:
+        type: string
+        description: Version number
+      model_type:
+        type: string
+        enum: [SMALL_MODEL, RAG_LIB]
+        description: Model type
+      storage_path:
+        type: string
+        description: DFS/S3 storage path
+      metrics:
+        type: object
+        description: Quality metrics (JSON)
+      is_active:
+        type: boolean
+        description: Is current recommended version
+      create_time:
+        type: string
+        description: Creation time (ISO-8601 datetime string)
+
+  ModelVersionPageData:
+    type: object
+    properties:
+      content:
+        type: array
+        items:
+          $ref: '#/definitions/ModelVersion'
+      totalElements:
+        type: integer
+        format: int64
+      totalPages:
+        type: integer
+      size:
+        type: integer
+      number:
+        type: integer
+      first:
+        type: boolean
+      last:
+        type: boolean
+
+  ModelVersionPageResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+        default: 200
+      message:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/ModelVersionPageData'
+
+  SampleStats:
+    type: object
+    properties:
+      app_type:
+        type: string
+        description: Application type
+      total_count:
+        type: integer
+        format: int64
+        description: Total sample count
+      last_update_time:
+        type: string
+        description: Last update time (ISO-8601 datetime string)
+
+  SampleStatsResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+        default: 200
+      message:
+        type: string
+        default: Success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/SampleStats'
+
+  CleaningRuleRequest:
+    type: object
+    required:
+      - app_type
+      - rule_config
+    properties:
+      app_type:
+        type: string
+        description: Application type
+      rule_config:
+        type: object
+        description: Rule configuration (JSON)
+      description:
+        type: string
+        description: Rule description
+
+  AlgoCallbackRequest:
+    type: object
+    required:
+      - job_id
+      - status
+    properties:
+      job_id:
+        type: integer
+        format: int64
+        description: Task ID
+      status:
+        type: string
+        enum: [SUCCESS, FAILED]
+        description: Task status
+      error_msg:
+        type: string
+        description: Error message if failed
+      result:
+        $ref: '#/definitions/AlgoCallbackResult'
+
+  AlgoCallbackResult:
+    type: object
+    properties:
+      model_version:
+        type: string
+        description: Generated model version
+      artifact_path:
+        type: string
+        description: Artifact storage path
+      metrics:
+        type: object
+        description: Evaluation metrics (JSON)
+
+  OperationResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+        default: 200
+      message:
+        type: string
+        default: Success
+      data:
+        type: object
+
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+      data:
+        type: object

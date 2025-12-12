@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree -L 3 -d ../dialingtest-service/src/main/java)",
+      "Bash(ls -la ../dialingtest-interface/src/main/resources/*.yaml)",
+      "Bash(mvn clean generate-sources)",
+      "Bash(mvn clean compile)",
+      "Bash(mvn -version)",
+      "Bash(where java)",
+      "Bash(dir \"C:\\Program Files\\Java\")",
+      "Bash(\"C:/Program Files/Java/jdk-21/bin/java.exe\" -version)",
+      "Bash(\"C:/Program Files/Java/jdk-21/bin/mvn.cmd\" -version)",
+      "Bash(mvn -Djava.home=\"C:/Program Files/Java/jdk-21\" -version)",
+      "Bash(mvn swagger-codegen:generate@finetuning-api)",
+      "Bash(tree -L 3 -d target/generated-sources/swagger/src/main/java/com/huawei/cloududn/finetuningapp)",
+      "Bash(mvn clean install)",
+      "Bash(grep -n \"format: date-time\" src/main/resources/*.yaml)",
+      "Bash(ls -lh target/*.jar)",
+      "Bash(mvn clean compile -q)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

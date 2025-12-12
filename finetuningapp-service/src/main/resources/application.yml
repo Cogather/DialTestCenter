@@ -1,0 +1,112 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /api/finetuning/v1
+
+spring:
+  application:
+    name: finetuningapp-service
+
+  # Database Configuration
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/finetuning_db
+    username: postgres
+    password: postgres
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: finetuning-consumer-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      max-poll-records: 500
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+
+  # Cache Configuration
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=3600s
+
+  # Security Configuration (basic setup)
+  security:
+    user:
+      name: admin
+      password: admin123
+
+# MyBatis Configuration
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.huawei.cloududn.finetuningapp.model.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Application-specific Configuration
+app:
+  # External Service URLs
+  dialing-service:
+    url: http://localhost:8080
+    callback-path: /dialingtest/callbacks/notify
+
+  protocol-miner:
+    url: http://localhost:9090
+    train-path: /algo/v1/train
+    extract-path: /algo/v1/extract
+
+  # Kafka Topics
+  kafka:
+    topic:
+      raw-flow: topic-raw-flow
+      labeled-sample: topic-labeled-sample
+
+  # Scheduler Configuration
+  scheduler:
+    task-poller:
+      enabled: true
+      fixed-delay: 5000  # 5 seconds
+      initial-delay: 10000  # 10 seconds
+
+    task-watchdog:
+      enabled: true
+      fixed-delay: 60000  # 1 minute
+      heartbeat-timeout: 300000  # 5 minutes
+
+  # Cleaning Engine Configuration
+  cleaning-engine:
+    max-aggregation-keys: 100000
+    max-samples-per-bucket: 20
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.huawei.cloududn.finetuningapp: DEBUG
+    org.springframework.kafka: INFO
+    org.mybatis: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
