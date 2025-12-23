@@ -68,6 +68,18 @@ public class TaskOrchestratorService {
         logger.info("TaskOrchestratorService initialized with all actions and listeners");
     }
 
+    /**
+     * 手动触发当前状态的动作执行（用于任务刚创建时）
+     *
+     * @param taskId 任务ID
+     * @param ctx 任务上下文
+     */
+    public void executeCurrentAction(Long taskId, TaskContext ctx) {
+        TaskState state = getCurrentState(ctx);
+        logger.info("Triggering initial action for task {}: {}", taskId, state);
+        taskStateMachine.executeAction(state, ctx);
+    }
+
     public boolean sendResultEvent(Long mainTaskId, boolean success) {
         return sendResultEvent(mainTaskId, success, null);
     }

@@ -10,6 +10,7 @@ import com.huawei.cloududn.dialingtest.model.StartTaskRequest;
 import com.huawei.cloududn.dialingtest.model.TaskEntity;
 import com.huawei.cloududn.dialingtest.model.TemplateEntity;
 import com.huawei.cloududn.dialingtestapp.service.taskmanagement.dto.TaskContext;
+import com.huawei.cloududn.dialingtestapp.service.taskmanagement.orchestration.TaskOrchestratorService;
 import com.huawei.cloududn.dialingtestapp.service.taskmanagement.orchestration.state.TaskState;
 
 import org.slf4j.Logger;
@@ -33,6 +34,9 @@ public class TaskTriggerService {
     @Autowired
     private TemplateMgmtService templateMgmtService;
 
+    @Autowired
+    private TaskOrchestratorService orchestratorService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public TaskEntity createTaskFromRequest(StartTaskRequest request) {
@@ -44,8 +48,14 @@ public class TaskTriggerService {
             ctx.setStep(TaskState.START_VALIDATION);
         }
         TaskEntity entity = buildMainTask("MANUAL", ctx, request == null ? null : toJson(request));
-        // 初始化步骤进入后由状态机自动触发相应 Action（当回调/事件到达时）
-        return taskMgmtService.create(entity);
+        // 初始化步骤进入后由状态机自动触发相应 Action
+        entity = taskMgmtService.create(entity);
+        
+        // 显式触发当前状态的 Action
+        Long taskId = entity.getId();
+        orchestratorService.executeCurrentAction(taskId, ctx);
+        
+        return entity;
     }
 
     public TaskEntity createTaskFromTemplate(TemplateEntity template) {
@@ -53,7 +63,13 @@ public class TaskTriggerService {
         ctx.setStep(TaskState.START_VALIDATION);
         TaskEntity entity = buildMainTask("CRON", ctx, template == null ? null : template.getInput());
         entity.setTemplateTaskId(template == null ? null : template.getId());
-        return taskMgmtService.create(entity);
+        entity = taskMgmtService.create(entity);
+
+        // 显式触发当前状态的 Action
+        Long taskId = entity.getId();
+        orchestratorService.executeCurrentAction(taskId, ctx);
+
+        return entity;
     }
 
     private TaskEntity buildMainTask(String creator, TaskContext ctx, String inputJson) {

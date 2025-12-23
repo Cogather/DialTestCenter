@@ -150,7 +150,7 @@ public class TaskStateMachine {
         }
     }
 
-    private void executeAction(TaskState state, TaskContext context) {
+    public void executeAction(TaskState state, TaskContext context) {
         if (state == TaskState.FINAL) {
             logger.debug("Reached FINAL state, no action to execute");
             return;
